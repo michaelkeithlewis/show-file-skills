@@ -144,8 +144,7 @@ input patch/routing; bus sends/assignments; long-name write; freq/gain quantizat
 ## Tools (2026-10-11)
 - `scripts/ses.py`: structural reader/writer. Parses any session back to V1619 (Q2, Q3, Q5, SD8, SD9, SD12 tested),
   finds live channels, gets/sets slots by key, renames all name copies in place.
-- `scripts/dlive2digico.py`: dLive show -> DiGiCo session (names, trim, polarity, delay, HPF/LPF, 4-band EQ, gate,
-  comp, stereo-pair pan) on an editor-made baseline. Needs `dlive/scripts/dlive_proc.py` from this repo.
+- `scripts/sesproc.py`: processing keys and the SD comp and Mustard writers.
 
 ## Stereo, Mustard, Spice Rack, SD FX, dynamic EQ and levels (2026-10-11, editor-verified)
 - **Stereo inputs**: in the section 201 channel record, the byte at +41 is the width (01 mono, 02 stereo). The record's
@@ -166,11 +165,7 @@ input patch/routing; bus sends/assignments; long-name write; freq/gain quantizat
   below); a baseline can also carry its own editor-made units.
 - **Dynamic EQ** on a channel EQ band (module 04, same band byte as the EQ): enable 0x7d, threshold 0x0e,
   ratio 0x10, attack 0x11, release 0x12, below/under 0x0b.
-- **Levels**: DiGiCo thresholds are dBFS and stop at 0. dLive thresholds sit on a nominal 0 dB scale with full scale
-  at +18 dB, so `dlive2digico.py` writes every dLive threshold 18 dB lower (`DLIVE_TO_DBFS`).
-- **Baseline for the translator**: make it in the editor with the stereo channels, Chilli 6 insert routing and FX
-  units you want (see `baselines.md`), then describe it to `dlive2digico.py` with a config like
-  `examples/fx_config.json`.
+- **Levels**: DiGiCo thresholds are dBFS and stop at 0.
 - **Surface banks** (section 243): u16 | u32 bank count | banks of 0x169 B: u16 size | u16 index |
   name ShortString[15] | ... | 12 strips of (index u8, type u8) at +0x23 (01 input = internal index - 1, 05 aux,
   06 group, 0a CG, 10 matrix) | ... | 12 view bytes at the end of the bank (0 SD view, 2 Mustard view).

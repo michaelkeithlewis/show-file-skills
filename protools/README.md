@@ -110,6 +110,8 @@ These scripts are examples to adapt. They come with no warranty. Save your
 session before a prep, and work on a copy when in doubt. This project is not
 affiliated with or endorsed by Avid. Pro Tools is a trademark of Avid Technology.
 
+More Accessibility rules (save panels, hung jobs, Logic) are in `../macos-accessibility/README.md`.
+
 ## Built on tour
 
 Built by Michael Lewis, touring engineer and co-founder of

@@ -63,7 +63,7 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and dlive2digico.py sit next to this package
+TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
 for _p in (TOOLS, ROOT):
     if _p not in sys.path:
         sys.path.insert(0, _p)

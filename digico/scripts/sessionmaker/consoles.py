@@ -32,7 +32,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULTS = (os.environ.get('SM_BASELINES') or os.path.join(ROOT, 'baselines'))
-TOOLS = ROOT  # ses.py and dlive2digico.py sit next to this package
+TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
 FACTS = os.path.join(DEFAULTS, 'console_facts.json')
@@ -67,7 +67,7 @@ MUSTARD_CAP_DEFAULT = 24       # other Quantums: unverified, see module docstrin
 MUSTARD_CAP_SPEC = {'q225': MUSTARD_CAP_Q225, 'q225p': 36, 'q338': 36, 'q338p': 48}
 
 # Builds whose generated output has been loaded in the real editor (Quantum 225 V2242: the relayout candidates
-# s01-s13 and the dLive translations v2-v7 all loaded in the offline editor).
+# s01-s13 and v2-v7 all loaded in the offline editor).
 _TESTED = {('q225', 2242)}
 
 CONSOLES = {}

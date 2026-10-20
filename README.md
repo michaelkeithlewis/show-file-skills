@@ -13,16 +13,17 @@ patch. This repo holds the tools and the notes so you do not have to decode them
 | Folder | Format | What you can do |
 | --- | --- | --- |
 | [`dlive/`](dlive/) | Allen & Heath dLive show (`.tar.gz`, firmware 2.x) | Names, colours, patch, mixer config, mixes and sends, processing, preamps, SoftKeys, layout, plus a validator |
-| [`digico/`](digico/) | DiGiCo SD and Quantum session (`.ses`) | Read any session, build and edit sessions from an editor-made baseline, translate a dLive show to DiGiCo |
+| [`digico/`](digico/) | DiGiCo SD and Quantum session (`.ses`) | Read any session, build and edit sessions from an input list or plain description on an editor-made baseline |
 | [`protools/`](protools/) | Avid Pro Tools (PTSL scripting) | Drive a running session: transport, tracks, markers, routing, import, bounce, session prep and stem QC |
-| [`logic/`](logic/) | Apple Logic Pro `ProjectData` | Read channel strips, insert slots and routing, measure plug-in latency |
+| [`logic/`](logic/) | Apple Logic Pro `ProjectData` | Read channel strips, insert slots and routing, measure plug-in latency, bounce through Accessibility |
 | [`livetrax/`](livetrax/) | LiveTrax 3 (Ardour XML) | Generate multitrack record templates from an input list |
 | [`liveprofessor/`](liveprofessor/) | LiveProfessor `.rack2` (JUCE ValueTree) | Read, write and generate pre-routed sessions byte-exact |
 | [`venue/`](venue/) | Avid VENUE / D-Show `.dsh` | Read the show tree and rename channels safely |
+| [`macos-accessibility/`](macos-accessibility/) | macOS Accessibility (AX) | Drive Logic, Pro Tools and save panels by name, with no screenshots or mouse |
 
 Each folder is a [Claude Code](https://claude.com/claude-code) skill: copy it into
 `~/.claude/skills/` and ask for what you need ("set up the IEM sends in my dLive show",
-"translate this dLive show to a Q225 session"). Every folder also works without Claude:
+"build a Q225 session from this input list"). Every folder also works without Claude:
 the scripts are plain Python and each folder README shows the commands.
 
 ## Safety

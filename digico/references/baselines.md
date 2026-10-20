@@ -36,19 +36,6 @@ Notes:
   `{"q112": {"max_inputs": 72, "max_inputs_verified": true}}`. The session maker also writes an
   `options_facts.json` cache there.
 
-## 2. A show layout baseline (for the dLive translator)
-
-`scripts/dlive2digico.py` does not change the layout. It writes names and processing into the channels the
-baseline already has. Make the baseline match the dLive show first.
-
-1. Open the offline editor for the target console and build.
-2. Go to **Files > Session Structure**. Set the input count, the stereo channels, and the aux and group counts.
-3. Optional, for the `--config` features:
-   - Add SD reverbs fed by aux 1-3, with their returns on spare inputs.
-   - Route Chilli 6 to the vocal channels: on each channel, **Insert A > INTERNAL > Spice Rack > slot**.
-4. Save under a new name. That file is the baseline. Keep it read-only: the translator writes a new file every time.
-5. Describe the FX and Chilli routing to the translator in a config file. See `examples/fx_config.json`.
-
 ## Always
 
 - Open every generated session in the same editor, check it, and **Files > Save As** a new file. Only the editor's

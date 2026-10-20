@@ -33,7 +33,7 @@ import struct
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and dlive2digico.py sit next to this package
+TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
 from ses import Record  # noqa: E402

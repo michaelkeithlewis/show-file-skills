@@ -4,7 +4,7 @@
 The values come from data/templates.json: one template per instrument category, the show-weighted medians of
 39 real DiGiCo sessions, in display units (Hz as shown on the strip, dBFS, ms). meta.write_keys there
 names the (module, param, band) slot for each value and the display -> stored conversion; this module reads those
-keys and checks them against the constants in dlive2digico.py, whose SD comp and Mustard writers it
+keys and checks them against the constants in sesproc.py, whose SD comp and Mustard writers it
 reuses (with thresholds passed through as dBFS, not dLive levels).
 
 What gets written per channel (only where the template has the processor in):
@@ -18,7 +18,7 @@ What gets written per channel (only where the template has the processor in):
                    verified). Dyn2 as a second comp when the template has dyn2_comp in.
   Mustard comp     module 1d, Quantum only, up to the console's instance cap (a stereo channel uses 2), best
                    candidates first. On a Mustard channel the SD compressor stays off (the Mustard comp replaces
-                   it, as in dlive2digico). Past the cap the Mustard settings go to the SD compressor instead.
+                   it). Past the cap the Mustard settings go to the SD compressor instead.
                    Mustard channels open on the M view of their bank (Session.set_strip_view).
   Delay, polarity  module 09 (07 on, 08 seconds); module 01 (02): 1 inverts a mono channel; a stereo channel
                    takes a side mask (the iPad map gives phase 0-3), so both sides = 3.
@@ -30,10 +30,10 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and dlive2digico.py sit next to this package
+TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-import dlive2digico as d2d  # noqa: E402  (constants + put_comp / put_mustard writers)
+import sesproc  # noqa: E402  (processing keys + put_comp / put_mustard writers)
 
 TEMPLATES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'templates.json')
 _T = None
@@ -53,18 +53,18 @@ def _k(v):
 
 
 def _check_keys(wk):
-    """The JSON's write keys and the dLive translator's constants must name the same slots."""
-    pairs = [(_k(wk['hpf_in']), d2d.HPF_IN), (_k(wk['hpf_freq']), d2d.HPF_F), (_k(wk['lpf_in']), d2d.LPF_IN),
-             (_k(wk['lpf_freq']), d2d.LPF_F), (_k(wk['eq_in']), d2d.EQ_IN), (_k(wk['polarity']), d2d.POLARITY),
-             (_k(wk['delay']['on']), d2d.DELAY_ON), (_k(wk['delay']['time']), d2d.DELAY),
-             (tuple(wk['comp']['in'][:3]), (0x05, d2d.C_IN, 0)), (tuple(wk['comp']['mode'][:3]), (0x05, d2d.C_MODE, 0)),
-             (tuple(wk['dyn2']['mode'][:3]), (0x05, d2d.G_MODE, 3)), (tuple(wk['dyn2']['hold'][:3]), (0x05, d2d.G_HOLD, 3)),
-             (tuple(wk['mustard_comp']['on'][:3]), (d2d.MC, d2d.MC_ON, 0)),
-             (tuple(wk['mustard_comp']['model'][:3]), (d2d.MC, d2d.MC_TYPE, 0)),
-             ((wk['eq_band_n']['freq'][0], wk['eq_band_n']['freq'][1]), (0x04, d2d.EQ_FREQ))]
+    """The JSON's write keys and the sesproc constants must name the same slots."""
+    pairs = [(_k(wk['hpf_in']), sesproc.HPF_IN), (_k(wk['hpf_freq']), sesproc.HPF_F), (_k(wk['lpf_in']), sesproc.LPF_IN),
+             (_k(wk['lpf_freq']), sesproc.LPF_F), (_k(wk['eq_in']), sesproc.EQ_IN), (_k(wk['polarity']), sesproc.POLARITY),
+             (_k(wk['delay']['on']), sesproc.DELAY_ON), (_k(wk['delay']['time']), sesproc.DELAY),
+             (tuple(wk['comp']['in'][:3]), (0x05, sesproc.C_IN, 0)), (tuple(wk['comp']['mode'][:3]), (0x05, sesproc.C_MODE, 0)),
+             (tuple(wk['dyn2']['mode'][:3]), (0x05, sesproc.G_MODE, 3)), (tuple(wk['dyn2']['hold'][:3]), (0x05, sesproc.G_HOLD, 3)),
+             (tuple(wk['mustard_comp']['on'][:3]), (sesproc.MC, sesproc.MC_ON, 0)),
+             (tuple(wk['mustard_comp']['model'][:3]), (sesproc.MC, sesproc.MC_TYPE, 0)),
+             ((wk['eq_band_n']['freq'][0], wk['eq_band_n']['freq'][1]), (0x04, sesproc.EQ_FREQ))]
     bad = [p for p in pairs if p[0] != p[1]]
     if bad:
-        raise RuntimeError('templates.json write_keys disagree with dlive2digico constants: %r' % bad)
+        raise RuntimeError('templates.json write_keys disagree with sesproc constants: %r' % bad)
 
 
 WK = None
@@ -87,14 +87,14 @@ def keys():
     return WK
 
 
-HPF_PER, LPF_PER = d2d.HPF_SHOWN_PER_STORED, d2d.LPF_SHOWN_PER_STORED
+HPF_PER, LPF_PER = sesproc.HPF_SHOWN_PER_STORED, sesproc.LPF_SHOWN_PER_STORED
 SHAPES = {'bell': 1.0, 'low_shelf': 3.0, 'high_shelf': 4.0}
 SHAPE_NAMES = {1: 'bell', 2: 'shape2', 3: 'low_shelf', 4: 'high_shelf'}
 SHELF_BANDS = {'low_shelf': (1, 2), 'high_shelf': (3, 4)}
 KNEE_NAMES = {0: 'hard', 1: 'medium', 2: 'soft'}
 COMP_MODES = {0: 'comp', 1: 'multiband', 2: 'deesser'}
 DYN2_MODES = {0: 'gate', 1: 'ducker', 2: 'comp'}
-MUSTARD_MODELS = {v: k for k, v in d2d.MC_MODEL.items()}
+MUSTARD_MODELS = {v: k for k, v in sesproc.MC_MODEL.items()}
 # Mustard goes to the channels that gain most from it first; a lower number wins, then surface order.
 MUSTARD_PRIORITY = {'lead_vocal': 0, 'vocal_generic': 1, 'snare_top': 2, 'kick_in': 3, 'bass_di': 3,
                     'acoustic_guitar': 4, 'folk_strings': 5, 'strings': 5, 'drum_crotch': 6}
@@ -102,7 +102,7 @@ MUSTARD_PRIORITY = {'lead_vocal': 0, 'vocal_generic': 1, 'snare_top': 2, 'kick_i
 
 def dbfs(db):
     """Template thresholds are already dBFS; DiGiCo thresholds stop at 0."""
-    return d2d.clamp(float(db), -60.0, 0.0)
+    return sesproc.clamp(float(db), -60.0, 0.0)
 
 
 def resolve(category, role='foh'):
@@ -124,8 +124,8 @@ def category_label(category):
     return e['label'] if e else 'Other'
 
 
-class Writer(d2d.Writer):
-    """d2d.Writer that remembers every value written, so the build can check the file reads back the same."""
+class Writer(sesproc.Writer):
+    """sesproc.Writer that remembers every value written, so the build can check the file reads back the same."""
 
     def __init__(self, ses, ch):
         super().__init__(ses, ch)
@@ -148,11 +148,11 @@ def write_template(ses, ch, tpl, stereo, mustard):
     h = tpl.get('hpf') or {}
     if h.get('in') and h.get('freq_hz'):
         w.put(K['hpf_in'], 1.0)
-        w.put(K['hpf_f'], d2d.clamp(float(h['freq_hz']), 20.0, 20000.0) / HPF_PER)
+        w.put(K['hpf_f'], sesproc.clamp(float(h['freq_hz']), 20.0, 20000.0) / HPF_PER)
     lo = tpl.get('lpf') or {}
     if lo.get('in') and lo.get('freq_hz'):
         w.put(K['lpf_in'], 1.0)
-        w.put(K['lpf_f'], d2d.clamp(float(lo['freq_hz']), 20.0, 20000.0) / LPF_PER)
+        w.put(K['lpf_f'], sesproc.clamp(float(lo['freq_hz']), 20.0, 20000.0) / LPF_PER)
 
     eq = tpl.get('eq') or {}
     if eq.get('in') and eq.get('bands'):
@@ -164,9 +164,9 @@ def write_template(ses, ch, tpl, stereo, mustard):
                     n, shape.replace('_', ' '), '/'.join(map(str, SHELF_BANDS[shape]))))
                 shape = 'bell'
             m, bb = K['eq'], 4 - n
-            w.put((m['freq'][0], m['freq'][1], bb), d2d.clamp(float(b['freq_hz']), 20.0, 20000.0))
-            w.put((m['gain'][0], m['gain'][1], bb), d2d.clamp(float(b['gain_db']), -18.0, 18.0))
-            q = 0.85 if shape in SHELF_BANDS else d2d.clamp(_num(b.get('q'), 0.71), 0.1, 20.0)
+            w.put((m['freq'][0], m['freq'][1], bb), sesproc.clamp(float(b['freq_hz']), 20.0, 20000.0))
+            w.put((m['gain'][0], m['gain'][1], bb), sesproc.clamp(float(b['gain_db']), -18.0, 18.0))
+            q = 0.85 if shape in SHELF_BANDS else sesproc.clamp(_num(b.get('q'), 0.71), 0.1, 20.0)
             w.put((m['q'][0], m['q'][1], bb), q)
             w.put((m['shape'][0], m['shape'][1], bb), SHAPES.get(shape, 1.0))
             w.put((m['on'][0], m['on'][1], bb), 1.0)
@@ -177,18 +177,18 @@ def write_template(ses, ch, tpl, stereo, mustard):
         w.put(D['mode'], 0.0)
         w.put(D['in'], 1.0)
         w.put(D['thr'], dbfs(g['threshold_db']))
-        w.put(D['range'], d2d.clamp(_num(g.get('range_db'), 40.0), 0.0, 90.0))
-        w.put(D['atk'], d2d.clamp(_num(g.get('attack_ms'), 0.05), 0.05, 100.0) / 1000.0)
-        w.put(D['hold'], d2d.clamp(_num(g.get('hold_ms'), 100.0), 2.0, 2000.0) / 1000.0)
-        w.put(D['rel'], d2d.clamp(_num(g.get('release_ms'), 200.0), 5.0, 10000.0) / 1000.0)
+        w.put(D['range'], sesproc.clamp(_num(g.get('range_db'), 40.0), 0.0, 90.0))
+        w.put(D['atk'], sesproc.clamp(_num(g.get('attack_ms'), 0.05), 0.05, 100.0) / 1000.0)
+        w.put(D['hold'], sesproc.clamp(_num(g.get('hold_ms'), 100.0), 2.0, 2000.0) / 1000.0)
+        w.put(D['rel'], sesproc.clamp(_num(g.get('release_ms'), 200.0), 5.0, 10000.0) / 1000.0)
     d2 = tpl.get('dyn2_comp') or {}
     if d2.get('in') and not gate_on and d2.get('threshold_db') is not None:
         w.put(D['mode'], 2.0)
         w.put(D['in'], 1.0)
         w.put(D['thr'], dbfs(d2['threshold_db']))
-        w.put(D['ratio'], d2d.clamp(_num(d2.get('ratio'), 3.0), 1.0, 50.0))
-        w.put(D['atk'], d2d.clamp(_num(d2.get('attack_ms'), 10.0), 0.05, 100.0) / 1000.0)
-        w.put(D['rel'], d2d.clamp(_num(d2.get('release_ms'), 300.0), 5.0, 10000.0) / 1000.0)
+        w.put(D['ratio'], sesproc.clamp(_num(d2.get('ratio'), 3.0), 1.0, 50.0))
+        w.put(D['atk'], sesproc.clamp(_num(d2.get('attack_ms'), 10.0), 0.05, 100.0) / 1000.0)
+        w.put(D['rel'], sesproc.clamp(_num(d2.get('release_ms'), 300.0), 5.0, 10000.0) / 1000.0)
 
     c, mc = tpl.get('comp') or {}, tpl.get('mustard_comp') or {}
     if mustard == 'on':
@@ -203,11 +203,11 @@ def write_template(ses, ch, tpl, stereo, mustard):
             kw.update(ratio=mc.get('ratio'))
         elif model == 'levamp':
             kw.pop('thr')
-        d2d.put_mustard(w, model if model in d2d.MC_MODEL else 'classic', **kw)
+        sesproc.put_mustard(w, model if model in sesproc.MC_MODEL else 'classic', **kw)
         if c.get('in'):
             w.note('Mustard comp replaces the SD comp')
     elif c.get('in') and c.get('threshold_db') is not None:
-        d2d.put_comp(w, c['threshold_db'], _num(c.get('ratio'), 3.0), _num(c.get('attack_ms'), 10.0),
+        sesproc.put_comp(w, c['threshold_db'], _num(c.get('ratio'), 3.0), _num(c.get('attack_ms'), 10.0),
                      _num(c.get('release_ms'), 300.0), c.get('knee') or 'hard', max(0.0, _num(c.get('makeup_db'), 0.0)),
                      to_fs=dbfs)
         if c.get('mode') in ('multiband', 'deesser'):
@@ -215,13 +215,13 @@ def write_template(ses, ch, tpl, stereo, mustard):
         if mustard == 'over':
             w.note('no Mustard instance left: SD comp from the template')
     elif mustard == 'over' and mc.get('threshold_db') is not None:
-        d2d.put_comp(w, mc['threshold_db'], min(_num(mc.get('ratio'), 3.0), 50.0), _num(mc.get('attack_ms'), 10.0),
+        sesproc.put_comp(w, mc['threshold_db'], min(_num(mc.get('ratio'), 3.0), 50.0), _num(mc.get('attack_ms'), 10.0),
                      _num(mc.get('release_ms'), 250.0), 'medium', max(0.0, _num(mc.get('output_db'), 0.0)), to_fs=dbfs)
         w.note('no Mustard instance left: Mustard settings on the SD comp')
 
     dl = tpl.get('delay') or {}
     if dl.get('on') and dl.get('ms'):
-        w.put(K['delay'], d2d.clamp(float(dl['ms']), 0.0, 1300.0) / 1000.0)
+        w.put(K['delay'], sesproc.clamp(float(dl['ms']), 0.0, 1300.0) / 1000.0)
         w.put(K['delay_on'], 1.0)
     if tpl.get('polarity_invert'):
         w.put(K['polarity'], 3.0 if stereo else 1.0)
@@ -302,19 +302,19 @@ def readback_channel(ses, idx):
         else:
             gate.update(range=_r(g(D['range'])), hold_ms=_r(g(D['hold']) * 1000))
         out['gate'] = gate
-    if ses.get(idx, 0x05, d2d.C_IN, 0) == 1.0:
+    if ses.get(idx, 0x05, sesproc.C_IN, 0) == 1.0:
         c = lambda p: ses.get(idx, 0x05, p, 0)
-        out['comp'] = {'mode': COMP_MODES.get(int(c(d2d.C_MODE)), '?'), 'threshold': _r(c(d2d.C_THR)),
-                       'ratio': _r(c(d2d.C_RATIO), 2), 'attack_ms': _r(c(d2d.C_ATK) * 1000, 2),
-                       'release_ms': _r(c(d2d.C_REL) * 1000), 'knee': KNEE_NAMES.get(int(c(d2d.C_KNEE)), '?'),
-                       'makeup': _r(c(d2d.C_MK))}
-    if ses.has_module(d2d.MC, idx) and ses.get(idx, d2d.MC, d2d.MC_ON, 0) == 1.0:
-        mc = lambda p: ses.get(idx, d2d.MC, p, 0)
-        out['mustard'] = {'model': MUSTARD_MODELS.get(mc(d2d.MC_TYPE), str(mc(d2d.MC_TYPE))),
-                          'threshold': _r(mc(d2d.MC_THR)), 'ratio': _r(mc(d2d.MC_RATIO), 2),
-                          'attack_ms': _r(mc(d2d.MC_ATK) * 1000, 2), 'release_ms': _r(mc(d2d.MC_REL) * 1000),
-                          'knee': 'hard' if mc(d2d.MC_KNEE) == 1.0 else 'soft', 'mix': _r(mc(d2d.MC_MIX), 2),
-                          'output': _r(mc(d2d.MC_OUT))}
+        out['comp'] = {'mode': COMP_MODES.get(int(c(sesproc.C_MODE)), '?'), 'threshold': _r(c(sesproc.C_THR)),
+                       'ratio': _r(c(sesproc.C_RATIO), 2), 'attack_ms': _r(c(sesproc.C_ATK) * 1000, 2),
+                       'release_ms': _r(c(sesproc.C_REL) * 1000), 'knee': KNEE_NAMES.get(int(c(sesproc.C_KNEE)), '?'),
+                       'makeup': _r(c(sesproc.C_MK))}
+    if ses.has_module(sesproc.MC, idx) and ses.get(idx, sesproc.MC, sesproc.MC_ON, 0) == 1.0:
+        mc = lambda p: ses.get(idx, sesproc.MC, p, 0)
+        out['mustard'] = {'model': MUSTARD_MODELS.get(mc(sesproc.MC_TYPE), str(mc(sesproc.MC_TYPE))),
+                          'threshold': _r(mc(sesproc.MC_THR)), 'ratio': _r(mc(sesproc.MC_RATIO), 2),
+                          'attack_ms': _r(mc(sesproc.MC_ATK) * 1000, 2), 'release_ms': _r(mc(sesproc.MC_REL) * 1000),
+                          'knee': 'hard' if mc(sesproc.MC_KNEE) == 1.0 else 'soft', 'mix': _r(mc(sesproc.MC_MIX), 2),
+                          'output': _r(mc(sesproc.MC_OUT))}
     if g(K['delay_on']) == 1.0:
         out['delay_ms'] = _r(g(K['delay']) * 1000, 2)
     return out

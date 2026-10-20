@@ -1,6 +1,6 @@
 ---
 name: logic-projectdata
-description: Read Logic Pro ProjectData (the binary inside a .logicx package) without opening Logic - channel strips, names, inputs, outputs, buses and aux routing, insert slots and AU plugins - measure each AU insert's real latency from its saved state, compute per-path latency to the main mix, and patch AUSampleDelay inserts in to line every path up. Trigger on "Logic", ".logicx", "ProjectData", "plugin latency in my Logic template", "line up the latency", "time-align the live stream mix", "what is on each channel strip", or "add a sample delay to these channels". NOT for Pro Tools, Ableton, or Logic regions and automation.
+description: Read Logic Pro ProjectData (the binary inside a .logicx package) without opening Logic - channel strips, names, inputs, outputs, buses and aux routing, insert slots and AU plugins - measure each AU insert's real latency from its saved state, compute per-path latency to the main mix, and patch AUSampleDelay inserts in to line every path up. Trigger on "Logic", ".logicx", "ProjectData", "plugin latency in my Logic template", "line up the latency", "time-align the live stream mix", "what is on each channel strip", or "add a sample delay to these channels", "bounce bars 17 to 25", "which inserts are bypassed". NOT for Pro Tools, Ableton, or Logic regions and automation.
 ---
 
 # Logic Pro ProjectData
@@ -54,3 +54,8 @@ needs a Mac with the plugins installed and the Swift compiler (Xcode command lin
   with no AU inserts at all cannot be patched. Add any AU in Logic, save, and run again.
 - Test without a project: `examples/make_test_projectdata.py` writes a synthetic file
   that matches `examples/lat.txt` and `examples/plan.json`.
+
+## Bounce and read Logic without looking
+
+To bounce a section or read insert bypass states in a running Logic, use `scripts/logic_ax.lua` through
+`scripts/hs_run.sh` (see the README and `../macos-accessibility/`). Run with `dry = true` first.

@@ -49,7 +49,7 @@ against a fixed 0.5 / 80.
 ## Level reference
 
 dLive levels sit on a nominal 0 dB scale with full scale at +18 dB (dLive thresholds run up to +18). Consoles
-that work in dBFS (DiGiCo) need every dLive threshold 18 dB lower. See `../../digico/references/filters-and-thresholds.md`.
+that work in dBFS need every dLive threshold 18 dB lower.
 
 ## Raw or unconfirmed
 

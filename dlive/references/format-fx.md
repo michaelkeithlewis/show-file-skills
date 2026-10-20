@@ -40,8 +40,3 @@ own static tables, kept in `scripts/fx_tables.json` with their addresses.
 - Any parameter without a confirmed conversion code (reported as `?raw`).
 - UltraFX "step" parameters (for example `HF CutType` 1.812) read as fractions, so their scale is not confirmed.
   On the plates, a nonzero `HF CutGain` points to a shelf, not a cut.
-
-## Level reference
-
-dLive levels sit on a nominal 0 dB scale with full scale at +18 dB. DiGiCo levels are dBFS, so the DiGiCo
-translator writes every dLive threshold 18 dB lower.

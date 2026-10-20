@@ -59,6 +59,20 @@ To install as a skill, copy this folder to `~/.claude/skills/logic-projectdata/`
 This tool is not affiliated with or endorsed by Apple. Logic Pro is a trademark of Apple Inc.
 No warranty.
 
+## Remote control through Accessibility (bounce without looking)
+
+`scripts/logic_ax.lua` drives Logic through the macOS Accessibility tree from Hammerspoon: dump any window, press
+menu items by path, read insert bypass states, and bounce a bar range to a named file
+(`L.bounce{name=, s={bar,beat}, e={bar,beat}, dry=}`). `scripts/hs_run.sh <job.lua>` runs a job without waiting
+on the `hs` CLI, which can hang; set `HS_HOST=user@mac` to run it on another Mac over SSH. Example job:
+`examples/bounce_job.lua`. `scripts/locate_clip.py <source.wav> <clip.wav>` finds where a bounce sits in a longer
+file and the gain between them, so you can check a plug-in state without listening. Needs Hammerspoon with
+Accessibility permission; `locate_clip.py` needs ffmpeg and numpy. The rules behind it are in
+`../macos-accessibility/README.md`.
+
+Status: the bounce, insert-state and plug-in window code ran on a real project in Logic Pro on macOS in October
+2026. The generic version in this repo has passed a Lua syntax check but has not been re-run in Logic.
+
 ## Built on tour
 
 Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack planning app for touring and production crews.

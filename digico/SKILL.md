@@ -1,6 +1,6 @@
 ---
 name: digico-session
-description: Read, build and edit DiGiCo SD and Quantum sessions (.ses) by bytes, on a baseline saved by the DiGiCo offline editor - build a new session from an input list or a plain description (channel count, order, stereo, names, per-instrument starting processing, buses, SD FX units, IEM and wedge mixes, sends, input patch and preamps), edit any session (processing, names, moves, stereo, patch, sends, FX, buses) from edit ops or plain-English commands, check a session (what console and software it loads on, structure, problems), and translate an Allen & Heath dLive show to a DiGiCo session (names, trim, polarity, delay, HPF/LPF, 4-band EQ, gate, compressor, stereo pans, Mustard comps, SD reverbs, Chilli 6, dynamic EQ) with a report of every approximation. Trigger on "DiGiCo", ".ses", "Quantum", "SD12", "SD9", "Q225", "Q338", "session file", "build a DiGiCo session from this input list", "translate my dLive show to DiGiCo", "check this session", "Mustard", "Spice Rack", or any request to make or change a DiGiCo show file. Needs the dlive-showfile skill next to it for dLive translation.
+description: Read, build and edit DiGiCo SD and Quantum sessions (.ses) by bytes, on a baseline saved by the DiGiCo offline editor - build a new session from an input list or a plain description (channel count, order, stereo, names, per-instrument starting processing, buses, SD FX units, IEM and wedge mixes, sends, input patch and preamps), edit any session (processing, names, moves, stereo, patch, sends, FX, buses) from edit ops or plain-English commands, check a session (what console and software it loads on, structure, problems). Built for agents creating session files from the command line. Trigger on "DiGiCo", ".ses", "Quantum", "SD12", "SD9", "Q225", "Q338", "session file", "build a DiGiCo session from this input list", "check this session", "Mustard", "Spice Rack", or any request to make or change a DiGiCo show file.
 ---
 
 # DiGiCo sessions
@@ -21,10 +21,8 @@ its caches on load.
 ## Set up once
 
 - Baselines: `references/baselines.md`. Default sessions go in `scripts/baselines/<key>_v<build>.ses`
-  (or the folder `SM_BASELINES` names). For dLive translation, make a layout baseline in Session Structure.
+  (or the folder `SM_BASELINES` names).
 - Python 3.9+, standard library only. Run everything from `scripts/`.
-- dLive translation reads the show with `../dlive/scripts/` (the dlive-showfile skill in this repo). Set
-  `DLIVE_SCRIPTS` if it lives somewhere else.
 
 ## Tools
 
@@ -39,7 +37,6 @@ its caches on load.
 | `python3 -m sessionmaker.edit <in.ses> '<ops json>' <out.ses>` | Apply edit ops. Refused ops say why and leave the file as it was. |
 | `python3 -m sessionmaker.commands <in.ses> "<text>"` | Turn plain English into edit ops (prints them; apply with `edit`). |
 | `python3 -m sessionmaker.validate <file.ses>` | Structural invariants. Run after every write. |
-| `python3 dlive2digico.py <show.tar.gz> <baseline.ses> <out.ses> [--channels 1-64] [--config fx.json]` | dLive show to DiGiCo session. |
 
 The request format is in the `build.py` docstring, the op format in `edit.py`. Overview: `references/sessionmaker.md`.
 
@@ -52,29 +49,9 @@ The request format is in the `build.py` docstring, the op format in `edit.py`. O
 4. Changes: `commands` to draft ops, read them, then `edit`. Validate again.
 5. Open in the editor, check, Save As.
 
-## dLive to DiGiCo
-
-```
-python3 dlive2digico.py <show.tar.gz> <baseline.ses> <out.ses> [--channels 1-64] [--config fx.json]
-```
-
-Written: name, digital trim, polarity, delay, HPF, LPF, 4-band PEQ, gate/ducker (Dyn2), compressor (Dyn1),
-stereo-pair pans. Modelled dLive comps go to the Mustard comp up to the console's instance limit
-(`--mustard-limit`, 24 on a Quantum 225, a stereo channel uses 2), ranked by channel name (vocals first),
-and those strips open on the Mustard view. The rest get an approximation on the SD compressor.
-
-With `--config` (see `examples/fx_config.json`) it also writes:
-- the SD reverbs that replace the dLive UltraFX reverbs, with return faders and channel sends to the auxes,
-- Chilli 6 settings in the Spice Rack slots from a vocal channel's dLive Dyn8 (`show:N` = the translated
-  show's own Dyn8 unit N, `tpl:N` = unit N of the `template_show` in the config),
-- a dynamic band on a free EQ band for each dynamic cut of a non-vocal Dyn8.
-
-Not written: preamp gain, 48V, the input patch, IEM sends, groups, control groups, insert FX. The baseline's
-layout is kept; make it match the show first.
-
 ## Levels and filters (read before writing values by hand)
 
-- dLive thresholds sit on a nominal 0 dB scale (full scale +18). DiGiCo thresholds are dBFS. Subtract 18 dB.
+- Thresholds are dBFS and stop at 0.
 - The strip shows the -3 dB cutoff. Stored HPF = shown / 1.25, stored LPF = shown / 0.8. EQ is stored as shown.
 - Times are stored in seconds.
 Details: `references/filters-and-thresholds.md`.

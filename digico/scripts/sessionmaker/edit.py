@@ -12,7 +12,7 @@ still run. validate.py (and, for routing ops, sends.route_errors / patch.patch_e
 after an op, or the op is refused.
 
 The writers are the Session Maker's own: ses.py (slots by (module, param, band), set_strip_view),
-process.py (keys and the template writer), dlive2digico.py (put_comp, put_mustard), sends.py, patch.py, fx.py,
+process.py (keys and the template writer), sesproc.py (put_comp, put_mustard), sends.py, patch.py, fx.py,
 buses.py, layout.py (relayout for every structural op) and options.py (FX choices, mix plans, output picks).
 
 Model = the Session Checker readout (sessionmaker/inspect.py) plus, per channel:
@@ -78,11 +78,11 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and dlive2digico.py sit next to this package
+TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
 from ses import Channel, Record, Session  # noqa: E402
-import dlive2digico as d2d  # noqa: E402
+import sesproc  # noqa: E402
 
 from . import buses as B  # noqa: E402
 from . import consoles, layout, process, taxonomy, validate  # noqa: E402
@@ -590,10 +590,10 @@ def _ms(x, nd=2):
     return None if x is None else _r(x * 1000.0, nd)
 
 
-COMP = {'on': d2d.C_IN, 'mode': d2d.C_MODE, 'thr': d2d.C_THR, 'ratio': d2d.C_RATIO, 'attack': d2d.C_ATK,
-        'release': d2d.C_REL, 'knee': d2d.C_KNEE, 'makeup': d2d.C_MK}
-MC = {'on': d2d.MC_ON, 'model': d2d.MC_TYPE, 'thr': d2d.MC_THR, 'ratio': d2d.MC_RATIO, 'attack': d2d.MC_ATK,
-      'release': d2d.MC_REL, 'knee': d2d.MC_KNEE, 'mix': d2d.MC_MIX, 'out': d2d.MC_OUT}
+COMP = {'on': sesproc.C_IN, 'mode': sesproc.C_MODE, 'thr': sesproc.C_THR, 'ratio': sesproc.C_RATIO, 'attack': sesproc.C_ATK,
+        'release': sesproc.C_REL, 'knee': sesproc.C_KNEE, 'makeup': sesproc.C_MK}
+MC = {'on': sesproc.MC_ON, 'model': sesproc.MC_TYPE, 'thr': sesproc.MC_THR, 'ratio': sesproc.MC_RATIO, 'attack': sesproc.MC_ATK,
+      'release': sesproc.MC_REL, 'knee': sesproc.MC_KNEE, 'mix': sesproc.MC_MIX, 'out': sesproc.MC_OUT}
 FADER, PAN, TRIM = (0x0c, 0x21, 0), (0x0d, 0x23, 0), (0x01, 0x01, 0)
 MUTE = (0x0c, 0x22, 0)
 
@@ -623,19 +623,19 @@ def _edit_params(st, idx):
                    'thr': _r(g(D['thr'])), 'range': _r(g(D['range'])), 'attack': _ms(g(D['atk'])),
                    'hold': _ms(g(D['hold']), 1), 'release': _ms(g(D['rel']), 1), 'ratio': _r(g(D['ratio']), 2)}
     c = lambda p: g((0x05, p, 0))  # noqa: E731
-    cm, kn = c(d2d.C_MODE), c(d2d.C_KNEE)
-    out['comp'] = {'on': c(d2d.C_IN) == 1.0, 'mode': process.COMP_MODES.get(int(cm), 'comp') if cm is not None else None,
-                   'thr': _r(c(d2d.C_THR)), 'ratio': _r(c(d2d.C_RATIO), 2), 'attack': _ms(c(d2d.C_ATK)),
-                   'release': _ms(c(d2d.C_REL), 1), 'knee': process.KNEE_NAMES.get(int(kn), 'hard') if kn is not None
-                   else None, 'makeup': _r(c(d2d.C_MK))}
-    if st.ses.has_module(d2d.MC, idx):
-        mc = lambda p: g((d2d.MC, p, 0))  # noqa: E731
-        mt = mc(d2d.MC_TYPE)
-        out['mustard'] = {'on': mc(d2d.MC_ON) == 1.0,
+    cm, kn = c(sesproc.C_MODE), c(sesproc.C_KNEE)
+    out['comp'] = {'on': c(sesproc.C_IN) == 1.0, 'mode': process.COMP_MODES.get(int(cm), 'comp') if cm is not None else None,
+                   'thr': _r(c(sesproc.C_THR)), 'ratio': _r(c(sesproc.C_RATIO), 2), 'attack': _ms(c(sesproc.C_ATK)),
+                   'release': _ms(c(sesproc.C_REL), 1), 'knee': process.KNEE_NAMES.get(int(kn), 'hard') if kn is not None
+                   else None, 'makeup': _r(c(sesproc.C_MK))}
+    if st.ses.has_module(sesproc.MC, idx):
+        mc = lambda p: g((sesproc.MC, p, 0))  # noqa: E731
+        mt = mc(sesproc.MC_TYPE)
+        out['mustard'] = {'on': mc(sesproc.MC_ON) == 1.0,
                           'model': process.MUSTARD_MODELS.get(mt, 'classic') if mt is not None else None,
-                          'thr': _r(mc(d2d.MC_THR)), 'ratio': _r(mc(d2d.MC_RATIO), 2), 'attack': _ms(mc(d2d.MC_ATK)),
-                          'release': _ms(mc(d2d.MC_REL), 1), 'knee': 'hard' if mc(d2d.MC_KNEE) == 1.0 else 'soft',
-                          'mix': _r(mc(d2d.MC_MIX), 2), 'out': _r(mc(d2d.MC_OUT))}
+                          'thr': _r(mc(sesproc.MC_THR)), 'ratio': _r(mc(sesproc.MC_RATIO), 2), 'attack': _ms(mc(sesproc.MC_ATK)),
+                          'release': _ms(mc(sesproc.MC_REL), 1), 'knee': 'hard' if mc(sesproc.MC_KNEE) == 1.0 else 'soft',
+                          'mix': _r(mc(sesproc.MC_MIX), 2), 'out': _r(mc(sesproc.MC_OUT))}
     else:
         out['mustard'] = None
     dl = g(k['delay'])
@@ -1049,18 +1049,18 @@ def _comp_from(st, n):
 def _write_comp(st, idx, vals):
     if 'thr' in vals:
         for band in (0, 1, 2):          # the editor mirrors the comp threshold into all three records
-            if st.ses.has_slot(idx, 0x05, d2d.C_THR, band):
-                st.ses.set(idx, 0x05, d2d.C_THR, band, process.dbfs(vals['thr']))
+            if st.ses.has_slot(idx, 0x05, sesproc.C_THR, band):
+                st.ses.set(idx, 0x05, sesproc.C_THR, band, process.dbfs(vals['thr']))
     if 'ratio' in vals:
-        _put(st, idx, (0x05, d2d.C_RATIO, 0), d2d.clamp(float(vals['ratio']), 1.0, 50.0))
+        _put(st, idx, (0x05, sesproc.C_RATIO, 0), sesproc.clamp(float(vals['ratio']), 1.0, 50.0))
     if 'attack' in vals:
-        _put(st, idx, (0x05, d2d.C_ATK, 0), d2d.clamp(float(vals['attack']), 0.02, 100.0) / 1000.0)
+        _put(st, idx, (0x05, sesproc.C_ATK, 0), sesproc.clamp(float(vals['attack']), 0.02, 100.0) / 1000.0)
     if 'release' in vals:
-        _put(st, idx, (0x05, d2d.C_REL, 0), d2d.clamp(float(vals['release']), 1.0, 10000.0) / 1000.0)
+        _put(st, idx, (0x05, sesproc.C_REL, 0), sesproc.clamp(float(vals['release']), 1.0, 10000.0) / 1000.0)
     if 'knee' in vals:
-        _put(st, idx, (0x05, d2d.C_KNEE, 0), d2d.KNEE.get(str(vals['knee']).lower(), 0.0))
+        _put(st, idx, (0x05, sesproc.C_KNEE, 0), sesproc.KNEE.get(str(vals['knee']).lower(), 0.0))
     if 'makeup' in vals:
-        _put(st, idx, (0x05, d2d.C_MK, 0), d2d.clamp(float(vals['makeup']), 0.0, 40.0))
+        _put(st, idx, (0x05, sesproc.C_MK, 0), sesproc.clamp(float(vals['makeup']), 0.0, 40.0))
 
 
 def _set_comp(st, ns, v):
@@ -1073,7 +1073,7 @@ def _set_comp(st, ns, v):
         if f.get(k_) is not None:
             given[k_] = _num(f[k_], 'The comp %s' % k_)
     if f.get('knee') is not None:
-        if str(f['knee']).lower() not in d2d.KNEE:
+        if str(f['knee']).lower() not in sesproc.KNEE:
             raise Refuse('The SD comp knee is hard, medium or soft.')
         given['knee'] = str(f['knee']).lower()
     if 'thr' in given and not -60.0 <= given['thr'] <= 0.0:
@@ -1082,17 +1082,17 @@ def _set_comp(st, ns, v):
     for n in ns:
         idx = st.idx(n)
         if not on:
-            _put(st, idx, (0x05, d2d.C_IN, 0), 0.0)
+            _put(st, idx, (0x05, sesproc.C_IN, 0), 0.0)
             continue
         vals = dict(given)
-        if 'thr' not in vals and st.is_default(n, (0x05, d2d.C_THR, 0)):
+        if 'thr' not in vals and st.is_default(n, (0x05, sesproc.C_THR, 0)):
             for k_, x in _comp_from(st, n).items():
                 vals.setdefault(k_, x)
-        if f.get('mode') is not None or _get(st, idx, (0x05, d2d.C_MODE, 0)) not in (0.0, None):
-            _put(st, idx, (0x05, d2d.C_MODE, 0), 0.0)
+        if f.get('mode') is not None or _get(st, idx, (0x05, sesproc.C_MODE, 0)) not in (0.0, None):
+            _put(st, idx, (0x05, sesproc.C_MODE, 0), 0.0)
         _write_comp(st, idx, vals)
-        _put(st, idx, (0x05, d2d.C_IN, 0), 1.0)
-        if st.ses.has_module(d2d.MC, idx) and _get(st, idx, (d2d.MC, d2d.MC_ON, 0)) == 1.0:
+        _put(st, idx, (0x05, sesproc.C_IN, 0), 1.0)
+        if st.ses.has_module(sesproc.MC, idx) and _get(st, idx, (sesproc.MC, sesproc.MC_ON, 0)) == 1.0:
             both.append(n)
     if both:
         st.warn('%s now run%s the SD comp and the Mustard comp.' % (_who(st, both), 's' if len(both) == 1 else ''))
@@ -1139,10 +1139,10 @@ def _mustard_base(st, n):
     template, else Classic -20 dB 3:1."""
     idx = st.idx(n)
     c = lambda p: _get(st, idx, (0x05, p, 0))  # noqa: E731
-    if c(d2d.C_IN) == 1.0 and c(d2d.C_THR) is not None:
-        return {'model': 'classic', 'thr': c(d2d.C_THR), 'ratio': d2d.clamp(c(d2d.C_RATIO) or 3.0, 1.0, 20.0),
-                'attack': (c(d2d.C_ATK) or 0.01) * 1000.0, 'release': (c(d2d.C_REL) or 0.15) * 1000.0,
-                'knee': 'hard' if (c(d2d.C_KNEE) or 0.0) == 0.0 else 'soft', 'out': c(d2d.C_MK) or 0.0,
+    if c(sesproc.C_IN) == 1.0 and c(sesproc.C_THR) is not None:
+        return {'model': 'classic', 'thr': c(sesproc.C_THR), 'ratio': sesproc.clamp(c(sesproc.C_RATIO) or 3.0, 1.0, 20.0),
+                'attack': (c(sesproc.C_ATK) or 0.01) * 1000.0, 'release': (c(sesproc.C_REL) or 0.15) * 1000.0,
+                'knee': 'hard' if (c(sesproc.C_KNEE) or 0.0) == 0.0 else 'soft', 'out': c(sesproc.C_MK) or 0.0,
                 'mix': 1.0, 'from': 'sd'}
     mc = _tpl(st, n, 'mustard_comp')
     if mc.get('threshold_db') is not None or mc.get('model') == 'levamp':
@@ -1163,21 +1163,21 @@ def _mustard_base(st, n):
 def _mustard_current(st, n):
     """The Mustard comp values channel n holds now, in _write_mustard's units."""
     idx = st.idx(n)
-    g = lambda p: _get(st, idx, (d2d.MC, p, 0))  # noqa: E731
-    vals = {'model': process.MUSTARD_MODELS.get(g(d2d.MC_TYPE), 'classic'), 'thr': g(d2d.MC_THR),
-            'ratio': g(d2d.MC_RATIO), 'attack': None if g(d2d.MC_ATK) is None else g(d2d.MC_ATK) * 1000.0,
-            'release': None if g(d2d.MC_REL) is None else g(d2d.MC_REL) * 1000.0,
-            'knee': 'hard' if g(d2d.MC_KNEE) == 1.0 else 'soft', 'out': g(d2d.MC_OUT), 'mix': g(d2d.MC_MIX)}
+    g = lambda p: _get(st, idx, (sesproc.MC, p, 0))  # noqa: E731
+    vals = {'model': process.MUSTARD_MODELS.get(g(sesproc.MC_TYPE), 'classic'), 'thr': g(sesproc.MC_THR),
+            'ratio': g(sesproc.MC_RATIO), 'attack': None if g(sesproc.MC_ATK) is None else g(sesproc.MC_ATK) * 1000.0,
+            'release': None if g(sesproc.MC_REL) is None else g(sesproc.MC_REL) * 1000.0,
+            'knee': 'hard' if g(sesproc.MC_KNEE) == 1.0 else 'soft', 'out': g(sesproc.MC_OUT), 'mix': g(sesproc.MC_MIX)}
     return {k_: x for k_, x in vals.items() if x is not None}
 
 
 def _write_mustard(st, n, vals):
     """Mustard comp on channel n with vals (model, thr, ratio, attack, release, knee, out, mix), through
-    dlive2digico.put_mustard as build does (thresholds already dBFS)."""
+    sesproc.put_mustard as build does (thresholds already dBFS)."""
     idx = st.idx(n)
-    w = d2d.Writer(st.ses, idx)
+    w = sesproc.Writer(st.ses, idx)
     model = vals.get('model') or 'classic'
-    kw = dict(out=vals.get('out'), mix=d2d.clamp(float(vals.get('mix') if vals.get('mix') is not None else 1.0), 0, 1),
+    kw = dict(out=vals.get('out'), mix=sesproc.clamp(float(vals.get('mix') if vals.get('mix') is not None else 1.0), 0, 1),
               to_fs=process.dbfs)
     if model in ('classic', 'vca', 'optical'):
         kw['thr'] = vals.get('thr')
@@ -1188,15 +1188,15 @@ def _write_mustard(st, n, vals):
         kw['ratio'] = min(float(r), 3.0) if r is not None else None
     elif model == 'vca':
         kw['ratio'] = vals.get('ratio')
-    d2d.put_mustard(w, model, **kw)
+    sesproc.put_mustard(w, model, **kw)
     if model == 'fet':
         if vals.get('input') is not None:
-            w.put((d2d.MC, d2d.MC_FET_IN, 0), d2d.clamp(float(vals['input']), -40.0, 20.0))
+            w.put((sesproc.MC, sesproc.MC_FET_IN, 0), sesproc.clamp(float(vals['input']), -40.0, 20.0))
         if vals.get('ratio') is not None:
             r = float(vals['ratio'])
-            w.put((d2d.MC, d2d.MC_FET_RATIO, 0), min(FET_RATIO_BUTTON, key=lambda x: abs(x[0] - r))[1])
+            w.put((sesproc.MC, sesproc.MC_FET_RATIO, 0), min(FET_RATIO_BUTTON, key=lambda x: abs(x[0] - r))[1])
         if vals.get('out') is not None:
-            w.put((d2d.MC, d2d.MC_FET_OUT, 0), d2d.clamp(float(vals['out']), -24.0, 24.0))
+            w.put((sesproc.MC, sesproc.MC_FET_OUT, 0), sesproc.clamp(float(vals['out']), -24.0, 24.0))
 
 
 def _set_tidal(st, n, value):
@@ -1228,7 +1228,7 @@ def _set_mustard(st, ns, v):
         raise Refuse('A Mustard threshold goes from -60 to 0 dBFS.')
     if 'mix' in given and given['mix'] > 1.0:
         given['mix'] = given['mix'] / 100.0
-    no_mod = [n for n in ns if not st.ses.has_module(d2d.MC, st.idx(n))]
+    no_mod = [n for n in ns if not st.ses.has_module(sesproc.MC, st.idx(n))]
     if no_mod:
         raise Refuse('%s %s no Mustard modules in this file.' % (_who(st, no_mod), 'has' if len(no_mod) == 1 else 'have'))
     if not on:
@@ -1252,7 +1252,7 @@ def _set_mustard(st, ns, v):
     from_sd = []
     for n in got:
         idx = st.idx(n)
-        cur_on = _get(st, idx, (d2d.MC, d2d.MC_ON, 0)) == 1.0
+        cur_on = _get(st, idx, (sesproc.MC, sesproc.MC_ON, 0)) == 1.0
         if cur_on:
             vals = _mustard_current(st, n)    # already on: only the given values change
         else:
@@ -1265,7 +1265,7 @@ def _set_mustard(st, ns, v):
         vals.update(given)
         if not cur_on or given or model is not None:
             _write_mustard(st, n, vals)
-        _put(st, idx, (0x05, d2d.C_IN, 0), 0.0)                 # the Mustard comp replaces the SD comp
+        _put(st, idx, (0x05, sesproc.C_IN, 0), 0.0)                 # the Mustard comp replaces the SD comp
         st.ses.set_strip_view(idx, st.ses.VIEW_MUSTARD)
     out = []
     if got:
@@ -1300,20 +1300,20 @@ def _mustard_off(st, ns, sd_comp=True):
     off, moved = [], []
     for n in ns:
         idx = st.idx(n)
-        if _get(st, idx, (d2d.MC, d2d.MC_ON, 0)) != 1.0:
+        if _get(st, idx, (sesproc.MC, sesproc.MC_ON, 0)) != 1.0:
             continue
-        g = lambda p: _get(st, idx, (d2d.MC, p, 0))  # noqa: E731
-        vals = {'thr': g(d2d.MC_THR), 'ratio': d2d.clamp(g(d2d.MC_RATIO) or 3.0, 1.0, 50.0),
-                'attack': (g(d2d.MC_ATK) or 0.01) * 1000.0, 'release': (g(d2d.MC_REL) or 0.15) * 1000.0,
-                'knee': 'hard' if g(d2d.MC_KNEE) == 1.0 else 'soft', 'makeup': max(0.0, g(d2d.MC_OUT) or 0.0)}
-        _put(st, idx, (d2d.MC, d2d.MC_ON, 0), 0.0)
+        g = lambda p: _get(st, idx, (sesproc.MC, p, 0))  # noqa: E731
+        vals = {'thr': g(sesproc.MC_THR), 'ratio': sesproc.clamp(g(sesproc.MC_RATIO) or 3.0, 1.0, 50.0),
+                'attack': (g(sesproc.MC_ATK) or 0.01) * 1000.0, 'release': (g(sesproc.MC_REL) or 0.15) * 1000.0,
+                'knee': 'hard' if g(sesproc.MC_KNEE) == 1.0 else 'soft', 'makeup': max(0.0, g(sesproc.MC_OUT) or 0.0)}
+        _put(st, idx, (sesproc.MC, sesproc.MC_ON, 0), 0.0)
         off.append(n)
-        if sd_comp and _get(st, idx, (0x05, d2d.C_IN, 0)) != 1.0:
+        if sd_comp and _get(st, idx, (0x05, sesproc.C_IN, 0)) != 1.0:
             if vals['thr'] is None:
                 vals.pop('thr')
-            _put(st, idx, (0x05, d2d.C_MODE, 0), 0.0)
+            _put(st, idx, (0x05, sesproc.C_MODE, 0), 0.0)
             _write_comp(st, idx, vals)
-            _put(st, idx, (0x05, d2d.C_IN, 0), 1.0)
+            _put(st, idx, (0x05, sesproc.C_IN, 0), 1.0)
             moved.append(n)
         if not st.mustard_uses_modules(n):
             st.ses.set_strip_view(idx, st.ses.VIEW_SD)
@@ -1717,7 +1717,7 @@ def _op_preamp(st, op):
 # ---------------------------------------------------------------------------------------------------- templates
 def _reset_processing(st, n):
     idx, k = st.idx(n), _k()
-    for key in (k['hpf_in'], k['lpf_in'], k['eq_in'], k['dyn2']['in'], (0x05, d2d.C_IN, 0), k['delay_on'],
+    for key in (k['hpf_in'], k['lpf_in'], k['eq_in'], k['dyn2']['in'], (0x05, sesproc.C_IN, 0), k['delay_on'],
                 k['polarity']):
         if st.ses.has_slot(idx, *key):
             st.ses.set(idx, key[0], key[1], key[2], 0.0)
@@ -1725,8 +1725,8 @@ def _reset_processing(st, n):
     for b in (1, 2, 3, 4):
         if st.ses.has_slot(idx, m['on'][0], m['on'][1], 4 - b):
             st.ses.set(idx, m['on'][0], m['on'][1], 4 - b, 0.0)
-    if st.ses.has_slot(idx, d2d.MC, d2d.MC_ON, 0):
-        st.ses.set(idx, d2d.MC, d2d.MC_ON, 0, 0.0)
+    if st.ses.has_slot(idx, sesproc.MC, sesproc.MC_ON, 0):
+        st.ses.set(idx, sesproc.MC, sesproc.MC_ON, 0, 0.0)
 
 
 def _op_apply_template(st, op):
