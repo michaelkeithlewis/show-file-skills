@@ -21,6 +21,9 @@ loads in Director offline will load on the console.
 5. Never put PASSIVE ribbon sockets on 48V (Coles 4038, R-121). Active ribbons need it.
    Take 48V from the input list.
 6. The writers support show Version 14 (firmware 2.x) with an LR main only. They refuse anything else.
+7. Show names and show file names use only letters, numbers, spaces, `-` and `_`. No special characters
+   (`& / \ : * ? " ' < > | # % .` beyond the `.tar.gz`, accents, em dashes, emoji). Special characters in a
+   name can stop Director or the console from loading the show.
 Full risk write-up and console recovery steps: `references/console-safety.md`.
 
 ## Where things live
