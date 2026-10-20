@@ -1,0 +1,21 @@
+# Core: Pro Tools control
+py-ptsl>=601
+grpcio
+protobuf
+
+# Audio analysis (prep, stem QC, markers)
+numpy
+scipy
+soundfile
+librosa
+scikit-learn
+
+# Optional: lyric-based section markers (lyrics.py, ptprep.py --lyrics)
+faster-whisper
+
+# Optional: stem identification by listening (stemid.py)
+onnxruntime
+
+# macOS GUI control through Accessibility (ptax.py, route_folders.py, demo_guard.py)
+pyobjc-framework-ApplicationServices; sys_platform == "darwin"
+pyobjc-framework-Quartz; sys_platform == "darwin"

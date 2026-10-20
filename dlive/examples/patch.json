@@ -1,0 +1,9 @@
+{
+  "_comment": "Synthetic patch for dlive_patch.py apply: FOH channel = MixRack socket, Main to MixRack outputs 1-2, IEM mixes to an I/O card.",
+  "inputs": {"1": "MixRack:1", "2": "MixRack:2", "3": "MixRack:3", "4": "MixRack:4", "5": "MixRack:5",
+             "6": "MixRack:6", "7": "MixRack:7", "8": "MixRack:8", "9": "MixRack:9", "10": "MixRack:10",
+             "11": {"A": "MixRack:11", "B": "IO 1:11", "active": "A"}, "12": "MixRack:12",
+             "13": "MixRack:13", "14": "MixRack:14", "15": "MixRack:15"},
+  "outputs": {"MixRack": {"1": "Main L", "2": "Main R"},
+              "IO 1": {"1": "St Aux 1 L", "2": "St Aux 1 R", "3": "St Aux 2 L", "4": "St Aux 2 R"}}
+}

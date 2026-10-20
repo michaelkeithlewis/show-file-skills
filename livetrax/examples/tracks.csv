@@ -1,0 +1,19 @@
+name,inputs,playback,arm,color,master,mute
+Kick In,1,1,1,e74c3c,0,0
+Kick Out,2,2,1,e74c3c,0,0
+Snare Top,3,3,1,e74c3c,0,0
+Snare Btm,4,4,1,e74c3c,0,0
+Hat,5,5,1,e74c3c,0,0
+Rack Tom,6,6,1,e74c3c,0,0
+Floor Tom,7,7,1,e74c3c,0,0
+OH,8-9,8-9,1,e74c3c,0,0
+Bass DI,10,10,1,3a7bd5,0,0
+Gtr 1,11,11,1,f1c40f,0,0
+Gtr 2,12,12,1,f1c40f,0,0
+Keys,13-14,13-14,1,2ecc71,0,0
+Tracks,15-16,15-16,1,9b59b6,0,0
+Lead Vox,17,17,1,c8c8c8,0,0
+BGV 1,18,18,1,c8c8c8,0,0
+BGV 2,19,19,1,c8c8c8,0,0
+Crowd,20-21,,1,5dade2,0,0
+Main Mix,31-32,,1,c8c8c8,1,0

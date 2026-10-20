@@ -1,0 +1,1282 @@
+{
+ "aux1_level": {
+  "band": 0,
+  "default": -150.0,
+  "flags": 0,
+  "module": 2,
+  "noise1_off": "0x1468b",
+  "param": 1
+ },
+ "aux1_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 2,
+  "noise1_off": "0x14693",
+  "param": 2
+ },
+ "aux2_level": {
+  "band": 1,
+  "default": -150.0,
+  "flags": 0,
+  "module": 2,
+  "noise1_off": "0x146eb",
+  "param": 1
+ },
+ "aux2_on": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 2,
+  "noise1_off": "0x146f3",
+  "param": 2
+ },
+ "aux_base": {
+  "band": 0,
+  "default": -150.0,
+  "flags": 0,
+  "module": 2,
+  "noise1_off": "0x1468b",
+  "param": 1
+ },
+ "comp_attack": {
+  "band": 0,
+  "default": 0.01,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143cf",
+  "param": 17
+ },
+ "comp_in": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143af",
+  "param": 2
+ },
+ "comp_knee": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143c7",
+  "param": 15
+ },
+ "comp_makeup": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143e7",
+  "param": 9
+ },
+ "comp_ratio": {
+  "band": 0,
+  "default": 3.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143df",
+  "param": 16
+ },
+ "comp_release": {
+  "band": 0,
+  "default": 0.5,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143d7",
+  "param": 18
+ },
+ "comp_thresh": {
+  "band": 0,
+  "default": -20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143bf",
+  "param": 14
+ },
+ "delay": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 9,
+  "noise1_off": "0x1401f",
+  "param": 8
+ },
+ "digitube_bias": {
+  "band": 0,
+  "default": 3.0,
+  "flags": 0,
+  "module": 1,
+  "noise1_off": "0x13fbd",
+  "param": 17
+ },
+ "digitube_drive": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 1,
+  "noise1_off": "0x13fb5",
+  "param": 18
+ },
+ "digitube_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 1,
+  "noise1_off": "0x13fad",
+  "param": 19
+ },
+ "dyn1_autogain": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143ef",
+  "param": 59
+ },
+ "dyn1_mode": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143a7",
+  "param": 58
+ },
+ "dyn2_attack": {
+  "band": 3,
+  "default": 0.002,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144af",
+  "param": 17
+ },
+ "dyn2_hold": {
+  "band": 3,
+  "default": 0.14,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144bf",
+  "param": 19
+ },
+ "dyn2_in": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1449f",
+  "param": 2
+ },
+ "dyn2_key": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 0,
+  "noise1_off": "0x14491",
+  "param": 0
+ },
+ "dyn2_mode": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x14497",
+  "param": 11
+ },
+ "dyn2_range": {
+  "band": 3,
+  "default": 40.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144c7",
+  "param": 10
+ },
+ "dyn2_release": {
+  "band": 3,
+  "default": 0.14,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144b7",
+  "param": 18
+ },
+ "dyn2_sc_hp": {
+  "band": 3,
+  "default": 20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144cf",
+  "param": 5
+ },
+ "dyn2_sc_lp": {
+  "band": 2,
+  "default": 20000.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144d7",
+  "param": 5
+ },
+ "dyn2_thresh": {
+  "band": 3,
+  "default": -20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144a7",
+  "param": 14
+ },
+ "eq1_classic": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14325",
+  "param": 124
+ },
+ "eq1_dyn_attack": {
+  "band": 3,
+  "default": 0.05,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1433d",
+  "param": 17
+ },
+ "eq1_dyn_ratio": {
+  "band": 3,
+  "default": 2.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1434d",
+  "param": 16
+ },
+ "eq1_dyn_release": {
+  "band": 3,
+  "default": 0.6,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14345",
+  "param": 18
+ },
+ "eq1_dyn_thresh": {
+  "band": 3,
+  "default": -36.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14335",
+  "param": 14
+ },
+ "eq1_dyn_under": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14355",
+  "param": 11
+ },
+ "eq1_dyneq": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1432d",
+  "param": 125
+ },
+ "eq1_freq": {
+  "band": 3,
+  "default": 100.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14305",
+  "param": 5
+ },
+ "eq1_gain": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14315",
+  "param": 7
+ },
+ "eq1_on": {
+  "band": 3,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1431d",
+  "param": 3
+ },
+ "eq1_q": {
+  "band": 3,
+  "default": 0.71,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1430d",
+  "param": 6
+ },
+ "eq1_shape": {
+  "band": 3,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142fd",
+  "param": 4
+ },
+ "eq2_classic": {
+  "band": 2,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142c5",
+  "param": 124
+ },
+ "eq2_dyn_attack": {
+  "band": 2,
+  "default": 0.025,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142dd",
+  "param": 17
+ },
+ "eq2_dyn_ratio": {
+  "band": 2,
+  "default": 2.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142ed",
+  "param": 16
+ },
+ "eq2_dyn_release": {
+  "band": 2,
+  "default": 0.4,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142e5",
+  "param": 18
+ },
+ "eq2_dyn_thresh": {
+  "band": 2,
+  "default": -36.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142d5",
+  "param": 14
+ },
+ "eq2_dyn_under": {
+  "band": 2,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142f5",
+  "param": 11
+ },
+ "eq2_dyneq": {
+  "band": 2,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142cd",
+  "param": 125
+ },
+ "eq2_freq": {
+  "band": 2,
+  "default": 300.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142a5",
+  "param": 5
+ },
+ "eq2_gain": {
+  "band": 2,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142b5",
+  "param": 7
+ },
+ "eq2_on": {
+  "band": 2,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142bd",
+  "param": 3
+ },
+ "eq2_q": {
+  "band": 2,
+  "default": 0.71,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x142ad",
+  "param": 6
+ },
+ "eq2_shape": {
+  "band": 2,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1429d",
+  "param": 4
+ },
+ "eq3_classic": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14265",
+  "param": 124
+ },
+ "eq3_dyn_attack": {
+  "band": 1,
+  "default": 0.015,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1427d",
+  "param": 17
+ },
+ "eq3_dyn_ratio": {
+  "band": 1,
+  "default": 2.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1428d",
+  "param": 16
+ },
+ "eq3_dyn_release": {
+  "band": 1,
+  "default": 0.35,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14285",
+  "param": 18
+ },
+ "eq3_dyn_thresh": {
+  "band": 1,
+  "default": -36.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14275",
+  "param": 14
+ },
+ "eq3_dyn_under": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14295",
+  "param": 11
+ },
+ "eq3_dyneq": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1426d",
+  "param": 125
+ },
+ "eq3_freq": {
+  "band": 1,
+  "default": 1600.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14245",
+  "param": 5
+ },
+ "eq3_gain": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14255",
+  "param": 7
+ },
+ "eq3_on": {
+  "band": 1,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1425d",
+  "param": 3
+ },
+ "eq3_q": {
+  "band": 1,
+  "default": 0.71,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1424d",
+  "param": 6
+ },
+ "eq3_shape": {
+  "band": 1,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1423d",
+  "param": 4
+ },
+ "eq4_classic": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14205",
+  "param": 124
+ },
+ "eq4_dyn_attack": {
+  "band": 0,
+  "default": 0.01,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1421d",
+  "param": 17
+ },
+ "eq4_dyn_ratio": {
+  "band": 0,
+  "default": 2.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1422d",
+  "param": 16
+ },
+ "eq4_dyn_release": {
+  "band": 0,
+  "default": 0.3,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14225",
+  "param": 18
+ },
+ "eq4_dyn_thresh": {
+  "band": 0,
+  "default": -36.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14215",
+  "param": 14
+ },
+ "eq4_dyn_under": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14235",
+  "param": 11
+ },
+ "eq4_dyneq": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x1420d",
+  "param": 125
+ },
+ "eq4_freq": {
+  "band": 0,
+  "default": 6300.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141e5",
+  "param": 5
+ },
+ "eq4_gain": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141f5",
+  "param": 7
+ },
+ "eq4_on": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141fd",
+  "param": 3
+ },
+ "eq4_q": {
+  "band": 0,
+  "default": 0.71,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141ed",
+  "param": 6
+ },
+ "eq4_shape": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141dd",
+  "param": 4
+ },
+ "eq_b1freq": {
+  "band": 3,
+  "default": 100.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x14305",
+  "param": 5
+ },
+ "eq_in": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141c5",
+  "param": 2
+ },
+ "eqdyn_order": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 4,
+  "noise1_off": "0x141cd",
+  "param": 129
+ },
+ "fader_f32": {
+  "band": 0,
+  "default": -150.0,
+  "flags": 0,
+  "module": 12,
+  "noise1_off": "0x14559",
+  "param": 33
+ },
+ "hpf_f32": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 7,
+  "noise1_off": "0x14091",
+  "param": 3
+ },
+ "hpf_flag": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 0,
+  "noise1_off": "0x8dcd4",
+  "param": 0
+ },
+ "hpf_freq": {
+  "band": 1,
+  "default": 16.0,
+  "flags": 0,
+  "module": 7,
+  "noise1_off": "0x14099",
+  "param": 5
+ },
+ "insert_a": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 8,
+  "noise1_off": "0x140eb",
+  "param": 2
+ },
+ "insert_a_pos": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 0,
+  "noise1_off": "0x1411d",
+  "param": 0
+ },
+ "insert_b": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 8,
+  "noise1_off": "0x14133",
+  "param": 2
+ },
+ "lpf_freq": {
+  "band": 0,
+  "default": 25000.0,
+  "flags": 0,
+  "module": 7,
+  "noise1_off": "0x14089",
+  "param": 5
+ },
+ "lpf_in": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 7,
+  "noise1_off": "0x14081",
+  "param": 3
+ },
+ "mb1_attack": {
+  "band": 1,
+  "default": 0.005,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1440f",
+  "param": 17
+ },
+ "mb1_on": {
+  "band": 1,
+  "default": 1.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143f7",
+  "param": 3
+ },
+ "mb1_ratio": {
+  "band": 1,
+  "default": 2.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1441f",
+  "param": 16
+ },
+ "mb1_release": {
+  "band": 1,
+  "default": 0.2,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x14417",
+  "param": 18
+ },
+ "mb1_thresh": {
+  "band": 1,
+  "default": -20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143ff",
+  "param": 14
+ },
+ "mb2_attack": {
+  "band": 2,
+  "default": 0.025,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1444f",
+  "param": 17
+ },
+ "mb2_on": {
+  "band": 2,
+  "default": 1.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x14437",
+  "param": 3
+ },
+ "mb2_ratio": {
+  "band": 2,
+  "default": 2.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1445f",
+  "param": 16
+ },
+ "mb2_release": {
+  "band": 2,
+  "default": 0.4,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x14457",
+  "param": 18
+ },
+ "mb2_thresh": {
+  "band": 2,
+  "default": -20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1443f",
+  "param": 14
+ },
+ "mb3_attack": {
+  "band": 0,
+  "default": 0.01,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143cf",
+  "param": 17
+ },
+ "mb3_on": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143b7",
+  "param": 3
+ },
+ "mb3_ratio": {
+  "band": 0,
+  "default": 3.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143df",
+  "param": 16
+ },
+ "mb3_release": {
+  "band": 0,
+  "default": 0.5,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143d7",
+  "param": 18
+ },
+ "mb3_thresh": {
+  "band": 0,
+  "default": -20.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x143bf",
+  "param": 14
+ },
+ "mb_xover_hi": {
+  "band": 1,
+  "default": 1000.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x14477",
+  "param": 5
+ },
+ "mb_xover_lo": {
+  "band": 0,
+  "default": 130.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x1447f",
+  "param": 5
+ },
+ "mcomp_attack": {
+  "band": 0,
+  "default": 0.01,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x15075",
+  "param": 17
+ },
+ "mcomp_fet_in": {
+  "band": 0,
+  "default": -20.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150d5",
+  "param": 65
+ },
+ "mcomp_fet_out": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150ed",
+  "param": 77
+ },
+ "mcomp_fet_ratio": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150dd",
+  "param": 74
+ },
+ "mcomp_flagA": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1506d",
+  "param": 15
+ },
+ "mcomp_knee": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1506d",
+  "param": 15
+ },
+ "mcomp_mix": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1504d",
+  "param": 71
+ },
+ "mcomp_model": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1503d",
+  "param": 11
+ },
+ "mcomp_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x15045",
+  "param": 2
+ },
+ "mcomp_opt_atk": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1509d",
+  "param": 72
+ },
+ "mcomp_opt_rec": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150a5",
+  "param": 73
+ },
+ "mcomp_output": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1508d",
+  "param": 9
+ },
+ "mcomp_ratio": {
+  "band": 0,
+  "default": 3.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x15085",
+  "param": 16
+ },
+ "mcomp_release": {
+  "band": 0,
+  "default": 0.25,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x1507d",
+  "param": 18
+ },
+ "mcomp_sc_hp": {
+  "band": 1,
+  "default": 20.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150b5",
+  "param": 5
+ },
+ "mcomp_sc_lp": {
+  "band": 0,
+  "default": 20000.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x150bd",
+  "param": 5
+ },
+ "mcomp_sensing": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x15095",
+  "param": 70
+ },
+ "mcomp_threshold": {
+  "band": 0,
+  "default": -20.0,
+  "flags": 0,
+  "module": 29,
+  "noise1_off": "0x15065",
+  "param": 14
+ },
+ "meq1_freq": {
+  "band": 3,
+  "default": 100.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fdb",
+  "param": 5
+ },
+ "meq1_gain": {
+  "band": 3,
+  "default": 0.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14feb",
+  "param": 7
+ },
+ "meq1_q": {
+  "band": 3,
+  "default": 0.71,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fe3",
+  "param": 6
+ },
+ "meq1_shape": {
+  "band": 3,
+  "default": 1.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fd3",
+  "param": 4
+ },
+ "meq2_freq": {
+  "band": 2,
+  "default": 300.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fbb",
+  "param": 5
+ },
+ "meq2_gain": {
+  "band": 2,
+  "default": 0.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fcb",
+  "param": 7
+ },
+ "meq2_q": {
+  "band": 2,
+  "default": 0.71,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fc3",
+  "param": 6
+ },
+ "meq2_shape": {
+  "band": 2,
+  "default": 1.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fb3",
+  "param": 4
+ },
+ "meq3_freq": {
+  "band": 1,
+  "default": 1600.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f9b",
+  "param": 5
+ },
+ "meq3_gain": {
+  "band": 1,
+  "default": 0.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fab",
+  "param": 7
+ },
+ "meq3_q": {
+  "band": 1,
+  "default": 0.71,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fa3",
+  "param": 6
+ },
+ "meq3_shape": {
+  "band": 1,
+  "default": 1.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f93",
+  "param": 4
+ },
+ "meq4_freq": {
+  "band": 0,
+  "default": 6300.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f7b",
+  "param": 5
+ },
+ "meq4_gain": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f8b",
+  "param": 7
+ },
+ "meq4_q": {
+  "band": 0,
+  "default": 0.71,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f83",
+  "param": 6
+ },
+ "meq4_shape": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f73",
+  "param": 4
+ },
+ "meq_b1_freq": {
+  "band": 3,
+  "default": 100.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14fdb",
+  "param": 5
+ },
+ "meq_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 28,
+  "noise1_off": "0x14f63",
+  "param": 2
+ },
+ "mgate_attack": {
+  "band": 0,
+  "default": 0.002,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x1516f",
+  "param": 17
+ },
+ "mgate_hold": {
+  "band": 0,
+  "default": 0.14,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x1517f",
+  "param": 19
+ },
+ "mgate_in": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x1515f",
+  "param": 2
+ },
+ "mgate_mode": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x15157",
+  "param": 11
+ },
+ "mgate_range": {
+  "band": 0,
+  "default": 40.0,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x15187",
+  "param": 10
+ },
+ "mgate_release": {
+  "band": 0,
+  "default": 0.14,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x15177",
+  "param": 18
+ },
+ "mgate_threshold": {
+  "band": 0,
+  "default": -20.0,
+  "flags": 0,
+  "module": 30,
+  "noise1_off": "0x15167",
+  "param": 14
+ },
+ "mtube_amp_bias": {
+  "band": 0,
+  "default": 11.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e77",
+  "param": 26
+ },
+ "mtube_amp_drive": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e67",
+  "param": 56
+ },
+ "mtube_amp_sat": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e87",
+  "param": 58
+ },
+ "mtube_drive": {
+  "band": 0,
+  "default": 0.5,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e5f",
+  "param": 27
+ },
+ "mtube_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e4f",
+  "param": 2
+ },
+ "mtube_output": {
+  "band": 0,
+  "default": -6.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e97",
+  "param": 60
+ },
+ "mtube_preset": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e57",
+  "param": 69
+ },
+ "mtube_type": {
+  "band": 0,
+  "default": 1.0,
+  "flags": 0,
+  "module": 26,
+  "noise1_off": "0x14e47",
+  "param": 59
+ },
+ "mute_f32": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 12,
+  "noise1_off": "0x14561",
+  "param": 34
+ },
+ "pan": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 13,
+  "noise1_off": "0x14b55",
+  "param": 35
+ },
+ "polarity": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 1,
+  "noise1_off": "0x13f5d",
+  "param": 2
+ },
+ "trim": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 1,
+  "noise1_off": "0x13f45",
+  "param": 1
+ }
+}

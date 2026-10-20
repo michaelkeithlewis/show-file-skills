@@ -1,0 +1,690 @@
+{
+"Channel Left Bank Switcher": [
+146
+],
+"Channel Middle Bank Switcher": [
+2,
+98,
+146
+],
+"Channel Right Bank Switcher": [
+2,
+98,
+146
+],
+"LED Brightness": [
+13
+],
+"Surface Strip, MIDI N": [
+44,
+45
+],
+"Soft Rotaries Control Manager": [
+169
+],
+"Surface Analogue Input, Number N": [
+5
+],
+"Surface Digital Input, Number N": [
+2
+],
+"Surface TSnake Analogue Input, Number N": [
+5
+],
+"Surface TSnake Digital Input, Number N": [
+2
+],
+"Surface TSnake Digital Output, Number N": [
+2
+],
+"Surface Output Socket Polarity": [
+47,
+303
+],
+"Surface IPN Manager N": [
+30,
+32,
+278,
+286,
+290,
+294,
+302,
+314
+],
+"Mix Delay, Mono Group Channel N ": [
+4
+],
+"Digital Attenuator, Mono Group Channel N ": [
+5,
+7
+],
+"Parametric EQ, Mono Group Channel N ": [
+38,
+118
+],
+"Graphic EQ, Mono Group Channel N ": [
+169,
+619,
+1089
+],
+"Compressor, Mono Group Channel N ": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Mono Group Channel N ": [
+3
+],
+"Insert, Mono Group Channel N ": [
+3
+],
+"Send Source Select, Mono Group N ": [
+2,
+3
+],
+"Mix Delay, Stereo Group Channel N Left": [
+4
+],
+"Digital Attenuator, Stereo Group Channel N Left": [
+5,
+7
+],
+"Parametric EQ, Stereo Group Channel N Left": [
+38,
+118
+],
+"Graphic EQ, Stereo Group Channel N Left": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Group Channel N Left": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Group Channel N Left": [
+3
+],
+"Insert, Stereo Group Channel N Left": [
+3
+],
+"Mix Delay, Stereo Group Channel N Right": [
+4
+],
+"Digital Attenuator, Stereo Group Channel N Right": [
+5,
+7
+],
+"Parametric EQ, Stereo Group Channel N Right": [
+38,
+118
+],
+"Graphic EQ, Stereo Group Channel N Right": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Group Channel N Right": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Group Channel N Right": [
+3
+],
+"Insert, Stereo Group Channel N Right": [
+3
+],
+"Send Source Select, Stereo Group N Left": [
+2,
+3
+],
+"Send Source Select, Stereo Group N Right": [
+2,
+3
+],
+"Send Source Select, Mono FX N ": [
+2,
+3
+],
+"Mix Delay, Mono Aux Channel N ": [
+4
+],
+"Digital Attenuator, Mono Aux Channel N ": [
+5,
+7
+],
+"Parametric EQ, Mono Aux Channel N ": [
+38,
+118
+],
+"Graphic EQ, Mono Aux Channel N ": [
+169,
+619,
+1089
+],
+"Compressor, Mono Aux Channel N ": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Mono Aux Channel N ": [
+3
+],
+"Insert, Mono Aux Channel N ": [
+3
+],
+"Send Source Select, Mono Aux N ": [
+2,
+3
+],
+"Mix Delay, Stereo Aux Channel N Left": [
+4
+],
+"Digital Attenuator, Stereo Aux Channel N Left": [
+5,
+7
+],
+"Parametric EQ, Stereo Aux Channel N Left": [
+38,
+118
+],
+"Graphic EQ, Stereo Aux Channel N Left": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Aux Channel N Left": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Aux Channel N Left": [
+3
+],
+"Insert, Stereo Aux Channel N Left": [
+3
+],
+"Mix Delay, Stereo Aux Channel N Right": [
+4
+],
+"Digital Attenuator, Stereo Aux Channel N Right": [
+5,
+7
+],
+"Parametric EQ, Stereo Aux Channel N Right": [
+38,
+118
+],
+"Graphic EQ, Stereo Aux Channel N Right": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Aux Channel N Right": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Aux Channel N Right": [
+3
+],
+"Insert, Stereo Aux Channel N Right": [
+3
+],
+"Send Source Select, Stereo Aux N Left": [
+2,
+3
+],
+"Send Source Select, Stereo Aux N Right": [
+2,
+3
+],
+"Mix Delay, Main Channel N Left": [
+4
+],
+"Digital Attenuator, Main Channel N Left": [
+5,
+7
+],
+"Parametric EQ, Main Channel N Left": [
+38,
+118
+],
+"Graphic EQ, Main Channel N Left": [
+169,
+619,
+1089
+],
+"Compressor, Main Channel N Left": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Main Channel N Left": [
+3
+],
+"Insert, Main Channel N Left": [
+3
+],
+"Mix Delay, Main Channel N Right": [
+4
+],
+"Digital Attenuator, Main Channel N Right": [
+5,
+7
+],
+"Parametric EQ, Main Channel N Right": [
+38,
+118
+],
+"Graphic EQ, Main Channel N Right": [
+169,
+619,
+1089
+],
+"Compressor, Main Channel N Right": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Main Channel N Right": [
+3
+],
+"Insert, Main Channel N Right": [
+3
+],
+"Send Source Select, Main N Left": [
+2,
+3
+],
+"Send Source Select, Main N Right": [
+2,
+3
+],
+"Mix Delay, Mono Matrix Channel N ": [
+4
+],
+"Digital Attenuator, Mono Matrix Channel N ": [
+5,
+7
+],
+"Parametric EQ, Mono Matrix Channel N ": [
+38,
+118
+],
+"Graphic EQ, Mono Matrix Channel N ": [
+169,
+619,
+1089
+],
+"Compressor, Mono Matrix Channel N ": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Mono Matrix Channel N ": [
+3
+],
+"Insert, Mono Matrix Channel N ": [
+3
+],
+"Mix Delay, Stereo Matrix Channel N Left": [
+4
+],
+"Digital Attenuator, Stereo Matrix Channel N Left": [
+5,
+7
+],
+"Parametric EQ, Stereo Matrix Channel N Left": [
+38,
+118
+],
+"Graphic EQ, Stereo Matrix Channel N Left": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Matrix Channel N Left": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Matrix Channel N Left": [
+3
+],
+"Insert, Stereo Matrix Channel N Left": [
+3
+],
+"Mix Delay, Stereo Matrix Channel N Right": [
+4
+],
+"Digital Attenuator, Stereo Matrix Channel N Right": [
+5,
+7
+],
+"Parametric EQ, Stereo Matrix Channel N Right": [
+38,
+118
+],
+"Graphic EQ, Stereo Matrix Channel N Right": [
+169,
+619,
+1089
+],
+"Compressor, Stereo Matrix Channel N Right": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Stereo Matrix Channel N Right": [
+3
+],
+"Insert, Stereo Matrix Channel N Right": [
+3
+],
+"MADI Set-up Option Card, N": [
+6,
+15
+],
+"FX Send Mixer": [
+593
+],
+"FX Manager N": [
+124
+],
+"Parametric EQ, FX Return Left N": [
+38,
+118
+],
+"Parametric EQ, FX Return Right N": [
+38,
+118
+],
+"Global Direct Outputs": [
+5,
+6
+],
+"Input Channel Name Colour Manager": [
+1281
+],
+"Mono Group Channel Name Colour Manager": [
+641
+],
+"Stereo Group Channel Name Colour Manager": [
+321
+],
+"Mono Aux Channel Name Colour Manager": [
+641
+],
+"Stereo Aux Channel Name Colour Manager": [
+321
+],
+"Mono FX Send Channel Name Colour Manager": [
+161
+],
+"Stereo FX Send Channel Name Colour Manager": [
+161
+],
+"Main Channel Name Colour Manager": [
+61
+],
+"Mono Matrix Channel Name Colour Manager": [
+641
+],
+"Stereo Matrix Channel Name Colour Manager": [
+321
+],
+"FX Return Channel Name Colour Manager": [
+161
+],
+"DCA Channel Name Colour Manager": [
+241
+],
+"Monitor Channel Name Colour Manager": [
+21
+],
+"Channel Mapper": [
+6142,
+7233,
+7245,
+10332,
+10380
+],
+"Output Socket Polarity": [
+97,
+481
+],
+"Channel Ganging": [
+481,
+497
+],
+"Delay, Input Channel N": [
+4
+],
+"Stereo Image Input Channel N": [
+4
+],
+"Preamp Model Input Channel N": [
+14,
+18
+],
+"Digital Attenuator Input Channel N": [
+5,
+7
+],
+"Highpass Filter Input Channel N": [
+5,
+45
+],
+"Lowpass Filter Input Channel N": [
+11,
+31
+],
+"Direct Output, Input Channel N": [
+3
+],
+"Gate, Input Channel N": [
+19,
+24,
+25
+],
+"Gate side chain source, Input Channel N": [
+3
+],
+"SCF Gate, Input Channel N": [
+23,
+60,
+63
+],
+"Insert N, Input Channel N": [
+3
+],
+"Parametric EQ, Input Channel N": [
+38,
+118
+],
+"Compressor, Input Channel N": [
+82,
+88,
+96,
+101,
+119,
+127
+],
+"Compressor side chain source, Input Channel N": [
+3
+],
+"DCA Levels and Mutes": [
+129
+],
+"StageBox Analogue Input, Number N": [
+5
+],
+"StageBox TSnake Analogue Input, Number N": [
+5
+],
+"StageBox TSnake Digital Input, Number N": [
+2
+],
+"StageBox TSnake Digital Output, Number N": [
+2
+],
+"Stagebox TSnake NetObject": [
+21
+],
+"Talkback Highpass Filter": [
+11,
+31
+],
+"FX Global Tap Tempo": [
+3
+],
+"StageBox IPN Manager N": [
+30,
+32,
+278,
+286,
+290,
+294,
+302,
+314
+],
+"Dynamics Unit N": [
+140
+],
+"Send Source Select, UFX N Left": [
+3
+],
+"Send Source Select, UFX N Right": [
+3
+],
+"AHFX Send Mixer": [
+297
+],
+"Stereo AHFX Send Channel Name Colour Manager": [
+81
+],
+"AHFX Return Channel Name Colour Manager": [
+81
+],
+"StageBox Port B TSnake Analogue Input, Slot N, Number N": [
+5
+],
+"StageBox Port B TSnake Digital Input, Slot N, Number N": [
+2
+],
+"StageBox port B TSnake Digital Output, Slot N, Number N": [
+2
+],
+"StageBox Port B TSnake Analogue Input, Slot N Number N": [
+5
+],
+"Source Select Controller N": [
+288
+],
+"AutoMicMixer": [
+673
+],
+"StageBox IP GPIO Manager N": [
+65
+],
+"RTA Control Manager": [
+31
+],
+"AHFX Manager N": [
+246
+],
+"FX Global Key Scale": [
+2
+],
+"AHFX Unit Side Chain Source, FX Channel N": [
+3
+],
+"SEND AHFX Dynamics SCF, FX Channel N": [
+24
+],
+"RETURN AHFX Dynamics SCF, FX Channel N": [
+24
+],
+"RETURN AHFX Dynamics, FX Channel N": [
+75
+],
+"AHFX Dynamics, FX Channel N": [
+75
+],
+"Parametric EQ, AHFX Channel N": [
+38
+],
+"Parametric EQ Send, AHFX Channel N": [
+38
+],
+"Send Source Select, Stereo FX N Left": [
+3
+],
+"Send Source Select, Stereo FX N Right": [
+3
+],
+"Port B Plus GigaACE. Option Card, N": [
+2
+],
+"Surface IP GPIO Manager N": [
+65
+],
+"Surface Port B TSnake Analogue Input, Slot N, Number N": [
+5
+],
+"Surface Port B TSnake Digital Input, Slot N, Number N": [
+2
+],
+"Surface Port B TSnake Digital Output, Slot N, Number N": [
+2
+],
+"Surface Port B TSnake Analogue Input, Slot N Number N": [
+5
+],
+"Surface RTA Control": [
+33
+],
+"Scene Custom MIDI": [
+10,
+13
+],
+"Port B MADI MkN Status - Port N": [
+58
+]
+}

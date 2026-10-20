@@ -1,0 +1,21 @@
+Ch,Source,Mic/DI,48V,Stand,Notes
+1,Kick In,Beta 91,yes,,
+2,Kick Out,Beta 52,,short,
+3,Snare Top,SM57,,short,
+4,Snare Bottom,e604,,clip,
+5,Hi-Hat,KM184,yes,tall,
+6,Rack Tom,e604,,clip,
+7,Floor Tom,e604,,clip,
+8,OH L,KM184,yes,tall,
+9,OH R,KM184,yes,tall,
+10,Bass DI,Radial J48,yes,,
+11,Gtr 1,SM57,,short,
+12,Keys L,DI,,,stereo
+13,Keys R,DI,,,stereo
+14,Sam Vox,Beta 58,,tall,lead vocal
+15,Riley BGV,SM58,,tall,
+16,Alex BGV,SM58,,tall,
+17,Trax L,DI,,,
+18,Trax R,DI,,,
+19,Click,DI,,,
+20,FOH TB,SM58,,,talkback

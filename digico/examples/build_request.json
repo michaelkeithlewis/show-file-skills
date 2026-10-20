@@ -1,0 +1,29 @@
+{
+  "_comment": "Synthetic request for python3 -m sessionmaker.build (made-up band). Needs a q225 V2242 baseline in digico/scripts/baselines/.",
+  "console": "q225",
+  "version": 2242,
+  "title": "Sam Rivers club run",
+  "processing": "templates",
+  "role": "foh",
+  "channels": [
+    {"name": "Kick In",  "stereo": false, "category": "kick_in",        "phantom": true,  "source": "Beta 91"},
+    {"name": "Kick Out", "stereo": false, "category": "kick_out",       "phantom": false, "source": "Beta 52"},
+    {"name": "Snr Top",  "stereo": false, "category": "snare_top",      "phantom": false, "source": "SM57"},
+    {"name": "Snr Btm",  "stereo": false, "category": "snare_bottom",   "phantom": false, "source": "e604"},
+    {"name": "Hat",      "stereo": false, "category": "hihat",          "phantom": true,  "source": "KM184"},
+    {"name": "Rack Tom", "stereo": false, "category": "rack_tom",       "phantom": false, "source": "e604"},
+    {"name": "Flr Tom",  "stereo": false, "category": "floor_tom",      "phantom": false, "source": "e604"},
+    {"name": "OH",       "stereo": true,  "category": "overheads",      "phantom": true,  "source": "KM184"},
+    {"name": "Bass DI",  "stereo": false, "category": "bass_di",        "phantom": true,  "source": "J48"},
+    {"name": "Gtr 1",    "stereo": false, "category": "electric_guitar","phantom": false, "source": "SM57"},
+    {"name": "Keys",     "stereo": true,  "category": "keys",           "phantom": false, "source": "DI"},
+    {"name": "Sam Vox",  "stereo": false, "category": "lead_vocal",     "phantom": false, "source": "Beta 58"},
+    {"name": "R.BGV",    "stereo": false, "category": "vocal_generic",  "phantom": false, "source": "SM58"},
+    {"name": "A.BGV",    "stereo": false, "category": "vocal_generic",  "phantom": false, "source": "SM58"},
+    {"name": "Trax",     "stereo": true,  "category": "tracks_music",   "phantom": false, "source": "DI"},
+    {"name": "Click",    "stereo": false, "category": "click",          "phantom": false, "source": "DI"},
+    {"name": "FOH TB",   "stereo": false, "category": "talkback",       "phantom": false, "source": "SM58"}
+  ],
+  "mixes": {"stereo": 3, "mono": 1},
+  "fx": [{"kind": "vocal plate"}, {"kind": "room"}]
+}

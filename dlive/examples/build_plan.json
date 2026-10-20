@@ -1,0 +1,24 @@
+{
+  "_comment": "Synthetic plan for build_show.py (made-up band). inputs rows: [ch, name (8 chars), colour, mono groups, stereo groups, DCAs, main 0/1]. Colour indices follow Director: 0 off, 1 red, 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan, 7 white.",
+  "colours": {"off": 0, "red": 1, "green": 2, "yellow": 3, "blue": 4, "magenta": 5, "cyan": 6, "white": 7},
+  "inputs": [
+    [1,  "Kick In",  "red",     [], [1], [1], 0],
+    [2,  "Kick Out", "red",     [], [1], [1], 0],
+    [3,  "Snr Top",  "red",     [], [1], [1], 0],
+    [4,  "Snr Btm",  "red",     [], [1], [1], 0],
+    [5,  "OH L",     "red",     [], [1], [1], 0],
+    [6,  "OH R",     "red",     [], [1], [1], 0],
+    [7,  "Bass DI",  "yellow",  [], [2], [2], 0],
+    [8,  "Gtr 1",    "blue",    [], [3], [3], 0],
+    [9,  "Keys L",   "magenta", [], [3], [4], 0],
+    [10, "Keys R",   "magenta", [], [3], [4], 0],
+    [11, "Ld Vox",   "green",   [], [4], [5], 0],
+    [12, "BGV 1",    "green",   [], [4], [6], 0],
+    [13, "Trax L",   "cyan",    [], [5], [7], 0],
+    [14, "Trax R",   "cyan",    [], [5], [7], 0],
+    [15, "Click",    "white",   [], [],  [],  0]
+  ],
+  "stereo_pairs": [5, 9, 13],
+  "dca_names": {"1": "DRUMS", "2": "BASS", "3": "GTR", "4": "KEYS", "5": "LD VOX", "6": "BGV", "7": "TRAX"},
+  "stereo_aux_names": {"1": "Sam IEM", "2": "RileyIEM", "3": "Alex IEM"}
+}

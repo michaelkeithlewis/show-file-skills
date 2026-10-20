@@ -1,0 +1,3 @@
+# editor-saved default sessions and baselines stay local (DiGiCo editor output, not redistributable)
+scripts/baselines/
+*.ses

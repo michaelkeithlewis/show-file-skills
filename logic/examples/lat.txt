@@ -1,0 +1,3 @@
+000_476.plist XXXX Demo ch=1 samples=64
+001_1128.plist XXXX Demo ch=1 samples=164
+002_2268.plist XXXX Demo ch=1 samples=264

@@ -1,0 +1,20 @@
+{
+  "device": "Dante Virtual Soundcard",
+  "io": 32,
+  "blank_mono": "BLANK MONO",
+  "blank_stereo": "BLANK STEREO",
+  "rename_cue_lists": {"OLD BAND": "DEMO BAND"},
+  "labels": {"29": "LP RTN L", "30": "LP RTN R"},
+  "chains": [
+    {"name": "1 Kick In", "inputs": [1], "colour": "ffff3333", "delay_mode": 1},
+    {"name": "2 Snare", "inputs": [2], "colour": "ffff3333", "delay_mode": 1},
+    {"name": "3-4 OH", "inputs": [3, 4], "colour": "ffff3333", "delay_mode": 1},
+    {"name": "5 Bass DI", "inputs": [5], "colour": "ff3393ff", "delay_mode": 1},
+    {"name": "6 Gtr", "inputs": [6], "colour": "ffffe633", "delay_mode": 1},
+    {"name": "7-8 Keys", "inputs": [7, 8], "colour": "ff33ff4b", "delay_mode": 1},
+    {"name": "9 Lead Vox", "inputs": [9], "colour": "ffd0d0d0", "delay_mode": 1, "template": "VOCAL CHAIN"},
+    {"name": "10 BGV", "inputs": [10], "colour": "ffd0d0d0", "delay_mode": 1},
+    {"name": "29-30 LP RTN", "inputs": [29, 30], "colour": "ff9933ff", "delay_mode": 0},
+    {"name": "31-32 MAIN", "inputs": [31, 32], "colour": "ffd0d0d0", "delay_mode": 0, "template": "MIX BUS CHAIN"}
+  ]
+}

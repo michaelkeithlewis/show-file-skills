@@ -1,0 +1,14 @@
+{
+  "_comment": "Synthetic plan for dlive_mix.py apply: two IEM mixes with a starting balance.",
+  "mixes": {"St Aux 1": {"name": "Sam IEM", "fader": 0, "mute": false},
+            "St Aux 2": {"name": "RileyIEM", "fader": 0, "mute": false}},
+  "sends": [
+    {"from": "Ip 1",  "to": "St Aux 1", "level": -10, "pre": true, "on": true},
+    {"from": "Ip 3",  "to": "St Aux 1", "level": -10, "pre": true, "on": true},
+    {"from": "Ip 11", "to": "St Aux 1", "level": 0,   "pre": true, "on": true},
+    {"from": "Ip 15", "to": "St Aux 1", "level": -6,  "pre": true, "on": true, "pan": "C"},
+    {"from": "Ip 1",  "to": "St Aux 2", "level": -4,  "pre": true, "on": true},
+    {"from": "Ip 7",  "to": "St Aux 2", "level": -2,  "pre": true, "on": true},
+    {"from": "Ip 15", "to": "St Aux 2", "level": -6,  "pre": true, "on": true}
+  ]
+}

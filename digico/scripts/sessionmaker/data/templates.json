@@ -1,0 +1,5682 @@
+{
+ "meta": {
+  "source": "Per-instrument starting points: show-weighted medians of real FOH and monitor DiGiCo sessions (aggregate values only; no session, show or channel names are kept).",
+  "units": {
+   "freq_hz": "Hz as shown on the strip (HPF = stored x 1.25, LPF = stored x 0.8)",
+   "gain_db": "dB",
+   "threshold_db": "dBFS",
+   "range_db": "dB, positive = attenuation",
+   "attack_ms/hold_ms/release_ms": "milliseconds (file stores seconds)",
+   "q": "Q as shown; shelves 0.85",
+   "eq band": "UI band 1-4 (file band byte = 4 - UI band)",
+   "delay ms": "milliseconds"
+  },
+  "rules": {
+   "in": "a processor is on in the template when >= 50% of the show-weighted channels use it",
+   "eq_band": "an EQ band is in the template when >= 40% of channels have it active (|gain| >= 0.5 dB or dynamic); freq/gain/Q are medians of the dominant sign (cut or boost) and shape",
+   "values": "medians over channels that use the processor, each show weighted 1 (split across its channels)",
+   "hpf_used": "HPF in and above 21 Hz; lpf_used: LPF in and below 19.5 kHz",
+   "mustard": "Mustard stats come only from Quantum sessions (Q2/Q3/Q5); SD-series files have no Mustard modules",
+   "thin": "fewer than 5 channels or fewer than 3 shows: use the fallback category"
+  },
+  "taxonomy": {
+   "normalise": "lower case; every run of characters outside [a-z0-9] becomes one space; trim",
+   "skip": "^$|^ch \\d+$|^\\d+$|^\\d+ (mic|madi) \\d+$|spare|^fx$|^aud mics$|^tbs$|^util$",
+   "rules": [
+    {
+     "category": "test_signal",
+     "regex": "\\bpink\\b|\\bnoise\\b|^tone$"
+    },
+    {
+     "category": "measurement_ref",
+     "regex": "\\bref mic\\b|\\brta\\b|\\bsmaart\\b|\\btune ref\\b"
+    },
+    {
+     "category": "timecode",
+     "regex": "\\btimecode\\b|\\bsmpte\\b|\\bltc\\b"
+    },
+    {
+     "category": "click",
+     "regex": "\\bclicks?\\b"
+    },
+    {
+     "category": "cues_guide",
+     "regex": "\\bcues?\\b|\\bguide\\b"
+    },
+    {
+     "category": "utility",
+     "regex": "\\btuner\\b|\\bfoh mix\\b|^foh$|\\bproducer\\b|^c mic$"
+    },
+    {
+     "category": "comms_radio",
+     "regex": "\\bradio\\b|\\bcomms?\\b|\\bcom annc\\b|^vog$|\\bsm to\\b"
+    },
+    {
+     "category": "talkback",
+     "regex": "\\btb\\b|tb$|\\btbq\\b|talkback|\\bt2[a-z]|2me\\b|2all\\b|\\bfoh (band|mon|tech|to me)\\b|\\bspnc\\b"
+    },
+    {
+     "category": "media_playback",
+     "regex": "\\bipod\\b|house music|\\bmedia\\b|\\bvideo\\b|propresenter|\\bpvp\\b|\\bspch\\b|\\bfoh mac\\b|\\bvd to med\\b|\\bprojector\\b|^music$|^pb$"
+    },
+    {
+     "category": "fx_delay",
+     "regex": "\\bdelay\\b|\\bdly\\b|\\bslap\\b|\\bthrow\\b|\\becho\\b|\\bhdelay\\b|\\bvxdel\\b"
+    },
+    {
+     "category": "fx_modulation",
+     "regex": "\\badt\\b|\\bthicken\\b|^double$|\\blush\\b|\\bvibe\\b|^spr$"
+    },
+    {
+     "category": "fx_reverb",
+     "regex": "verb|\\bvrb\\b|\\bver\\b|\\bplate\\b|\\bhall\\b|\\bshimmer\\b|\\b(sn|dr|in)fx rt\\b|\\bgated v\\b|^(drum|vox) v$|^d (short|long)$|^drum (long|short|gate)$|\\bvxvrb\\b|^v gate$|^vocal (long|short)$"
+    },
+    {
+     "category": "fx_reverb",
+     "regex": "\\b(room|rm)\\b(?! \\d)",
+     "only": "stereo"
+    },
+    {
+     "category": "fx_other",
+     "regex": "\\bfx \\d+ rt\\b|\\bfx vox rtn\\b|\\bacu fx\\b|\\binst fx\\d?\\b|\\bfx rt\\b"
+    },
+    {
+     "category": "vocal_fx_mic",
+     "regex": "\\bfx (vocal|mic)\\b|\\bvox \\d dist\\b"
+    },
+    {
+     "category": "vocal_ear_split",
+     "regex": "\\biem\\b|\\bears\\b"
+    },
+    {
+     "category": "tracks_drums_perc",
+     "regex": "^(t |drum t|perc t)\\w*\\b.*(drum|perc)|^drum (trax|tx)\\b|^perc tr(ax|x)\\b|^t (drums|perc)\\b"
+    },
+    {
+     "category": "tracks_bass",
+     "regex": "^t bass\\b|^bass (trax|tx|trx)\\b"
+    },
+    {
+     "category": "tracks_vocals",
+     "regex": "^t (bgvs?|vocal|vox)\\b|^(bgv|vox) (trx|trax|tx|tracks)\\b|\\bvxtrx\\b|^vox tracks\\b"
+    },
+    {
+     "category": "tracks_music",
+     "regex": "^t (music|guitars?|guit|keys?|loops|aux|gtr|hooks|percs?)\\b|\\btrax\\b|\\btracks?\\b|^loops$|^hooks$|^music (tx|l)$|^pb \\d|^ambient backup$|^inst trx$|^spd trax$|^t key$"
+    },
+    {
+     "category": "drum_trigger",
+     "regex": "\\btrig\\b|\\btg\\b|\\btrigger\\b"
+    },
+    {
+     "category": "sample_pad",
+     "regex": "\\bspd|\\bspdsx\\b|^pad$"
+    },
+    {
+     "category": "hand_perc",
+     "regex": "\\bperc\\b|\\bcajon\\b|\\bdjembe\\b|\\bconga\\b|^clap$|\\bwash ?board\\b|\\bporch|\\bshaker\\b|\\btamb"
+    },
+    {
+     "category": "kick_sub",
+     "regex": "\\bsub ?kick\\b|\\bkick sub\\b"
+    },
+    {
+     "category": "kick_out",
+     "regex": "\\bki?c?k (out|52)\\b"
+    },
+    {
+     "category": "kick_in",
+     "regex": "\\bki?c?k\\b|\\bkik\\b"
+    },
+    {
+     "category": "snare_bottom",
+     "regex": "\\b(snare|snr|sn)\\s?\\d? (\\d )?bot"
+    },
+    {
+     "category": "snare_top",
+     "regex": "\\bsnare\\b|\\bsnr\\d?\\b|\\bsn\\d\\b"
+    },
+    {
+     "category": "speech_mic",
+     "regex": "\\bemcee\\b|\\bmc \\d\\b|\\bhost\\b|\\bspeaker\\b|\\bsprkr\\b|\\bspeak\\b|\\bspr hh\\b|^hh \\d$|^hs\\d$|^script \\d$"
+    },
+    {
+     "category": "hihat",
+     "regex": "^h ?h$|\\bhats?\\b|\\bhi ?hat\\b|\\bhigh hat\\b"
+    },
+    {
+     "category": "roto_tom",
+     "regex": "\\broto\\b"
+    },
+    {
+     "category": "floor_tom",
+     "regex": "\\bfloor\\b|\\bflr\\b"
+    },
+    {
+     "category": "rack_tom",
+     "regex": "\\btom\\b|\\brack ?\\d?\\b|^t\\d$|^tom \\d$"
+    },
+    {
+     "category": "overheads",
+     "regex": "^ohs?\\b|\\boverheads?\\b|^oh (sr|sl|l|r)$"
+    },
+    {
+     "category": "ride",
+     "regex": "\\bride\\b"
+    },
+    {
+     "category": "drum_crotch",
+     "regex": "\\bcrotch\\b|^knee$"
+    },
+    {
+     "category": "choir",
+     "regex": "\\bchoir\\b|\\bensemble\\b"
+    },
+    {
+     "category": "lead_vocal",
+     "regex": "\\blead (vox|vocal)\\b|^lv\\b"
+    },
+    {
+     "category": "vocal_generic",
+     "regex": "\\bvox\\b|\\bvocal\\b|\\bvox\\d\\b|^\\d+ [a-z]+$|^walkabout$|\\bsing\\b"
+    },
+    {
+     "category": "synth_bass",
+     "regex": "\\bbass syn|\\bsynth bass\\b|\\bkey bass\\b|\\bmoog\\b"
+    },
+    {
+     "category": "bass_amp",
+     "regex": "\\bbass (mic|amp|dirty)\\b|^b mic$"
+    },
+    {
+     "category": "bass_di",
+     "regex": "\\bbass\\b|^b di$|^bas di\\d$"
+    },
+    {
+     "category": "acoustic_guitar",
+     "regex": "\\bag\\d?\\b|\\bacu\\d?\\b|\\bacou?\\b|acoustic|\\baco\\b|^ac \\d|\\bac\\b|\\brubber\\b"
+    },
+    {
+     "category": "electric_guitar",
+     "regex": "\\beg ?\\d?\\b|\\beg\\d[lr]?\\b|\\bele\\b|\\bele\\d|electric|\\bgtr\\b|\\bguitar\\b|\\bamp\\b"
+    },
+    {
+     "category": "organ",
+     "regex": "\\borgan\\b|\\bb3\\b"
+    },
+    {
+     "category": "piano",
+     "regex": "\\bpiano\\b"
+    },
+    {
+     "category": "synth",
+     "regex": "\\bprophet\\b|\\bproph\\b|\\bsynth\\b"
+    },
+    {
+     "category": "keys",
+     "regex": "\\bkeys?\\b|\\bkey ?\\d\\b|\\bkeys\\d\\b|\\bnord\\b|\\bkeylargo\\b|\\bmidi keys\\b"
+    },
+    {
+     "category": "folk_strings",
+     "regex": "\\bmando\\b|\\bbanjo\\b|\\bdulcimer\\b|\\bfiddle\\b|\\bdobro\\b"
+    },
+    {
+     "category": "strings",
+     "regex": "\\bstring\\d?\\b|\\bcello\\b|\\bviolin\\b|\\bviola\\b"
+    },
+    {
+     "category": "horns",
+     "regex": "\\bsax\\b|\\btrumpet\\b|\\btrombone\\b|\\bhorns?\\b"
+    },
+    {
+     "category": "audience",
+     "regex": "\\bcrowds?\\b|\\baud\\b|\\baudience\\b|\\bar (sg|ldc)\\b|^room \\d|\\bshotgun\\b"
+    }
+   ],
+   "floor_tom": "numbered toms only (T1/T2, Tom 1/Tom 2) and no explicit floor tom in the file: the highest number is the floor tom"
+  },
+  "write_keys": {
+   "note": "(module, param, band) for ses.Session.set(ch, module, param, band, value); convert display -> stored",
+   "hpf_in": [
+    7,
+    3,
+    1
+   ],
+   "hpf_freq": [
+    7,
+    5,
+    1,
+    "stored = shown / 1.25"
+   ],
+   "lpf_in": [
+    7,
+    3,
+    0
+   ],
+   "lpf_freq": [
+    7,
+    5,
+    0,
+    "stored = shown / 0.8"
+   ],
+   "eq_in": [
+    4,
+    2,
+    0
+   ],
+   "eq_band_n": {
+    "on": [
+     4,
+     3,
+     "4-n"
+    ],
+    "shape": [
+     4,
+     4,
+     "4-n",
+     "1 bell, 3 low shelf, 4 high shelf"
+    ],
+    "freq": [
+     4,
+     5,
+     "4-n"
+    ],
+    "q": [
+     4,
+     6,
+     "4-n"
+    ],
+    "gain": [
+     4,
+     7,
+     "4-n"
+    ]
+   },
+   "comp": {
+    "mode": [
+     5,
+     58,
+     0,
+     "0 comp"
+    ],
+    "in": [
+     5,
+     2,
+     0
+    ],
+    "threshold": [
+     5,
+     14,
+     "0,1,2 (mirrored)"
+    ],
+    "ratio": [
+     5,
+     16,
+     0
+    ],
+    "attack": [
+     5,
+     17,
+     0,
+     "s"
+    ],
+    "release": [
+     5,
+     18,
+     0,
+     "s"
+    ],
+    "knee": [
+     5,
+     15,
+     0,
+     "0 hard, 1 medium, 2 soft"
+    ],
+    "makeup": [
+     5,
+     9,
+     0
+    ]
+   },
+   "comp_multiband": {
+    "mode": [
+     5,
+     58,
+     0,
+     "1 multiband"
+    ],
+    "band_on": [
+     5,
+     3,
+     "UI band 1 -> 1, 2 -> 2, 3 -> 0"
+    ],
+    "band_threshold": [
+     5,
+     14,
+     "same map"
+    ],
+    "band_ratio": [
+     5,
+     16,
+     "same map"
+    ],
+    "band_attack": [
+     5,
+     17,
+     "same map",
+     "s"
+    ],
+    "band_release": [
+     5,
+     18,
+     "same map",
+     "s"
+    ],
+    "band_gain": [
+     5,
+     9,
+     "same map",
+     "INFERENCE"
+    ],
+    "xover_lo": [
+     5,
+     5,
+     0
+    ],
+    "xover_hi": [
+     5,
+     5,
+     1
+    ]
+   },
+   "dyn2": {
+    "mode": [
+     5,
+     11,
+     3,
+     "0 gate, 1 ducker, 2 comp"
+    ],
+    "in": [
+     5,
+     2,
+     3
+    ],
+    "threshold": [
+     5,
+     14,
+     3
+    ],
+    "attack": [
+     5,
+     17,
+     3,
+     "s"
+    ],
+    "release": [
+     5,
+     18,
+     3,
+     "s"
+    ],
+    "hold": [
+     5,
+     19,
+     3,
+     "s"
+    ],
+    "range": [
+     5,
+     10,
+     3,
+     "positive dB"
+    ],
+    "ratio_when_comp": [
+     5,
+     16,
+     3
+    ]
+   },
+   "delay": {
+    "on": [
+     9,
+     7,
+     0
+    ],
+    "time": [
+     9,
+     8,
+     0,
+     "s"
+    ]
+   },
+   "polarity": [
+    1,
+    2,
+    0
+   ],
+   "mustard_comp": {
+    "on": [
+     29,
+     2,
+     0
+    ],
+    "model": [
+     29,
+     11,
+     0,
+     "0 classic, 3 vca, 4 fet, 5 optical, 8 leveling amp"
+    ],
+    "mix": [
+     29,
+     71,
+     0
+    ],
+    "threshold": [
+     29,
+     14,
+     0
+    ],
+    "ratio": [
+     29,
+     16,
+     0
+    ],
+    "attack": [
+     29,
+     17,
+     0,
+     "s"
+    ],
+    "release": [
+     29,
+     18,
+     0,
+     "s"
+    ],
+    "knee": [
+     29,
+     15,
+     0,
+     "1 hard, 0 soft"
+    ],
+    "output": [
+     29,
+     9,
+     0
+    ]
+   }
+  }
+ },
+ "groups": {
+  "drums": [
+   "kick_in",
+   "kick_out",
+   "kick_sub",
+   "snare_top",
+   "snare_bottom",
+   "hihat",
+   "rack_tom",
+   "floor_tom",
+   "roto_tom",
+   "overheads",
+   "ride",
+   "drum_crotch",
+   "drum_trigger",
+   "sample_pad",
+   "hand_perc"
+  ],
+  "bass": [
+   "bass_di",
+   "bass_amp",
+   "synth_bass"
+  ],
+  "guitars_strings": [
+   "electric_guitar",
+   "acoustic_guitar",
+   "folk_strings",
+   "strings",
+   "horns"
+  ],
+  "keys": [
+   "keys",
+   "piano",
+   "organ",
+   "synth"
+  ],
+  "vocals": [
+   "lead_vocal",
+   "vocal_generic",
+   "vocal_fx_mic",
+   "vocal_ear_split",
+   "choir",
+   "speech_mic"
+  ],
+  "playback": [
+   "tracks_music",
+   "tracks_drums_perc",
+   "tracks_bass",
+   "tracks_vocals",
+   "click",
+   "cues_guide",
+   "timecode",
+   "media_playback"
+  ],
+  "ambience": [
+   "audience",
+   "measurement_ref",
+   "test_signal"
+  ],
+  "fx_returns": [
+   "fx_reverb",
+   "fx_delay",
+   "fx_modulation",
+   "fx_other"
+  ],
+  "comms": [
+   "talkback",
+   "comms_radio"
+  ]
+ },
+ "categories": {
+  "kick_in": {
+   "label": "Kick in (inside / port / single kick)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 17,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 31
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 53,
+       "gain_db": 5.5,
+       "q": 2.4
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 284,
+       "gain_db": -8.0,
+       "q": 1.0
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 3730,
+       "gain_db": 5.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -31.3,
+     "range_db": 28.6,
+     "attack_ms": 0.05,
+     "hold_ms": 62.0,
+     "release_ms": 171.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -12.5,
+     "ratio": 3.21,
+     "attack_ms": 9.5,
+     "release_ms": 180.0,
+     "knee": "medium",
+     "makeup_db": 3.3
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -25.2,
+     "ratio": 2.63,
+     "attack_ms": 7.74,
+     "release_ms": 154.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": 0.02
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "kick_in",
+   "monitor": {
+    "samples": {
+     "channels": 5,
+     "shows": 5
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 40
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 13000
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 58,
+        "gain_db": 6.0,
+        "q": 1.9
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 205,
+        "gain_db": -9.0,
+        "q": 2.27
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 841,
+        "gain_db": -13.0,
+        "q": 1.29
+       },
+       {
+        "band": 4,
+        "shape": "bell",
+        "freq_hz": 2770,
+        "gain_db": -3.0,
+        "q": 1.23
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -24.9,
+      "ratio": 1.99,
+      "attack_ms": 7.74,
+      "release_ms": 111.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "kick_out": {
+   "label": "Kick out (front head)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 15,
+    "shows": 15
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 31
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 16600
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 53,
+       "gain_db": 6.0,
+       "q": 2.53
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 211,
+       "gain_db": -8.5,
+       "q": 1.0
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -31.3,
+     "range_db": 40.2,
+     "attack_ms": 0.05,
+     "hold_ms": 62.0,
+     "release_ms": 179.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -26.6,
+     "ratio": 3.41,
+     "attack_ms": 4.05,
+     "release_ms": 10.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "kick_out",
+   "monitor": {
+    "samples": {
+     "channels": 3,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 40
+     },
+     "lpf": {
+      "in": true,
+      "freq_hz": 3090
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 56,
+        "gain_db": 7.0,
+        "q": 2.4
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 148,
+        "gain_db": -9.0,
+        "q": 1.3
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 714,
+        "gain_db": -13.0,
+        "q": 0.85
+       },
+       {
+        "band": 4,
+        "shape": "bell",
+        "freq_hz": 5020,
+        "gain_db": -3.5,
+        "q": 0.73
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -26.6,
+      "ratio": 1.99,
+      "attack_ms": 6.43,
+      "release_ms": 172.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "kick_sub": {
+   "label": "Sub kick",
+   "group": "drums",
+   "fallback": "kick_out",
+   "samples": {
+    "channels": 0,
+    "shows": 0
+   },
+   "thin": true,
+   "template": null,
+   "use_template_of": "kick_out"
+  },
+  "snare_top": {
+   "label": "Snare top (incl. snare 2 top)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 27,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 94
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 7750
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 272,
+       "gain_db": 5.5,
+       "q": 0.71
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 464,
+       "gain_db": -11.5,
+       "q": 2.7
+      },
+      {
+       "band": 4,
+       "shape": "bell",
+       "freq_hz": 9580,
+       "gain_db": 4.0,
+       "q": 1.21
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -22.4,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 133.0,
+     "release_ms": 241.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -22.4,
+     "ratio": 3.41,
+     "attack_ms": 21.15,
+     "release_ms": 203.0,
+     "knee": "medium",
+     "makeup_db": 3.0
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "classic",
+     "threshold_db": -26.4,
+     "ratio": 4.43,
+     "attack_ms": 24.55,
+     "release_ms": 183.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 3.2
+    },
+    "delay": {
+     "on": false,
+     "ms": 0.72
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "snare_top",
+   "monitor": {
+    "samples": {
+     "channels": 10,
+     "shows": 6
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 73
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 161,
+        "gain_db": 2.5,
+        "q": 2.27
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 754,
+        "gain_db": -6.0,
+        "q": 1.17
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": -32.9,
+      "range_db": 2.1,
+      "attack_ms": 0.05,
+      "hold_ms": 115.0,
+      "release_ms": 358.0
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -25.2,
+      "ratio": 2.55,
+      "attack_ms": 17.55,
+      "release_ms": 119.0,
+      "knee": "hard",
+      "makeup_db": 3.0
+     },
+     "mustard_comp": {
+      "on": false,
+      "model": "classic",
+      "threshold_db": -23.3,
+      "ratio": 5.84,
+      "attack_ms": 7.95,
+      "release_ms": 129.0,
+      "knee": "hard",
+      "mix": 1.0,
+      "output_db": 3.2
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "snare_bottom": {
+   "label": "Snare bottom",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 22,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 94
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 353,
+       "gain_db": -11.5,
+       "q": 2.82
+      },
+      {
+       "band": 4,
+       "shape": "bell",
+       "freq_hz": 9580,
+       "gain_db": 4.0,
+       "q": 1.21
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -28.0,
+     "range_db": 14.1,
+     "attack_ms": 0.62,
+     "hold_ms": 140.0,
+     "release_ms": 162.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -26.1,
+     "ratio": 4.53,
+     "attack_ms": 11.2,
+     "release_ms": 180.0,
+     "knee": "medium",
+     "makeup_db": 3.0
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -29.9,
+     "ratio": 4.17,
+     "attack_ms": 5.48,
+     "release_ms": 113.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 1.6
+    },
+    "delay": {
+     "on": false,
+     "ms": 0.72
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "snare_bottom",
+   "monitor": {
+    "samples": {
+     "channels": 4,
+     "shows": 4
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 73
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 476,
+        "gain_db": -8.0,
+        "q": 1.4
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -18.4,
+      "ratio": 2.15,
+      "attack_ms": 11.46,
+      "release_ms": 243.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": true
+    }
+   }
+  },
+  "hihat": {
+   "label": "Hi-hat",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 16,
+    "shows": 15
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 211
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 13700
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 4,
+       "shape": "bell",
+       "freq_hz": 11000,
+       "gain_db": 2.5,
+       "q": 0.81
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -31.5,
+     "ratio": 3.57,
+     "attack_ms": 10.0,
+     "release_ms": 251.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -46.6,
+     "ratio": 3.0,
+     "attack_ms": 11.2,
+     "release_ms": 183.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": 2.66
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "hihat",
+   "monitor": {
+    "samples": {
+     "channels": 4,
+     "shows": 4
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 170
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 17000
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 184,
+        "gain_db": -6.5,
+        "q": 0.97
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -36.9,
+      "ratio": 2.29,
+      "attack_ms": 9.74,
+      "release_ms": 243.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "rack_tom": {
+   "label": "Rack tom",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 24,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 48
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 11300
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 102,
+       "gain_db": 8.5,
+       "q": 3.97
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 300,
+       "gain_db": -9.0,
+       "q": 1.15
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 1570,
+       "gain_db": 1.0,
+       "q": 1.65
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 4160,
+       "gain_db": 7.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": true,
+     "threshold_db": -27.5,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 100.0,
+     "release_ms": 205.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -18.6,
+     "ratio": 3.16,
+     "attack_ms": 14.25,
+     "release_ms": 251.0,
+     "knee": "medium",
+     "makeup_db": 1.4
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "vca",
+     "threshold_db": -32.5,
+     "ratio": 2.67,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": 2.13
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "rack_tom",
+   "monitor": {
+    "samples": {
+     "channels": 6,
+     "shows": 5
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 52
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 14800
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 416,
+        "gain_db": -9.0,
+        "q": 0.91
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -29.9,
+      "ratio": 1.99,
+      "attack_ms": 8.6,
+      "release_ms": 195.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "floor_tom": {
+   "label": "Floor tom",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 19,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 37
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 9890
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 62,
+       "gain_db": 8.0,
+       "q": 3.7
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 255,
+       "gain_db": -10.0,
+       "q": 1.17
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 3880,
+       "gain_db": 8.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": true,
+     "threshold_db": -31.1,
+     "range_db": 40.0,
+     "attack_ms": 0.12,
+     "hold_ms": 106.0,
+     "release_ms": 175.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -20.2,
+     "ratio": 3.0,
+     "attack_ms": 11.46,
+     "release_ms": 195.0,
+     "knee": "hard",
+     "makeup_db": 2.0
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -20.9,
+     "ratio": 4.43,
+     "attack_ms": 16.32,
+     "release_ms": 188.0,
+     "knee": "soft",
+     "mix": 1.0,
+     "output_db": 1.4
+    },
+    "delay": {
+     "on": false,
+     "ms": 3.55
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "floor_tom",
+   "monitor": {
+    "samples": {
+     "channels": 5,
+     "shows": 5
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": false,
+      "freq_hz": 39
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 12600
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 102,
+        "gain_db": -1.0,
+        "q": 2.59
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 353,
+        "gain_db": -9.0,
+        "q": 1.08
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 1160,
+        "gain_db": -5.0,
+        "q": 0.79
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -30.1,
+      "ratio": 1.99,
+      "attack_ms": 11.2,
+      "release_ms": 211.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "roto_tom": {
+   "label": "Roto tom",
+   "group": "drums",
+   "fallback": "rack_tom",
+   "samples": {
+    "channels": 6,
+    "shows": 3
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 44
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 91,
+       "gain_db": 3.5,
+       "q": 2.91
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 394,
+       "gain_db": -6.5,
+       "q": 0.71
+      }
+     ]
+    },
+    "gate": {
+     "in": true,
+     "threshold_db": -23.1,
+     "range_db": 12.4,
+     "attack_ms": 0.05,
+     "hold_ms": 135.0,
+     "release_ms": 232.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -25.4,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "roto_tom"
+  },
+  "overheads": {
+   "label": "Overheads",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 21,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 104
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 11600
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 262,
+       "gain_db": -3.5,
+       "q": 1.32
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 373,
+       "gain_db": -4.0,
+       "q": 1.02
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 3090,
+       "gain_db": -6.0,
+       "q": 1.83
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 3820,
+       "gain_db": 2.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -29.9,
+     "ratio": 3.41,
+     "attack_ms": 8.82,
+     "release_ms": 141.0,
+     "knee": "medium",
+     "makeup_db": 1.1
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -26.1,
+     "ratio": 3.21,
+     "attack_ms": 2.27,
+     "release_ms": 121.0,
+     "knee": "soft",
+     "mix": 1.0,
+     "output_db": 0.3
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -28.5,
+     "ratio": 3.57,
+     "attack_ms": 0.5,
+     "release_ms": 134.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "overheads",
+   "monitor": {
+    "samples": {
+     "channels": 6,
+     "shows": 6
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 104
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 13300
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -35.8,
+      "ratio": 2.09,
+      "attack_ms": 10.33,
+      "release_ms": 275.0,
+      "knee": "medium",
+      "makeup_db": 0.5
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "dyn2_comp": {
+      "in": false,
+      "threshold_db": -28.5,
+      "ratio": 3.57,
+      "attack_ms": 6.62,
+      "release_ms": 134.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "ride": {
+   "label": "Ride",
+   "group": "drums",
+   "fallback": "hihat",
+   "samples": {
+    "channels": 2,
+    "shows": 2
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 40
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 575,
+       "gain_db": -7.5,
+       "q": 0.86
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 6300,
+       "gain_db": 4.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -36.5,
+     "ratio": 3.41,
+     "attack_ms": 1.88,
+     "release_ms": 60.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": true
+   },
+   "use_template_of": "hihat"
+  },
+  "drum_crotch": {
+   "label": "Drum crotch / knee mic",
+   "group": "drums",
+   "fallback": "snare_top",
+   "samples": {
+    "channels": 3,
+    "shows": 3
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 165
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 16100
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 284,
+       "gain_db": -8.0,
+       "q": 2.09
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -31.3,
+     "ratio": 14.88,
+     "attack_ms": 0.5,
+     "release_ms": 104.0,
+     "knee": "hard",
+     "makeup_db": 8.5
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "snare_top"
+  },
+  "drum_trigger": {
+   "label": "Drum trigger (kick/snare/tom trig)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 15,
+    "shows": 6
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 217
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 3530
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -0.2,
+     "ratio": 3.41,
+     "attack_ms": 11.2,
+     "release_ms": 243.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "drum_trigger"
+  },
+  "sample_pad": {
+   "label": "Sample pad (SPD-SX etc.)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 15,
+    "shows": 13
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 32
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -18.6,
+     "ratio": 3.41,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -12.2,
+     "ratio": 3.63,
+     "attack_ms": 0.5,
+     "release_ms": 299.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "sample_pad"
+  },
+  "hand_perc": {
+   "label": "Hand percussion (cajon, djembe, conga, washboard, porch board)",
+   "group": "drums",
+   "fallback": null,
+   "samples": {
+    "channels": 6,
+    "shows": 2
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 104
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 1840
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 3260,
+       "gain_db": -4.5,
+       "q": 0.93
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 1020,
+       "gain_db": -2.5,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -44.0,
+     "range_db": 40.0,
+     "attack_ms": 1.21,
+     "hold_ms": 86.0,
+     "release_ms": 121.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -17.4,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 267.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "hand_perc",
+   "monitor": {
+    "samples": {
+     "channels": 10,
+     "shows": 2
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 61
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 8640
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 100,
+        "gain_db": 3.0,
+        "q": 1.97
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 404,
+        "gain_db": -6.0,
+        "q": 0.79
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 818,
+        "gain_db": -5.0,
+        "q": 0.71
+       },
+       {
+        "band": 4,
+        "shape": "bell",
+        "freq_hz": 4760,
+        "gain_db": 3.5,
+        "q": 0.71
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -32.2,
+      "ratio": 2.15,
+      "attack_ms": 5.29,
+      "release_ms": 134.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "bass_di": {
+   "label": "Bass DI (clean)",
+   "group": "bass",
+   "fallback": null,
+   "samples": {
+    "channels": 18,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 35
+    },
+    "lpf": {
+     "in": true,
+     "freq_hz": 6770
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "low_shelf",
+       "freq_hz": 175,
+       "gain_db": 2.0,
+       "q": 0.85
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 123,
+       "gain_db": -4.0,
+       "q": 2.64
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 677,
+       "gain_db": 2.0,
+       "q": 1.17
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -57.9,
+     "range_db": 40.0,
+     "attack_ms": 2.0,
+     "hold_ms": 156.0,
+     "release_ms": 343.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "multiband",
+     "threshold_db": -27.3,
+     "ratio": 4.17,
+     "attack_ms": 13.36,
+     "release_ms": 219.0,
+     "knee": "medium",
+     "makeup_db": 2.2,
+     "multiband": {
+      "xover_lo_hz": 130,
+      "xover_hi_hz": 1000,
+      "bands": [
+       {
+        "band": 1,
+        "threshold_db": -38.4,
+        "ratio": 3.11,
+        "attack_ms": 2.11,
+        "release_ms": 200.0,
+        "gain_db": 2.8,
+        "on": true
+       },
+       {
+        "band": 2,
+        "threshold_db": -25.4,
+        "ratio": 2.0,
+        "attack_ms": 25.0,
+        "release_ms": 400.0,
+        "gain_db": 1.9,
+        "on": true
+       },
+       {
+        "band": 3,
+        "threshold_db": -25.9,
+        "ratio": 2.0,
+        "attack_ms": 6.72,
+        "release_ms": 547.0,
+        "gain_db": 4.4,
+        "on": true
+       }
+      ]
+     }
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "classic",
+     "threshold_db": -26.1,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 2.8
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -17.9,
+     "ratio": 3.0,
+     "attack_ms": 1.81,
+     "release_ms": 134.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "bass_di",
+   "monitor": {
+    "samples": {
+     "channels": 6,
+     "shows": 6
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 40
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 6770
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": -43.1,
+      "range_db": 49.4,
+      "attack_ms": 2.54,
+      "hold_ms": 171.0,
+      "release_ms": 658.0
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -28.9,
+      "ratio": 2.06,
+      "attack_ms": 6.33,
+      "release_ms": 235.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": true,
+      "model": "optical",
+      "threshold_db": -25.6,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 250.0,
+      "knee": "hard",
+      "mix": 1.0,
+      "output_db": 3.2
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "bass_amp": {
+   "label": "Bass amp mic / drive DI",
+   "group": "bass",
+   "fallback": null,
+   "samples": {
+    "channels": 7,
+    "shows": 7
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 38
+    },
+    "lpf": {
+     "in": true,
+     "freq_hz": 9890
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 277,
+       "gain_db": -1.5,
+       "q": 2.34
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 99,
+       "gain_db": -1.0,
+       "q": 1.38
+      },
+      {
+       "band": 4,
+       "shape": "bell",
+       "freq_hz": 3170,
+       "gain_db": -7.0,
+       "q": 0.93
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -50.1,
+     "range_db": 37.4,
+     "attack_ms": 0.19,
+     "hold_ms": 140.0,
+     "release_ms": 734.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -9.6,
+     "ratio": 3.41,
+     "attack_ms": 12.52,
+     "release_ms": 243.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "bass_amp"
+  },
+  "synth_bass": {
+   "label": "Synth bass (Moog, key bass)",
+   "group": "bass",
+   "fallback": null,
+   "samples": {
+    "channels": 8,
+    "shows": 8
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 37
+    },
+    "lpf": {
+     "in": true,
+     "freq_hz": 9890
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 234,
+       "gain_db": -3.0,
+       "q": 1.38
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -60.0,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 140.0,
+     "release_ms": 140.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -20.0,
+     "ratio": 3.41,
+     "attack_ms": 11.2,
+     "release_ms": 243.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -20.5,
+     "ratio": 3.0,
+     "attack_ms": 11.85,
+     "release_ms": 119.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "synth_bass"
+  },
+  "electric_guitar": {
+   "label": "Electric guitar",
+   "group": "guitars_strings",
+   "fallback": null,
+   "samples": {
+    "channels": 43,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 102
+    },
+    "lpf": {
+     "in": true,
+     "freq_hz": 12300
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 235,
+       "gain_db": -9.0,
+       "q": 1.36
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 255,
+       "gain_db": -4.0,
+       "q": 1.81
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 2620,
+       "gain_db": -5.0,
+       "q": 1.08
+      },
+      {
+       "band": 4,
+       "shape": "bell",
+       "freq_hz": 6300,
+       "gain_db": 1.0,
+       "q": 1.55
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -53.6,
+     "range_db": 40.0,
+     "attack_ms": 1.9,
+     "hold_ms": 154.0,
+     "release_ms": 879.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -20.5,
+     "ratio": 3.52,
+     "attack_ms": 10.0,
+     "release_ms": 324.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -22.8,
+     "ratio": 3.0,
+     "attack_ms": 12.39,
+     "release_ms": 150.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.1
+    },
+    "delay": {
+     "on": false,
+     "ms": 23.11
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "electric_guitar",
+   "monitor": {
+    "samples": {
+     "channels": 13,
+     "shows": 6
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 102
+     },
+     "lpf": {
+      "in": true,
+      "freq_hz": 16100
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": -53.6,
+      "range_db": 40.0,
+      "attack_ms": 1.9,
+      "hold_ms": 140.0,
+      "release_ms": 140.0
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -0.2,
+      "ratio": 3.41,
+      "attack_ms": 11.2,
+      "release_ms": 243.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": 4.5
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "acoustic_guitar": {
+   "label": "Acoustic guitar",
+   "group": "guitars_strings",
+   "fallback": null,
+   "samples": {
+    "channels": 26,
+    "shows": 14
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 107
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 12000
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 144,
+       "gain_db": -9.0,
+       "q": 3.4
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 335,
+       "gain_db": -3.5,
+       "q": 1.88
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 3630,
+       "gain_db": -3.5,
+       "q": 1.1
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -58.1,
+     "range_db": 40.0,
+     "attack_ms": 1.52,
+     "hold_ms": 249.0,
+     "release_ms": 917.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -23.5,
+     "ratio": 3.21,
+     "attack_ms": 9.39,
+     "release_ms": 316.0,
+     "knee": "hard",
+     "makeup_db": 1.9
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "optical",
+     "threshold_db": -46.1,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -21.6,
+     "ratio": 8.06,
+     "attack_ms": 9.97,
+     "release_ms": 834.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "acoustic_guitar",
+   "monitor": {
+    "samples": {
+     "channels": 16,
+     "shows": 6
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 102
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 16100
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 394,
+        "gain_db": -4.5,
+        "q": 1.51
+       },
+       {
+        "band": 4,
+        "shape": "high_shelf",
+        "freq_hz": 4760,
+        "gain_db": 4.0,
+        "q": 0.85
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -24.0,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 375.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "folk_strings": {
+   "label": "Mandolin / dulcimer / banjo",
+   "group": "guitars_strings",
+   "fallback": "acoustic_guitar",
+   "samples": {
+    "channels": 2,
+    "shows": 1
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 184
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 317,
+       "gain_db": -4.5,
+       "q": 1.11
+      }
+     ]
+    },
+    "gate": {
+     "in": true,
+     "threshold_db": -60.0,
+     "range_db": 15.9,
+     "attack_ms": 1.82,
+     "hold_ms": 169.0,
+     "release_ms": 201.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "classic",
+     "threshold_db": -30.8,
+     "ratio": 2.59,
+     "attack_ms": 8.71,
+     "release_ms": 255.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "acoustic_guitar"
+  },
+  "strings": {
+   "label": "Orchestral strings (violin, cello)",
+   "group": "guitars_strings",
+   "fallback": "folk_strings",
+   "samples": {
+    "channels": 5,
+    "shows": 1
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 82
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "acoustic_guitar"
+  },
+  "horns": {
+   "label": "Horns / sax",
+   "group": "guitars_strings",
+   "fallback": "vocal_generic",
+   "samples": {
+    "channels": 1,
+    "shows": 1
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 75
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "vocal_generic"
+  },
+  "keys": {
+   "label": "Keys (Nord, generic keys)",
+   "group": "keys",
+   "fallback": null,
+   "samples": {
+    "channels": 22,
+    "shows": 12
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 40
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 16500
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "low_shelf",
+       "freq_hz": 205,
+       "gain_db": -2.0,
+       "q": 0.85
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 953,
+       "gain_db": -3.5,
+       "q": 1.32
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 3170,
+       "gain_db": 1.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -23.5,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.8
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -25.2,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -9.2,
+     "ratio": 2.12,
+     "attack_ms": 1.81,
+     "release_ms": 126.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "keys",
+   "monitor": {
+    "samples": {
+     "channels": 13,
+     "shows": 5
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 68
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 16500
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 248,
+        "gain_db": -4.5,
+        "q": 0.99
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": -9.9,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 375.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "piano": {
+   "label": "Piano",
+   "group": "keys",
+   "fallback": "keys",
+   "samples": {
+    "channels": 5,
+    "shows": 2
+   },
+   "thin": true,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 26
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -60.0,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 278.0,
+     "release_ms": 1374.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -36.2,
+     "ratio": 2.4,
+     "attack_ms": 8.6,
+     "release_ms": 308.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "classic",
+     "threshold_db": -25.2,
+     "ratio": 3.0,
+     "attack_ms": 11.46,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "keys"
+  },
+  "organ": {
+   "label": "Organ / B3",
+   "group": "keys",
+   "fallback": "keys",
+   "samples": {
+    "channels": 1,
+    "shows": 1
+   },
+   "thin": true,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 28
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 714,
+       "gain_db": 1.0,
+       "q": 0.79
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 4270,
+       "gain_db": -9.0,
+       "q": 0.63
+      }
+     ]
+    },
+    "gate": {
+     "in": true,
+     "threshold_db": -60.0,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 278.0,
+     "release_ms": 1374.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": true,
+     "model": "classic",
+     "threshold_db": -28.9,
+     "ratio": 4.17,
+     "attack_ms": 17.73,
+     "release_ms": 278.0,
+     "knee": "hard",
+     "mix": 0.99,
+     "output_db": 3.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "keys"
+  },
+  "synth": {
+   "label": "Synth (Prophet etc.)",
+   "group": "keys",
+   "fallback": "keys",
+   "samples": {
+    "channels": 4,
+    "shows": 4
+   },
+   "thin": true,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": false,
+     "freq_hz": 64
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 5600
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 38,
+       "gain_db": 1.0,
+       "q": 0.71
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 179,
+       "gain_db": -8.0,
+       "q": 0.71
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 1600,
+       "gain_db": 2.0,
+       "q": 0.71
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -29.4,
+     "ratio": 3.0,
+     "attack_ms": 3.72,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "keys"
+  },
+  "lead_vocal": {
+   "label": "Lead vocal",
+   "group": "vocals",
+   "fallback": "vocal_generic",
+   "samples": {
+    "channels": 15,
+    "shows": 10
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 126
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 14400
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 189,
+       "gain_db": -5.5,
+       "q": 1.11
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 300,
+       "gain_db": -7.5,
+       "q": 1.11
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 1890,
+       "gain_db": -3.5,
+       "q": 3.13
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 6770,
+       "gain_db": 2.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -60.0,
+     "range_db": 40.0,
+     "attack_ms": 1.9,
+     "hold_ms": 140.0,
+     "release_ms": 278.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "multiband",
+     "threshold_db": -24.2,
+     "ratio": 3.0,
+     "attack_ms": 13.08,
+     "release_ms": 259.0,
+     "knee": "hard",
+     "makeup_db": 0.0,
+     "multiband": {
+      "xover_lo_hz": 300,
+      "xover_hi_hz": 2000,
+      "bands": [
+       {
+        "band": 1,
+        "threshold_db": -36.7,
+        "ratio": 3.36,
+        "attack_ms": 5.0,
+        "release_ms": 410.0,
+        "gain_db": 2.5,
+        "on": true
+       },
+       {
+        "band": 2,
+        "threshold_db": -21.9,
+        "ratio": 2.88,
+        "attack_ms": 10.82,
+        "release_ms": 400.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 3,
+        "threshold_db": -39.1,
+        "ratio": 2.63,
+        "attack_ms": 5.57,
+        "release_ms": 401.0,
+        "gain_db": 0.0,
+        "on": true
+       }
+      ]
+     }
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "optical",
+     "threshold_db": -31.3,
+     "ratio": 2.0,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -19.3,
+     "ratio": 4.17,
+     "attack_ms": 6.04,
+     "release_ms": 157.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "lead_vocal"
+  },
+  "vocal_generic": {
+   "label": "Vocal, role not named (BGV or shared lead)",
+   "group": "vocals",
+   "fallback": null,
+   "samples": {
+    "channels": 67,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 141
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 14400
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 248,
+       "gain_db": -6.5,
+       "q": 0.76
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 344,
+       "gain_db": -6.0,
+       "q": 1.7
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 3350,
+       "gain_db": -4.0,
+       "q": 3.07
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 5450,
+       "gain_db": 2.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -32.2,
+     "range_db": 40.0,
+     "attack_ms": 0.26,
+     "hold_ms": 84.0,
+     "release_ms": 140.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "multiband",
+     "threshold_db": -35.3,
+     "ratio": 4.36,
+     "attack_ms": 8.38,
+     "release_ms": 350.0,
+     "knee": "soft",
+     "makeup_db": 3.8,
+     "multiband": {
+      "xover_lo_hz": 309,
+      "xover_hi_hz": 3530,
+      "bands": [
+       {
+        "band": 1,
+        "threshold_db": -36.5,
+        "ratio": 2.0,
+        "attack_ms": 5.0,
+        "release_ms": 200.0,
+        "gain_db": 1.3,
+        "on": true
+       },
+       {
+        "band": 2,
+        "threshold_db": -29.6,
+        "ratio": 2.0,
+        "attack_ms": 25.0,
+        "release_ms": 400.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 3,
+        "threshold_db": -36.2,
+        "ratio": 2.0,
+        "attack_ms": 3.06,
+        "release_ms": 455.0,
+        "gain_db": 0.0,
+        "on": true
+       }
+      ]
+     }
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -26.6,
+     "ratio": 4.36,
+     "attack_ms": 9.62,
+     "release_ms": 201.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 1.9
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -24.5,
+     "ratio": 3.57,
+     "attack_ms": 6.04,
+     "release_ms": 259.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "vocal_generic",
+   "monitor": {
+    "samples": {
+     "channels": 32,
+     "shows": 6
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 130
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 217,
+        "gain_db": -6.5,
+        "q": 1.04
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 353,
+        "gain_db": -5.0,
+        "q": 1.99
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -22.1,
+      "ratio": 3.26,
+      "attack_ms": 10.0,
+      "release_ms": 500.0,
+      "knee": "soft",
+      "makeup_db": 1.3
+     },
+     "mustard_comp": {
+      "on": false,
+      "model": "optical",
+      "threshold_db": -26.6,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 250.0,
+      "knee": "hard",
+      "mix": 1.0,
+      "output_db": 0.0
+     },
+     "dyn2_comp": {
+      "in": false,
+      "threshold_db": -21.9,
+      "ratio": 1.68,
+      "attack_ms": 1.88,
+      "release_ms": 119.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "vocal_fx_mic": {
+   "label": "Vocal FX / distortion mic",
+   "group": "vocals",
+   "fallback": "vocal_generic",
+   "samples": {
+    "channels": 3,
+    "shows": 3
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 141
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 11000
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 242,
+       "gain_db": -10.0,
+       "q": 0.68
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -28.0,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 79.0,
+     "release_ms": 45.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -28.7,
+     "ratio": 6.7,
+     "attack_ms": 10.7,
+     "release_ms": 283.0,
+     "knee": "medium",
+     "makeup_db": 5.2
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "vocal_generic"
+  },
+  "vocal_ear_split": {
+   "label": "Vocal split for in-ears",
+   "group": "vocals",
+   "fallback": "lead_vocal",
+   "samples": {
+    "channels": 0,
+    "shows": 0
+   },
+   "thin": true,
+   "template": null,
+   "use_template_of": "lead_vocal",
+   "monitor": {
+    "samples": {
+     "channels": 5,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 141
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 300,
+        "gain_db": -10.0,
+        "q": 0.76
+       },
+       {
+        "band": 4,
+        "shape": "bell",
+        "freq_hz": 2690,
+        "gain_db": 3.5,
+        "q": 0.86
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -23.5,
+      "ratio": 3.21,
+      "attack_ms": 10.0,
+      "release_ms": 500.0,
+      "knee": "medium",
+      "makeup_db": 5.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "choir": {
+   "label": "Choir / ensemble mic",
+   "group": "vocals",
+   "fallback": "vocal_generic",
+   "samples": {
+    "channels": 5,
+    "shows": 2
+   },
+   "thin": true,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 179
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 887,
+       "gain_db": -7.5,
+       "q": 2.64
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 2230,
+       "gain_db": 0.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -31.1,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "vocal_generic"
+  },
+  "speech_mic": {
+   "label": "Speech / host / emcee / script mic",
+   "group": "vocals",
+   "fallback": "vocal_generic",
+   "samples": {
+    "channels": 14,
+    "shows": 5
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 123
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 14100
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 217,
+       "gain_db": -5.0,
+       "q": 1.19
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 126,
+       "gain_db": -3.0,
+       "q": 4.96
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 4630,
+       "gain_db": 6.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -60.0,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 195.0,
+     "release_ms": 1099.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -32.5,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 316.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -38.8,
+     "ratio": 3.74,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.2
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -32.0,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 308.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "speech_mic",
+   "monitor": {
+    "samples": {
+     "channels": 4,
+     "shows": 2
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 126
+     },
+     "lpf": {
+      "in": true,
+      "freq_hz": 6950
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 144,
+        "gain_db": -7.5,
+        "q": 0.71
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 489,
+        "gain_db": -3.5,
+        "q": 1.57
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "multiband",
+      "threshold_db": -23.1,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 500.0,
+      "knee": "hard",
+      "makeup_db": 0.0,
+      "multiband": {
+       "xover_lo_hz": 383,
+       "xover_hi_hz": 3090,
+       "bands": [
+        {
+         "band": 1,
+         "threshold_db": -39.8,
+         "ratio": 6.5,
+         "attack_ms": 1.51,
+         "release_ms": 53.0,
+         "gain_db": 7.2,
+         "on": true
+        },
+        {
+         "band": 2,
+         "threshold_db": -20.2,
+         "ratio": 3.52,
+         "attack_ms": 8.06,
+         "release_ms": 243.0,
+         "gain_db": 4.7,
+         "on": true
+        },
+        {
+         "band": 3,
+         "threshold_db": -27.5,
+         "ratio": 3.63,
+         "attack_ms": 17.19,
+         "release_ms": 500.0,
+         "gain_db": 4.7,
+         "on": true
+        }
+       ]
+      }
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "tracks_music": {
+   "label": "Tracks: music / stems",
+   "group": "playback",
+   "fallback": null,
+   "samples": {
+    "channels": 34,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 54
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 13300
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 175,
+       "gain_db": -3.0,
+       "q": 1.23
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 2050,
+       "gain_db": -4.0,
+       "q": 1.17
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -46.6,
+     "range_db": 90.0,
+     "attack_ms": 0.05,
+     "hold_ms": 104.0,
+     "release_ms": 1042.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "multiband",
+     "threshold_db": -17.9,
+     "ratio": 2.47,
+     "attack_ms": 10.0,
+     "release_ms": 299.0,
+     "knee": "hard",
+     "makeup_db": 0.0,
+     "multiband": {
+      "xover_lo_hz": 1750,
+      "xover_hi_hz": 5020,
+      "bands": [
+       {
+        "band": 1,
+        "threshold_db": -33.2,
+        "ratio": 4.43,
+        "attack_ms": 1.0,
+        "release_ms": 283.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 2,
+        "threshold_db": -27.1,
+        "ratio": 2.33,
+        "attack_ms": 5.29,
+        "release_ms": 350.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 3,
+        "threshold_db": -24.9,
+        "ratio": 2.0,
+        "attack_ms": 10.0,
+        "release_ms": 700.0,
+        "gain_db": -0.5,
+        "on": true
+       }
+      ]
+     }
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -8.2,
+     "ratio": 3.16,
+     "attack_ms": 1.81,
+     "release_ms": 375.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "tracks_music",
+   "monitor": {
+    "samples": {
+     "channels": 5,
+     "shows": 4
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 49
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -22.1,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 500.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "dyn2_comp": {
+      "in": false,
+      "threshold_db": -15.3,
+      "ratio": 4.43,
+      "attack_ms": 0.5,
+      "release_ms": 333.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "tracks_drums_perc": {
+   "label": "Tracks: drums & percussion",
+   "group": "playback",
+   "fallback": "tracks_music",
+   "samples": {
+    "channels": 11,
+    "shows": 10
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 28
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 12000
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 1650,
+       "gain_db": -7.0,
+       "q": 2.14
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -46.6,
+     "range_db": 90.0,
+     "attack_ms": 0.05,
+     "hold_ms": 104.0,
+     "release_ms": 1042.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -25.2,
+     "ratio": 3.06,
+     "attack_ms": 8.49,
+     "release_ms": 341.0,
+     "knee": "hard",
+     "makeup_db": 0.8
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -15.3,
+     "ratio": 3.16,
+     "attack_ms": 0.5,
+     "release_ms": 333.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "tracks_drums_perc",
+   "monitor": {
+    "samples": {
+     "channels": 4,
+     "shows": 4
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 29
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -22.1,
+      "ratio": 3.0,
+      "attack_ms": 6.72,
+      "release_ms": 358.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "dyn2_comp": {
+      "in": false,
+      "threshold_db": -15.3,
+      "ratio": 4.43,
+      "attack_ms": 0.5,
+      "release_ms": 333.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "tracks_bass": {
+   "label": "Tracks: bass",
+   "group": "playback",
+   "fallback": "tracks_music",
+   "samples": {
+    "channels": 9,
+    "shows": 8
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 32
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 7960
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "low_shelf",
+       "freq_hz": 100,
+       "gain_db": 4.0,
+       "q": 0.85
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 205,
+       "gain_db": -6.5,
+       "q": 1.27
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -17.2,
+     "ratio": 3.0,
+     "attack_ms": 10.09,
+     "release_ms": 235.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -12.5,
+     "ratio": 2.22,
+     "attack_ms": 1.66,
+     "release_ms": 111.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "tracks_bass"
+  },
+  "tracks_vocals": {
+   "label": "Tracks: BGV / vocal stems",
+   "group": "playback",
+   "fallback": "tracks_music",
+   "samples": {
+    "channels": 13,
+    "shows": 11
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 66
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 17500
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "low_shelf",
+       "freq_hz": 641,
+       "gain_db": -3.5,
+       "q": 0.85
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 300,
+       "gain_db": -1.5,
+       "q": 0.71
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 4160,
+       "gain_db": -3.5,
+       "q": 1.74
+      },
+      {
+       "band": 4,
+       "shape": "high_shelf",
+       "freq_hz": 5300,
+       "gain_db": 3.0,
+       "q": 0.85
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -55.8,
+     "range_db": 40.0,
+     "attack_ms": 0.05,
+     "hold_ms": 104.0,
+     "release_ms": 140.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "multiband",
+     "threshold_db": -15.1,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0,
+     "multiband": {
+      "xover_lo_hz": 130,
+      "xover_hi_hz": 1000,
+      "bands": [
+       {
+        "band": 1,
+        "threshold_db": -20.0,
+        "ratio": 2.0,
+        "attack_ms": 5.0,
+        "release_ms": 200.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 2,
+        "threshold_db": -20.0,
+        "ratio": 2.0,
+        "attack_ms": 25.0,
+        "release_ms": 400.0,
+        "gain_db": 0.0,
+        "on": true
+       },
+       {
+        "band": 3,
+        "threshold_db": -27.8,
+        "ratio": 3.26,
+        "attack_ms": 0.5,
+        "release_ms": 473.0,
+        "gain_db": 0.0,
+        "on": true
+       }
+      ]
+     }
+    },
+    "mustard_comp": {
+     "on": false,
+     "model": "classic",
+     "threshold_db": -21.6,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 250.0,
+     "knee": "hard",
+     "mix": 1.0,
+     "output_db": 0.0
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": -24.0,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "tracks_vocals",
+   "monitor": {
+    "samples": {
+     "channels": 7,
+     "shows": 4
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 40
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 1600,
+        "gain_db": -2.0,
+        "q": 2.42
+       },
+       {
+        "band": 4,
+        "shape": "high_shelf",
+        "freq_hz": 3630,
+        "gain_db": 3.0,
+        "q": 0.85
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -22.1,
+      "ratio": 3.0,
+      "attack_ms": 6.72,
+      "release_ms": 358.0,
+      "knee": "hard",
+      "makeup_db": 1.3
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "dyn2_comp": {
+      "in": false,
+      "threshold_db": -15.3,
+      "ratio": 4.43,
+      "attack_ms": 0.5,
+      "release_ms": 333.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "click": {
+   "label": "Click",
+   "group": "playback",
+   "fallback": null,
+   "samples": {
+    "channels": 21,
+    "shows": 17
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 73
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 12300
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -8.9,
+     "ratio": 3.41,
+     "attack_ms": 11.2,
+     "release_ms": 259.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": 14.57
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "click",
+   "monitor": {
+    "samples": {
+     "channels": 3,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 141
+     },
+     "lpf": {
+      "in": true,
+      "freq_hz": 8870
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -0.2,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 243.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "cues_guide": {
+   "label": "Cues / guide",
+   "group": "playback",
+   "fallback": null,
+   "samples": {
+    "channels": 12,
+    "shows": 9
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 61
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -54.1,
+     "range_db": 40.0,
+     "attack_ms": 2.0,
+     "hold_ms": 140.0,
+     "release_ms": 879.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": 3.92
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "cues_guide"
+  },
+  "timecode": {
+   "label": "Timecode (LTC/SMPTE)",
+   "group": "playback",
+   "fallback": null,
+   "samples": {
+    "channels": 9,
+    "shows": 9
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -0.2,
+     "ratio": 3.41,
+     "attack_ms": 11.2,
+     "release_ms": 243.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "timecode"
+  },
+  "media_playback": {
+   "label": "Walk-in music / video / media playback",
+   "group": "playback",
+   "fallback": null,
+   "samples": {
+    "channels": 24,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": false,
+     "freq_hz": 99
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 9620
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "media_playback"
+  },
+  "audience": {
+   "label": "Audience / crowd mics",
+   "group": "ambience",
+   "fallback": null,
+   "samples": {
+    "channels": 33,
+    "shows": 13
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 269
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 10700
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -32.0,
+     "ratio": 3.0,
+     "attack_ms": 12.39,
+     "release_ms": 500.0,
+     "knee": "soft",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "dyn2_comp": {
+     "in": false,
+     "threshold_db": 0.0,
+     "ratio": 9.25,
+     "attack_ms": 10.0,
+     "release_ms": 195.0
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "audience",
+   "monitor": {
+    "samples": {
+     "channels": 5,
+     "shows": 3
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 235
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 16100
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 205,
+        "gain_db": -9.5,
+        "q": 0.73
+       },
+       {
+        "band": 3,
+        "shape": "bell",
+        "freq_hz": 864,
+        "gain_db": -3.0,
+        "q": 1.51
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -28.0,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 500.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "measurement_ref": {
+   "label": "Reference / RTA mic",
+   "group": "ambience",
+   "fallback": "audience",
+   "samples": {
+    "channels": 12,
+    "shows": 9
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 141
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "measurement_ref"
+  },
+  "test_signal": {
+   "label": "Pink noise / tone",
+   "group": "ambience",
+   "fallback": null,
+   "samples": {
+    "channels": 17,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": false,
+     "freq_hz": 91
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": null
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -42.8,
+     "range_db": 90.0,
+     "attack_ms": 1.14,
+     "hold_ms": 620.0,
+     "release_ms": 2840.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "test_signal",
+   "monitor": {
+    "samples": {
+     "channels": 3,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": null
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": null,
+      "ratio": null,
+      "attack_ms": null,
+      "release_ms": null,
+      "knee": null,
+      "makeup_db": null
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "fx_reverb": {
+   "label": "FX return: reverb",
+   "group": "fx_returns",
+   "fallback": null,
+   "samples": {
+    "channels": 74,
+    "shows": 16
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": false,
+     "freq_hz": 157
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 10700
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -22.4,
+     "range_db": 18.0,
+     "attack_ms": 0.05,
+     "hold_ms": 348.0,
+     "release_ms": 90.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -24.7,
+     "ratio": 3.0,
+     "attack_ms": 1.0,
+     "release_ms": 358.0,
+     "knee": "medium",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "fx_reverb",
+   "monitor": {
+    "samples": {
+     "channels": 31,
+     "shows": 7
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 161
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 6410
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": null,
+      "ratio": null,
+      "attack_ms": null,
+      "release_ms": null,
+      "knee": null,
+      "makeup_db": null
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "fx_delay": {
+   "label": "FX return: delay / slap / throw",
+   "group": "fx_returns",
+   "fallback": null,
+   "samples": {
+    "channels": 23,
+    "shows": 15
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": false,
+     "freq_hz": 107
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 5750
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -20.0,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "fx_delay"
+  },
+  "fx_modulation": {
+   "label": "FX return: ADT / doubler / vibe",
+   "group": "fx_returns",
+   "fallback": "fx_delay",
+   "samples": {
+    "channels": 21,
+    "shows": 14
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": false,
+     "freq_hz": 133
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 10200
+    },
+    "eq": {
+     "in": false,
+     "bands": []
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -29.2,
+     "ratio": 3.0,
+     "attack_ms": 6.52,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "fx_modulation"
+  },
+  "fx_other": {
+   "label": "FX return: unnamed / other",
+   "group": "fx_returns",
+   "fallback": "fx_reverb",
+   "samples": {
+    "channels": 7,
+    "shows": 3
+   },
+   "thin": false,
+   "template": {
+    "stereo": true,
+    "hpf": {
+     "in": true,
+     "freq_hz": 73
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 15700
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 1020,
+       "gain_db": -18.0,
+       "q": 1.79
+      },
+      {
+       "band": 2,
+       "shape": "bell",
+       "freq_hz": 300,
+       "gain_db": -8.5,
+       "q": 0.71
+      },
+      {
+       "band": 3,
+       "shape": "bell",
+       "freq_hz": 4040,
+       "gain_db": -10.5,
+       "q": 1.76
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": null,
+     "range_db": null,
+     "attack_ms": null,
+     "hold_ms": null,
+     "release_ms": null
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": null,
+     "ratio": null,
+     "attack_ms": null,
+     "release_ms": null,
+     "knee": null,
+     "makeup_db": null
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "fx_other",
+   "monitor": {
+    "samples": {
+     "channels": 3,
+     "shows": 2
+    },
+    "template": {
+     "stereo": true,
+     "hpf": {
+      "in": true,
+      "freq_hz": 96
+     },
+     "lpf": {
+      "in": true,
+      "freq_hz": 6410
+     },
+     "eq": {
+      "in": false,
+      "bands": []
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": null,
+      "range_db": null,
+      "attack_ms": null,
+      "hold_ms": null,
+      "release_ms": null
+     },
+     "comp": {
+      "in": false,
+      "mode": "comp",
+      "threshold_db": null,
+      "ratio": null,
+      "attack_ms": null,
+      "release_ms": null,
+      "knee": null,
+      "makeup_db": null
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "talkback": {
+   "label": "Talkback",
+   "group": "comms",
+   "fallback": null,
+   "samples": {
+    "channels": 61,
+    "shows": 15
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 116
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 13700
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 242,
+       "gain_db": -8.0,
+       "q": 0.93
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -57.4,
+     "range_db": 40.0,
+     "attack_ms": 2.0,
+     "hold_ms": 140.0,
+     "release_ms": 255.0
+    },
+    "comp": {
+     "in": true,
+     "mode": "comp",
+     "threshold_db": -28.0,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "talkback",
+   "monitor": {
+    "samples": {
+     "channels": 19,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 165
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 10700
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 205,
+        "gain_db": -8.0,
+        "q": 1.04
+       },
+       {
+        "band": 2,
+        "shape": "bell",
+        "freq_hz": 394,
+        "gain_db": -6.0,
+        "q": 1.13
+       },
+       {
+        "band": 4,
+        "shape": "bell",
+        "freq_hz": 4040,
+        "gain_db": -2.5,
+        "q": 3.7
+       }
+      ]
+     },
+     "gate": {
+      "in": false,
+      "threshold_db": -60.0,
+      "range_db": 16.6,
+      "attack_ms": 2.0,
+      "hold_ms": 140.0,
+      "release_ms": 140.0
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -30.4,
+      "ratio": 3.41,
+      "attack_ms": 10.0,
+      "release_ms": 291.0,
+      "knee": "medium",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false,
+      "model": "optical",
+      "threshold_db": -26.8,
+      "ratio": 3.0,
+      "attack_ms": 10.0,
+      "release_ms": 250.0,
+      "knee": "hard",
+      "mix": 1.0,
+      "output_db": 0.0
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  },
+  "comms_radio": {
+   "label": "Comms / radio / VOG",
+   "group": "comms",
+   "fallback": "talkback",
+   "samples": {
+    "channels": 9,
+    "shows": 7
+   },
+   "thin": false,
+   "template": {
+    "stereo": false,
+    "hpf": {
+     "in": true,
+     "freq_hz": 126
+    },
+    "lpf": {
+     "in": false,
+     "freq_hz": 8410
+    },
+    "eq": {
+     "in": true,
+     "bands": [
+      {
+       "band": 1,
+       "shape": "bell",
+       "freq_hz": 170,
+       "gain_db": -4.5,
+       "q": 0.71
+      }
+     ]
+    },
+    "gate": {
+     "in": false,
+     "threshold_db": -53.9,
+     "range_db": 40.0,
+     "attack_ms": 2.0,
+     "hold_ms": 154.0,
+     "release_ms": 517.0
+    },
+    "comp": {
+     "in": false,
+     "mode": "comp",
+     "threshold_db": -29.9,
+     "ratio": 3.0,
+     "attack_ms": 10.0,
+     "release_ms": 500.0,
+     "knee": "hard",
+     "makeup_db": 0.0
+    },
+    "mustard_comp": {
+     "on": false
+    },
+    "delay": {
+     "on": false,
+     "ms": null
+    },
+    "polarity_invert": false
+   },
+   "use_template_of": "comms_radio",
+   "monitor": {
+    "samples": {
+     "channels": 4,
+     "shows": 3
+    },
+    "template": {
+     "stereo": false,
+     "hpf": {
+      "in": true,
+      "freq_hz": 144
+     },
+     "lpf": {
+      "in": false,
+      "freq_hz": 15300
+     },
+     "eq": {
+      "in": true,
+      "bands": [
+       {
+        "band": 1,
+        "shape": "bell",
+        "freq_hz": 248,
+        "gain_db": -7.5,
+        "q": 0.38
+       }
+      ]
+     },
+     "gate": {
+      "in": true,
+      "threshold_db": -48.9,
+      "range_db": 40.0,
+      "attack_ms": 2.0,
+      "hold_ms": 140.0,
+      "release_ms": 140.0
+     },
+     "comp": {
+      "in": true,
+      "mode": "comp",
+      "threshold_db": -30.1,
+      "ratio": 6.6,
+      "attack_ms": 0.57,
+      "release_ms": 267.0,
+      "knee": "hard",
+      "makeup_db": 0.0
+     },
+     "mustard_comp": {
+      "on": false
+     },
+     "delay": {
+      "on": false,
+      "ms": null
+     },
+     "polarity_invert": false
+    }
+   }
+  }
+ }
+}
