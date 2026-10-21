@@ -24,7 +24,14 @@ loads in Director offline will load on the console.
 7. Show names and show file names use only letters, numbers, spaces, `-` and `_`. No special characters
    (`& / \ : * ? " ' < > | # % .` beyond the `.tar.gz`, accents, em dashes, emoji). Special characters in a
    name can stop Director or the console from loading the show.
+8. Every mono bus count (mono groups, mono FX sends, mono auxes, mono matrices) must be even. An odd count
+   shifts the stereo mixes off their even bus, and the console selects the wrong strip. `dlive_mix.py` and
+   `dlive_lint.py` enforce the rule.
 Full risk write-up and console recovery steps: `references/console-safety.md`.
+
+**Field notes:** `references/field-notes.md` records how a working FOH engineer lays out a show (bus
+layout, colours, DCAs, ears mixed from FOH, plugin-host inserts, layers). Read it before building a show,
+and add to it when a script-built show comes back reworked from the field.
 
 ## Where things live
 
