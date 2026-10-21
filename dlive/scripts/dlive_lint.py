@@ -47,6 +47,8 @@ def lint(path):
     mc = MixConfig(mc_raw); c = mc.counts
     used = MixConfig.buses_used(c)
     if used > 64: r.err("MixConfig", "%d mix buses used (max 64)" % used)
+    odd = MixConfig.odd_mono(c)
+    if odd: r.err("MixConfig", "odd mono count %s: stereo mixes land off their even bus (console selects the wrong strip)" % odd)
     if mc_raw[7] != 1 or mc_raw[8] != 1: r.warn("MixConfig", "main mode is not LR; dlive_mix reconfigure refuses these")
     tok = files.get("Show/InputConfig/InputConfig.dat", b"").decode(errors="replace").split()
     if len(tok) != 65 or tok[0] != "1" or any(x not in ("0", "1") for x in tok[1:]):

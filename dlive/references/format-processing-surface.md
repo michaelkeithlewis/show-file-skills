@@ -29,14 +29,19 @@ Parametric EQ, Compressor, Compressor side chain source, Delay, Insert 1, Insert
   Insert routing lives in the patch section (`Ip Ins A/B return`; FX/UFX/Dyn8 unit inputs fed by type
   0x08/0x09 = input insert send A/B). A Dyn8/FX unit can sit on one channel only.
 - Dyn8 units: `Dynamics Unit N` (140 bytes) hold parameters only; the channel binding is the patch.
-- Compressor/Digital Attenuator have older shorter formats (88 / 5 bytes) in older shows; Director upgrades.
+- Compressor has an older shorter format (88 bytes) in older shows; Director upgrades it.
+- Digital Attenuator length follows the saving version, not the age: Director 2.11 and the A&H factory
+  shows write 7 bytes (`01 | trim s16 | phase | mute | 2 extra`); Director 2.12 and 2.12 consoles write
+  5 bytes. Both load in 2.12.
 
 ## SoftKeys: `Surface Soft Controls` (surface scenes)
 cSurfaceSoftControlManager::GetStatus @0x1004d8f00: `[02][u16 26][u16 26]` + 52 settings (two identical
 sets of 26) + a tail kept as is. Setting = `[function][01][LED colour 0-7][version][payload]`.
 Function ids (cXxxSoftSetting constructors): 00 unused, 02 library, 04 mute (channel: `01 <strip> <idx>`),
 05 PAFL, 0c tap tempo (8 bytes), 0d scene recall (`01 u16`), 0e custom MIDI, 0f PAFL clear, 10 scene go,
-11 scene control, 12 (12 bytes, unknown), 17 spills, 18 AMM, 1e (4 bytes, unknown), 1f talkback
+11 scene control, 12 Sel/Mix/PAFL combo (cPAFLComboSoftSetting, payload `<strip> <idx> <combo type> <flag> 00 00 ff ff`,
+e.g. `05 <st aux-1> 02 01` for one key per IEM mix; UI modes Sel Mix PAFL / Mix PAFL / Sel PAFL, type 02
+not mapped yet), 17 spills, 18 AMM, 1e (4 bytes, unknown), 1f talkback
 (`02 <group-1> <latch>`), 24 ABCD set all (`01 <1-4>`), 25 ABCD set channel, 2b virtual soundcheck
 (`01 <mode>`), 2d talkback additive, 33 multifunction (`01 <mode> <name on>\0 <name off>\0`).
 Older shows contain key types whose sizes are not decoded yet; the parser stops there and lint warns.
@@ -48,6 +53,12 @@ Text. Line 1 `2`, line 2 a hex id, then one action per line as comma tokens: `aa
 source key right after the `e8`. Seen: fn 5 send on/level to destinations, fn 6 (group/main keys), fn 7
 ABCD source select, fn 13 (0x0d) show a screen (`ad Routing/Routing`). Macros reference channels by number,
 so moving to a new artist means remapping (dlive_multifunctions.py remap). SoftKeys refer to macros by name.
+
+## MCA (Mix Control Association): `Show/MCASettings/MCASettings.dat`
+Text: line 1 `1`, line 2 = 24 comma-separated `true|false` (DCA 1-24: the DCA acts as an MCA) then one more
+number (`0` with no MCAs, `1` once DCAs are MCAs; probably the global MCA allow). An MCA fader moves its
+members' sends to the selected mix instead of their faders (cMCASettingsArchiverRestorer,
+cMCAActivationManager, SoftKeys MCAGlobalAllow / MCAForceOnMix).
 
 ## Surface layout: `Channel Left/Middle/Right Bank Switcher`
 `[01][strips per layer]` + 6 layers x strips x `[strip type][index]`. CTi1500/C1500 = left bank only,

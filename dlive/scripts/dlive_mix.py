@@ -62,6 +62,15 @@ class MixConfig:
     # sMixerConfigurationSettings::GetNumberOfMainMixChannels @0x1005676f0; byte 11 = stereo PAFL count
     MAIN_BUSES = (0, 2, 4, 4, 4, 6, 4)
 
+    # mono buses come in pairs: an odd mono count pushes every later stereo mix off its even bus, the console
+    # logs "this fn requires the mix number to be even" (MixerModule.cpp) and Sel on a stereo strip shows its
+    # neighbour. Director only offers even mono counts; no real show seen has an odd one.
+    MONO = ("MG", "mFX", "mAux", "mMtx")
+
+    @staticmethod
+    def odd_mono(c):
+        return {k: c[k] for k in MixConfig.MONO if c[k] % 2}
+
     @staticmethod
     def buses_used(c):
         mode = c.get("mode", 1)
@@ -512,6 +521,8 @@ def reconfigure(src, out, **changes):
     assert not unknown, "unknown keys %s (use %s)" % (unknown, KEYS)
     used = MixConfig.buses_used(new)
     assert used <= 64, "config needs %d of 64 mix buses" % used
+    odd = MixConfig.odd_mono(new)
+    assert not odd, "mono counts must be even (round up and leave the spare unused): %s" % odd
     newcfg = oldcfg.with_counts(new)
     files["Show/MixConfig/MixConfig.dat"] = bytes(newcfg.raw)
     fp = "Show/FollowPanSettings/FollowPanSettings.dat"

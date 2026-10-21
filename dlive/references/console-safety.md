@@ -33,6 +33,7 @@ Director round-trip below takes the remaining risk close to zero. Investigated 2
 |---|---|---|---|
 | Console firmware older than the Director that saved the show | Most likely real problem | Show refuses to load, or newer-format sections load as defaults | Ask the rental shop for the firmware version; open and save in the matching Director (keep more than one Director version installed) |
 | A writer bug producing a malformed section | Low (lint + byte checks) | Section skipped or show rejected | dlive_lint.py, then Director round-trip |
+| A well-formed show with a config the console cannot lay out (odd mono bus count) | Happened once on a script-built show | Show loads, console logs "this fn requires the mix number to be even", Sel on a stereo strip shows another channel | dlive_lint.py ERROR; dlive_mix.py refuses odd mono counts; fix on the console with a mixer config change to an even count |
 | Wrong but well-formed values (wrong patch, 48V on a ribbon) | Depends on the plan | Audio wrong, or a damaged ribbon mic | Plans come from the input list; ribbons are asserted 48V-off; check the I/O screen in Director |
 | A loaded show crashes the console and the bad state persists across reboots | Very low, never observed | Console stuck until reset | Hard reset (below); keep a known-good show on USB |
 
