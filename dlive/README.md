@@ -3,6 +3,8 @@
 Read and write Allen & Heath dLive show files (`.tar.gz`, firmware 2.x, show Version 14) without dLive Director
 open. This folder is a Claude Code skill (`SKILL.md`) and a set of plain Python scripts you can run yourself.
 
+To use it in the browser instead, go to [idontownapc.com/dlive](https://idontownapc.com/dlive): the same code, with a console view.
+
 ## What it does
 
 - Names, colours, stereo pairs, group, DCA and main assigns from a plan.

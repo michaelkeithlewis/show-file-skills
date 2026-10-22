@@ -8,6 +8,12 @@ Every format here was decoded by hand on real gigs: a console file had to be bui
 day off, a session had to be prepped on a bus, a recording rig had to match the console
 patch. This repo holds the tools and the notes so you do not have to decode them again.
 
+## Use it in the browser
+
+The `digico/` and `dlive/` folders power [I Don't Own a PC](https://idontownapc.com), a free web
+tool built on this code. Drop an input list or a show file and edit it on a console view in the
+browser: [DiGiCo sessions](https://idontownapc.com) and [dLive shows](https://idontownapc.com/dlive).
+
 ## Formats
 
 | Folder | Format | What you can do |
