@@ -40,7 +40,7 @@ against a fixed 0.5 / 80.
   fields go under `stored_unused`.
 - **Digital Attenuator**: `01 | trim gain | phase | mute`. Director 2.11 adds two trailing zero bytes (reported raw).
 - **Delay**: `01 | samples | bypass`. Samples are at 96 kHz. The FPGA maximum 0x7fff is 341.3 ms.
-- **Insert 1 / Insert 2**: `02 | bypass | level mode`.
+- **Insert 1 / Insert 2**: `02 | bypass | level mode`. Byte 1 is the BYPASS flag: 1 = insert OUT, 0 = IN (the default). Verified 2026-10-23 in Director 2.12: cInsertNetObject::GetStatus writes the field cInsertNetObject::InsertBypass sets.
 - **Preamp**: the MixRack socket section `StageBox Analogue Input, Number NN` is `01 | gain (whole dB) | pad | 48V`.
   The Channel Mapper's active source picks the socket. The default gain is 27 dB.
 - **Stereo pairs**: `Show/InputConfig/InputConfig.dat`, plus the mono flag in byte 7 of each input channel section
@@ -60,7 +60,7 @@ that work in dBFS need every dLive threshold 18 dB lower.
   table (-6, -6, -4.5, -3, -1 dB), not from the stored threshold field.
 - Distressor attack, release, ratio state and distortion; 16T and Opto states; LevelAmp and Bus fields.
 - The polarity of the `peq_before_comp` flag (every channel reads `true`).
-- The insert bypass sense: unpatched inserts read 0, so 0 does not prove an insert is in use.
+- An unpatched insert reads 0 (in) as well, so check the insert return patch before treating 0 as a live insert.
 - I/O-port and DX preamp socket mapping (shown as `?`). An I/O port that reads the 27 dB default on every socket
   is probably a network card without remote preamps.
 

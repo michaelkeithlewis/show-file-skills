@@ -92,7 +92,9 @@ def lint_stagebox(r, where, d, mc, live):
     if live and bytes(sc.header).find(b"\x15" + bytes(mc.raw)) < 0:
         i = bytes(sc.header).find(b"\x15\x01")
         blank = i > 0 and not any(sc.header[i + 2:i + 13])
-        (r.warn if blank else r.err)(where, "header recall filter %s the show's mixer config" % ("is blank, not" if blank else "does not carry"))
+        # Director 2.12 itself writes other recall-filter state here once a scene has been stored,
+        # so a mismatch is only a warning.
+        r.warn(where, "header recall filter %s the show's mixer config" % ("is blank, not" if blank else "does not carry"))
     old = (lambda w, m: r.warn(w, "older-format stored scene, Director converts it on recall: " + m)) if not live else r.err
     try:
         hdrs = []

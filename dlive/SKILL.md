@@ -92,6 +92,7 @@ Building from an input list with no template show: `references/show-maker.md`.
 - Bus count: MixConfig byte 8 is the main mode (0 none, 1 LR, 5 5.1, 6 LCR+) and byte 11 the stereo PAFL count.
   `MixConfig.buses_used` counts both, so a show with no main (the factory Monitors show) lints clean.
 - Input channel section: byte 0 main assign, byte 2 mute, bytes 3-4 fader, byte 5 pan 0-74, byte 7 mono flag.
+- Insert state: byte 1 of `Insert n, Input Channel NN` (and the mix `Insert, ...` sections) is the bypass flag, 1 = OUT, 0 = IN.
 - Insert "in" with nothing patched is harmless. A Dyn8/FX unit can be inserted on one channel only.
 - Name fields: 8 characters, NUL-terminated. Bytes after the NUL are leftovers Director keeps.
 - Older stored scenes in long-lived shows use older section formats (lint warns, Director converts).

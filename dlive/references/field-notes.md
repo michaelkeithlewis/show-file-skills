@@ -58,9 +58,10 @@ Colours: 0 off, 1 red, 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan, 7 white.
 
 - Plugin-host inserts sit on the FOH inputs over a Dante card. Talkbacks get no insert.
 - Two macro pairs:
-  1. LP OFF / LP ON switch only the inserts that return from the Dante card: insert A where the plugin
-     host sits on A, insert B where a Dyn8 or FX unit holds A, plus the Main insert. LP OFF is the
-     emergency bypass if the plugin host goes down.
+  1. LP OFF / LP ON switch only the plugin-host inserts actually in use: return from the Dante card, send
+     out the same card, switched IN in the engineer's newest save, on a channel with a source. Mix inserts on
+     the card (Main, a socials matrix) count. Bypassed ones stay out. LP OFF is the emergency bypass if the
+     plugin host goes down. Insert state byte 1 = bypass: 1 = OUT, 0 = IN.
   2. INSERTS OFF / INSERTS ON switch every A and B insert on every input, Dyn8 and onboard FX included.
 - The LP key lists OFF first (`mf:LP OFF/LP ON`).
 - Bus FX run through the plugin host too: mono auxes go out the Dante card and come back on stereo return
