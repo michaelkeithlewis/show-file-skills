@@ -132,7 +132,7 @@ The wrapped `import_audio` in py-ptsl is broken (see `PTSL_REFERENCE.md`).
 | dual-mono (identical L/R) | One mono track. `dualmono_to_mono` spots the louder side's clip. No rebounce, half the DSP. |
 | stereo | Keep stereo. |
 | mono | Mono. |
-| L-only + R-only (a stereo file pair, one side dead in each), or an L/R-named pair of mono files | ONE stereo track, always. `channels` lists the pairs at the end. `merge_lr_pair(e, name, folder, l_clip, r_clip)` spots the L file's left clip onto ch1 and the R file's right clip onto ch2. The clips can come from different files. No rebounce and no new file. |
+| L-only + R-only (a stereo file pair, one side dead in each), or an L/R-named pair of mono files | ONE stereo track, always. `channels` lists the pairs at the end. `merge_lr_pair(e, name, folder, l_clip, r_clip)` spots the L file's left clip onto ch1 and the R file's right clip onto ch2. The clips can come from different files. No rebounce and no new file. For a session that is already built, run `scripts/merge_pairs.py "<stems dir>"` with it open. |
 | L-only or R-only with no partner | One mono track from the live side. |
 
 Some exporters print each half of a hard-panned part as a full stereo file with one
@@ -262,6 +262,34 @@ ruler. Absolute markers do not move when they do.
 
 `e.save_session()`, then report: stems imported, foldered and routed, channel
 decisions, BPM and section bars, and the manual steps below.
+
+## Updating your template (and pushing the change into built sessions)
+
+Use this when you change template tracks in one song (vocal FX returns, the master's
+routing) and want the template and the other unmixed songs to match. Pro Tools does the
+copy through Import Session Data, so no restart is needed. Pro Tools holds one session at
+a time, so every step closes the open session. Save that session first. Do not edit the
+`.ptxt` as binary: the block schema drifts between versions, and new plug-ins need
+session-wide table entries.
+
+1. Back up the template `.ptxt`.
+2. Create a session from the template into a `.nosync` scratch folder.
+3. Run `scripts/push_session_data.sh "<source song .ptx>" "<scratch session .ptx>"`. It runs two imports:
+   - `FX_TRACKS` (default: the vocal FX returns) replace their same-named tracks with all track data.
+   - `MASTER_TRACKS` (default: `MASTER BUS`) take only main outputs and sends. The target keeps its
+     own master chain and its reference plug-in state.
+4. Run `ptax.py menu File "Save As Template..."`. Keep **Install template in system** and the
+   category. The name field ignores Accessibility writes: focus it, then type with
+   `ptkeys.py key 0 cmd` (select all) and `ptkeys.py text "<template name>"`. Press OK, then **Replace**.
+5. For each unmixed song, run `push_session_data.sh "<source .ptx>" "<song .ptx>"...`. One call
+   takes several targets. Then run `merge_pairs.py "<stems dir>"` and `route_folders.py --dry` while each
+   song is open.
+
+The helpers use Accessibility only and never type into the frontmost app:
+`ax_open_panel.py` (moves through the Open panel by selecting rows and pressing Open; keystrokes
+posted to the app do not reach that panel), `isd.py` (Import Session Data destinations), `trackdata.py`
+(the Track Data to Import checkboxes), `strips.py` (a strip's inserts, sends and output),
+`opensess.py` (open a session and wait for it), `ptkeys.py` (keys posted to the Pro Tools pid only).
 
 ## Manual steps PTSL cannot do
 
