@@ -78,7 +78,7 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
 2. Create from the engineer's template with `prep_session.create_from_template`
    (into a `.nosync` folder if Documents syncs to iCloud). It can take 10 to 20
    minutes and look hung; watch Pro Tools' CPU, not PTSL.
-3. Import (`import_stems`), fix channel formats (dual-mono to mono, stereo kept).
+3. Import (`import_stems`), fix channel formats (dual-mono to mono, stereo kept, hard-panned L/R pairs to one stereo track).
 4. Fold into the template's folders with `CId_SpotClipsByID`; verify every track with
    the EDL text export.
 5. **Route:** `$PY scripts/route_folders.py --dry`, then `route_folders.py`. It must

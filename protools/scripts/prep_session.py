@@ -109,13 +109,21 @@ def import_stems(file_list):
 # ---------- channel analysis (FULL FILE - never sample the head) -------------
 
 def channel_kind(path):
-    """Returns 'mono' | 'dual-mono' | 'stereo' analysing the WHOLE file.
-    (Head-sampling misclassifies stems whose intro is identical L/R but whose body is stereo.)"""
+    """Returns 'mono' | 'dual-mono' | 'stereo' | 'L-only' | 'R-only' analysing the
+    WHOLE file. (Head-sampling misclassifies stems whose intro is identical L/R but whose body is stereo.)
+    'L-only'/'R-only' = a stereo file with one side dead, i.e. one half of a
+    hard-panned pair. Those must be merged with their partner by lr_pairs(), not kept
+    as two stereo tracks."""
     import soundfile as sf
     if sf.info(path).channels < 2:
         return "mono"
     y, _ = sf.read(path, always_2d=True)
     L, R = y[:, 0], y[:, 1]
+    pl, pr = float(np.max(np.abs(L))), float(np.max(np.abs(R)))
+    if pr < 1e-5 < pl:
+        return "L-only"
+    if pl < 1e-5 < pr:
+        return "R-only"
     if float(np.max(np.abs(L - R))) < 1e-4:
         return "dual-mono"
     mid = np.sqrt(np.mean(((L + R) / 2) ** 2)); side = np.sqrt(np.mean(((L - R) / 2) ** 2))
@@ -128,6 +136,46 @@ def louder_side(path):
         return "L"
     r = [float(np.sqrt(np.mean(y[:, c] ** 2))) for c in range(2)]
     return "L" if r[0] >= r[1] else "R"
+
+def _pair_base(path):
+    """('<base>', 'L'|'R'|None) from a stem name: drops the export counter (_1, _2),
+    then a 'PAN L/R' tag anywhere ('CINEMA TOM PAN L 2.0' -> 'CINEMA TOM 2.0'),
+    else a trailing side tag (L, R, Left, ...)."""
+    b = re.sub(r"_\d+$", "", os.path.splitext(os.path.basename(path))[0])
+    m = (re.search(r"(?i)[\s_.-]+pan[\s_-]*(l|r|left|right)\b", b)
+         or re.search(r"(?i)[\s_.-]+(l|r|left|right)$", b))
+    if not m:
+        return b.strip(), None
+    return " ".join((b[:m.start()] + b[m.end():]).split()), m.group(1)[0].upper()
+
+def lr_pairs(stems_dir, kinds=None):
+    """Find hard-panned pairs that belong on ONE stereo track:
+    an L-only + R-only stereo file, or two mono files tagged L/R, sharing a base name
+    in the same folder. The side comes from the AUDIO for one-sided files, never the
+    name (one real drop named its RIGHT half '... PAN L_2'). Returns
+    {"pairs": [{name, folder, L, R, l_clip, r_clip, name_lies}], "lone": [...]}.
+    l_clip/r_clip are the PT clip names to spot with merge_lr_pair()."""
+    kinds = kinds or {f: channel_kind(f) for f in stem_files(stems_dir)}
+    groups = {}
+    for f, k in kinds.items():
+        base, tag = _pair_base(f)
+        side = {"L-only": "L", "R-only": "R"}.get(k) or (tag if k == "mono" else None)
+        if side:
+            groups.setdefault((os.path.dirname(f), base.upper()), []).append((f, k, side, tag, base))
+    pairs, lone = [], []
+    for (d, _), items in groups.items():
+        ls = [i for i in items if i[2] == "L"]; rs = [i for i in items if i[2] == "R"]
+        if len(ls) == 1 and len(rs) == 1:
+            (lf, lk, _, ltag, base), (rf, rk, _, rtag, _) = ls[0], rs[0]
+            root = lambda f: os.path.splitext(os.path.basename(f))[0]
+            pairs.append({"name": base, "folder": os.path.relpath(d, stems_dir),
+                          "L": lf, "R": rf,
+                          "l_clip": root(lf) + (".L" if lk != "mono" else ""),
+                          "r_clip": root(rf) + (".R" if rk != "mono" else ""),
+                          "name_lies": ltag == "R" or rtag == "L"})
+        else:
+            lone += [i[0] for i in items if i[1] != "mono"]   # one-sided, no partner -> mono of the live side
+    return {"pairs": pairs, "lone": lone}
 
 # ---------- organize: fold a loose track into a folder ----------------------
 
@@ -173,12 +221,34 @@ def dualmono_to_mono(e, dest_name, folder, clip_base, side):
         "dst_location_data": {"location_type": "SLType_Start",
                               "location": {"time_type": "TLType_Samples", "location": "0"}}})
 
+def merge_lr_pair(e, dest_name, folder, l_clip, r_clip, before_track=None):
+    """ONE stereo track from a hard-panned pair: spot l_clip on ch1 and r_clip on ch2.
+    The two clips may come from DIFFERENT files (one-sided stereo halves '<a>.L' +
+    '<b>.R', or two mono files) - SpotClipsByID takes that, verified on PT 2026.4. No rebounce, no new audio file. Verify with the EDL after."""
+    ids = [_clip_id(e, c) for c in (l_clip, r_clip)]
+    if not all(ids):
+        raise RuntimeError(f"clip not found: {[c for c, i in zip((l_clip, r_clip), ids) if not i]}")
+    pos = ({"insertion_point_position": "TIPoint_Before", "insertion_point_track_name": before_track}
+           if before_track else
+           {"insertion_point_position": "TIPoint_Last", "insertion_point_track_name": folder})
+    e.client.run_command(rc.CId_CreateNewTracks, {"number_of_tracks": 1, "track_name": dest_name,
+        "track_type": "TType_Audio", "track_format": "TFormat_Stereo", "track_timebase": "TTimebase_Samples",
+        **pos})
+    e.client.run_command(rc.CId_SpotClipsByID, {"src_clips": ids, "dst_track_name": dest_name,
+        "dst_location_data": {"location_type": "SLType_Start",
+                              "location": {"time_type": "TLType_Samples", "location": "0"}}})
+
 def _clip_id(e, clip_full_name):
-    cl = e.client.run_command(rc.CId_GetClipList, {"pagination_request": {"limit": 800, "offset": 0}})
-    for c in cl.get("clip_list", []):
-        if c.get("clip_full_name") == clip_full_name:
-            return c["clip_id"]
-    return None
+    off = 0
+    while True:
+        cl = e.client.run_command(rc.CId_GetClipList, {"pagination_request": {"limit": 500, "offset": off}})
+        page = cl.get("clip_list", [])
+        for c in page:
+            if c.get("clip_full_name") == clip_full_name:
+                return c["clip_id"]
+        if len(page) < 500:
+            return None
+        off += 500
 
 # ---------- color each stem to match its parent group -----------------------
 
@@ -291,11 +361,20 @@ def _cli():
     a = p.parse_args()
     if a.cmd == "channels":
         root = a.stems_dir
+        kinds = {}
         for f in stem_files(root):
             rel = os.path.relpath(os.path.dirname(f), root)
-            k = channel_kind(f)
+            k = kinds[f] = channel_kind(f)
             side = "  louder=" + louder_side(f) if k == "dual-mono" else ""
             print(f"{rel:24} {os.path.basename(f):28} {k}{side}", flush=True)
+        lr = lr_pairs(root, kinds)
+        if lr["pairs"] or lr["lone"]:
+            print("\nHARD-PANNED PAIRS -> one stereo track each (merge_lr_pair):")
+            for p in lr["pairs"]:
+                lie = "  (name lies about the side)" if p["name_lies"] else ""
+                print(f"  {p['name']}: L={p['l_clip']}  R={p['r_clip']}{lie}")
+            for f in lr["lone"]:
+                print(f"  NO PARTNER: {os.path.basename(f)} -> mono track from its live side")
     elif a.cmd == "download":
         print("materialized:", len(download_offloaded(a.stems_dir)))
     elif a.cmd == "grid":

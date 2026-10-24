@@ -57,7 +57,7 @@ plug-ins, Session Notes) while a session opens. Run it in a second terminal.
 
 ```
 $PY scripts/stemqc.py levels "<stems dir>"                 # peak / RMS / % active per stem
-$PY scripts/prep_session.py channels "<stems dir>"         # mono / dual-mono / stereo per file
+$PY scripts/prep_session.py channels "<stems dir>"         # mono / dual-mono / stereo / L-only / R-only, then pairs
 ```
 
 - Count the files and compare with what the sender says they sent. Drops often
@@ -132,7 +132,13 @@ The wrapped `import_audio` in py-ptsl is broken (see `PTSL_REFERENCE.md`).
 | dual-mono (identical L/R) | One mono track. `dualmono_to_mono` spots the louder side's clip. No rebounce, half the DSP. |
 | stereo | Keep stereo. |
 | mono | Mono. |
-| an L/R-named pair of mono files | Leave as two mono tracks panned hard L/R, or write one stereo file with `interleave.py` and import that. |
+| L-only + R-only (a stereo file pair, one side dead in each), or an L/R-named pair of mono files | ONE stereo track, always. `channels` lists the pairs at the end. `merge_lr_pair(e, name, folder, l_clip, r_clip)` spots the L file's left clip onto ch1 and the R file's right clip onto ch2. The clips can come from different files. No rebounce and no new file. |
+| L-only or R-only with no partner | One mono track from the live side. |
+
+Some exporters print each half of a hard-panned part as a full stereo file with one
+side silent. Take the side from the audio, not the name: one real drop named its right
+half `... PAN L_2`. The side tag can also sit mid-name (`CINEMA TOM PAN L 2.0_1`). If
+the pair's base name is already taken by another stem, add ` LR`.
 
 Confirm the borderline ones with the engineer (correlation 1.0 with a level offset
 is effectively mono).
@@ -260,7 +266,7 @@ decisions, BPM and section bars, and the manual steps below.
 ## Manual steps PTSL cannot do
 
 - Set the tempo and meter.
-- Pan (for example an L/R mono pair hard left and right).
+- Pan. (Hard-panned pairs do not need it: they become one stereo track in step 3.)
 - Faders and volume. Bypass plug-ins. Reorder tracks (for example move utility
   tracks to the top).
 - Set the main output of a track that is not in a folder: use
