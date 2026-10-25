@@ -87,8 +87,9 @@ Proven on real sessions:
 - Offline bounces with `export_mix`.
 
 Known limits (PTSL has no command for these):
-- Tempo and meter, pan, faders, plug-in insert or bypass, track order, move into
-  folder, combine two monos to stereo.
+- Meter, pan, faders, plug-in insert or bypass, track order, move into
+  folder, combine two monos to stereo. Tempo has no PTSL command either, but
+  `set_tempo.py` sets it at bar 1 through the Tempo Change dialog (Accessibility).
 - Setting outputs needs the Private API (an Avid-issued key), so this skill uses
   Accessibility instead. Accessibility controls only exist for tracks Pro Tools has
   drawn on screen.

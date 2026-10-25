@@ -88,8 +88,10 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
 6. Color by group, detect tempo (`prep_session.py grid` with a dense percussive
    source; read the candidate table), place section markers (`ptprep.py markers
    --lyrics`, `--structure`, or `stemqc.py arrangement` for instrumentals). Dry-run
-   first.
-7. Save and report, including what the engineer must do by hand (tempo, pans,
+   first. Then set the tempo with `$PY scripts/set_tempo.py <BPM>`: it types the BPM
+   into the Tempo ruler's Tempo Change dialog at bar 1 through Accessibility and reads
+   it back. Absolute markers and sample-based audio do not move.
+7. Save and report, including what the engineer must do by hand (meter, pans,
    faders, plug-in bypass, track order).
 
 Other tools: `ptprep.py` (marker CLI on an open session; `clear-prep` removes only
