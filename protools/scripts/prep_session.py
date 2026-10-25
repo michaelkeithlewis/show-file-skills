@@ -91,9 +91,43 @@ def stem_files(stems_dir, recursive=True):
                if f.lower().endswith((".wav", ".aif", ".aiff")) and not f.startswith("._")]
     return sorted(out)
 
+def stem_rates(file_list):
+    """{path: sample rate} for every stem (soundfile reads the header only)."""
+    import soundfile as sf
+    return {f: sf.info(f).samplerate for f in file_list}
+
+def resample_stems(stems_dir, rate=48000, out_dir=None, files=None):
+    """Convert every stem whose rate != `rate` to a `rate` 32-bit float AIFC copy with
+    afconvert (best SRC: --src-complexity bats, quality 127), mirroring the folders under
+    `<stems_dir> <rate/1000>k/`. Originals are kept. Returns the file list to import:
+    converted copies for the mismatched stems, originals for the rest.
+    AOperations_AddAudio LINKS a file without converting it, so a 44.1k stem imported
+    into a 48k session plays 8.8% fast and 1.5 semitones sharp ."""
+    import subprocess
+    from concurrent.futures import ThreadPoolExecutor
+    out_dir = out_dir or f"{stems_dir.rstrip('/')} {rate // 1000 if rate % 1000 == 0 else rate / 1000}k"
+    files = files or stem_files(stems_dir)
+    rates = stem_rates(files)
+    def conv(f):
+        if rates[f] == rate:
+            return f
+        o = os.path.join(out_dir, os.path.splitext(os.path.relpath(f, stems_dir))[0] + ".aif")
+        os.makedirs(os.path.dirname(o), exist_ok=True)
+        subprocess.run(["afconvert", "-f", "AIFC", "-d", f"BEF32@{rate}", "--src-complexity", "bats",
+                        "-r", "127", f, o], check=True)
+        return o
+    with ThreadPoolExecutor(4) as ex:
+        out = list(ex.map(conv, files))
+    bad = {o: r for o, r in stem_rates(out).items() if r != rate}
+    if bad:
+        raise RuntimeError(f"still not {rate}: {list(bad)[:3]}")
+    return out
+
 def import_stems(file_list):
     """Import audio to NEW tracks. Uses raw CId_Import with IType_Audio - the
-    wrapped import_audio is broken (hardcodes IType_Session)."""
+    wrapped import_audio is broken (hardcodes IType_Session).
+    REFUSES stems whose sample rate differs from the session's: AddAudio links them
+    unconverted and they play at the wrong speed and pitch. Run resample_stems first."""
     body = {"import_type": "IType_Audio", "audio_data": {
         "file_list": file_list,
         "audio_operations": "AOperations_AddAudio",
@@ -102,6 +136,11 @@ def import_stems(file_list):
         "location_data": {"location_type": "SLType_Start", "location_options": "TOOptions_TimeCode",
                           "location_value": "00:00:00:00"}}}
     with engine() as e:
+        sr = int(e.session_sample_rate())
+        wrong = {f: r for f, r in stem_rates(file_list).items() if r != sr}
+        if wrong:
+            raise RuntimeError(f"{len(wrong)} stems are not {sr} Hz (e.g. {next(iter(wrong))}: "
+                               f"{next(iter(wrong.values()))}); run resample_stems(dir, {sr}) and import its list")
         before = len(e.track_list())
         e.client.run_command(rc.CId_Import, body)
         return {"added": len(e.track_list()) - before}
@@ -358,6 +397,8 @@ def _cli():
     sp = sub.add_parser("channels"); sp.add_argument("stems_dir")
     sp = sub.add_parser("download"); sp.add_argument("stems_dir")
     sp = sub.add_parser("grid"); sp.add_argument("paths", nargs="+")
+    sp = sub.add_parser("rates"); sp.add_argument("stems_dir")
+    sp = sub.add_parser("resample"); sp.add_argument("stems_dir"); sp.add_argument("--rate", type=int, default=48000)
     a = p.parse_args()
     if a.cmd == "channels":
         root = a.stems_dir
@@ -379,6 +420,13 @@ def _cli():
         print("materialized:", len(download_offloaded(a.stems_dir)))
     elif a.cmd == "grid":
         print(json.dumps(detect_click_grid(a.paths), indent=2))
+    elif a.cmd == "rates":
+        from collections import Counter
+        r = stem_rates(stem_files(a.stems_dir))
+        print(len(r), "stems", dict(Counter(r.values())))
+    elif a.cmd == "resample":
+        out = resample_stems(a.stems_dir, a.rate)
+        print("import list:", len(out), "files,", sum(1 for f in out if not f.startswith(a.stems_dir.rstrip("/") + "/")), "converted")
 
 if __name__ == "__main__":
     _cli()

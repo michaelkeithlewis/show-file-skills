@@ -125,6 +125,16 @@ ps.import_stems(files)                    # raw CId_Import, one new track per fi
 
 The wrapped `import_audio` in py-ptsl is broken (see `PTSL_REFERENCE.md`).
 
+**Match the sample rate first.** `AOperations_AddAudio` links a file without converting
+it, and Pro Tools does not warn. A 44.1k stem in a 48k session plays 8.8% fast and
+1.5 semitones sharp. `import_stems` refuses a mismatched file. Run
+`prep_session.py rates "<stems dir>"`, then `prep_session.py resample "<stems dir>"` if a
+rate differs. It writes 32-bit float AIFC copies at the session rate (afconvert, best SRC)
+to `<stems dir> 48k/` and keeps the originals. Import that list. For a session that is
+already built on the wrong rate, run `resample_session.py "<stems dir>" --dry` with the
+session open, then run it without `--dry`. It swaps each affected track's clips in place
+(Slip mode, Clear, spot at sample 0) and keeps plug-ins and routing.
+
 ### 3. Decide each stem's channel format
 
 | `channels` says | Do |
