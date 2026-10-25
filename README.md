@@ -12,7 +12,9 @@ patch. This repo holds the tools and the notes so you do not have to decode them
 
 The `digico/` and `dlive/` folders power [I Don't Own a PC](https://idontownapc.com), a free web
 tool built on this code. Drop an input list or a show file and edit it on a console view in the
-browser: [DiGiCo sessions](https://idontownapc.com) and [dLive shows](https://idontownapc.com/dlive).
+browser: [DiGiCo sessions](https://idontownapc.com) and [dLive shows](https://idontownapc.com/dlive). The
+[DiGiCo Session Converter](https://idontownapc.com/digico-session-converter) writes a session for older DiGiCo
+software, which DiGiCo's SD & Q Convert can't do.
 
 ## Formats
 

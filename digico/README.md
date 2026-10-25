@@ -4,6 +4,7 @@ Read, build and edit DiGiCo SD and Quantum session files (`.ses`) by bytes, from
 can create session files without the console software open. This folder is a Claude Code skill (`SKILL.md`) and a Python library you can run yourself.
 
 To use it in the browser instead, go to [idontownapc.com](https://idontownapc.com): the same code, with a console view.
+To convert a session to older DiGiCo software in the browser, use the [DiGiCo Session Converter](https://idontownapc.com/digico-session-converter).
 
 ## What it does
 
