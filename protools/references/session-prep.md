@@ -376,3 +376,18 @@ missing from it may still exist. Never hard-code a bus list. With a Private API 
 the unlock would be: `EnableAPI(key)`, `GetTrackControlInfo` on a correctly routed
 track to read its `signalpath_id`, then `SetTrackMainOutputAssignments` on the new
 track. Without one, use Accessibility.
+
+### Panned-mono stems and clip-gain staging
+
+- **Panned-mono:** a mono part printed into a stereo file with a pan. The quiet side is an exact
+  scaled copy of the loud side, and `channel_kind` returns `panned-mono`. Build it as stereo and
+  route it. Then run `pan_to_mono.py --dry`, and run it again without `--dry`. The script creates a
+  mono track from the loud side in the same folder slot and copies the bus, color, solo and mute. It
+  types the pan into the Output window's `Front Pan Numerical` field. Pro Tools pans mono with an exact
+  sin/cos -3 dB law (0 = -3.01/-3.01 dB, 61 = -10.41/-0.41 dB), so
+  pan = `100*(4*atan(loud/quiet)/pi - 1)` reproduces the printed ratio. Half the DSP per track.
+- **Clip-gain staging:** `clipgain_normalize.py --dry`, then the same command without `--dry`. It sets
+  each track's clip gain so the gated average level sits at -18 dBFS. Peaks stop at -1 dBFS, and clip
+  gain stops at +36 dB. PTSL has no clip gain command, so the script sends Ctrl+Shift+Up/Down (one Clip
+  Gain Nudge each) to the Pro Tools process after `SelectAllClipsOnTrack`. Run it only on fresh clips,
+  and never while someone is working in the session.

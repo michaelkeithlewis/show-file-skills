@@ -165,6 +165,11 @@ def channel_kind(path):
         return "R-only"
     if float(np.max(np.abs(L - R))) < 1e-4:
         return "dual-mono"
+    # one mono signal printed with a pan: the quiet side is an exact scaled copy of the loud side
+    p, q = (L, R) if float(L @ L) >= float(R @ R) else (R, L)
+    g = float(p @ q) / float(p @ p)
+    if g > 0 and float(((q - g * p) ** 2).sum()) < 1e-6 * float(q @ q):
+        return "panned-mono"   # -> pan_to_mono.py (mono track from the loud side + the matching pan)
     mid = np.sqrt(np.mean(((L + R) / 2) ** 2)); side = np.sqrt(np.mean(((L - R) / 2) ** 2))
     return "stereo" if side / (mid + 1e-12) > 0.02 else "dual-mono"
 
