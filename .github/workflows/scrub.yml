@@ -1,0 +1,32 @@
+name: scrub
+# Runs on PRs from forks too. pull_request_target gives access to the
+# SCRUB_DENYLIST secret, so the PR is checked out as data only: the check
+# script always comes from main, and nothing from the PR is executed.
+on:
+  pull_request_target:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted check script (main)
+        uses: actions/checkout@v4
+        with:
+          path: base
+          persist-credentials: false
+      - name: Check out code under review
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          path: target
+          persist-credentials: false
+      - name: Scrub check
+        env:
+          SCRUB_DENYLIST: ${{ secrets.SCRUB_DENYLIST }}
+        run: |
+          printf '%s\n' "$SCRUB_DENYLIST" > "$RUNNER_TEMP/deny.txt"
+          bash base/.github/scrub-check.sh target "$RUNNER_TEMP/deny.txt"
