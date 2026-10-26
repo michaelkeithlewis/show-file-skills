@@ -408,3 +408,18 @@ track. Without one, use Accessibility.
 
 Faders are typed into each track's Output window (`Volume Numerical`). Posted keystrokes reset the
 Mac's HID idle timer, so `ptgui.py` records its own last keystroke to tell its input from a person's.
+
+### Premix: top-down faders
+
+After `plan`, run `premix.py topdown --faders plan.json --out td.json`, then `premix.py apply td.json`.
+Use `--live` instead of `--faders` if the session changed. What a folder's children share moves onto the folder fader,
+deepest first and then up to the parent, so stem faders sit near unity with good resolution. Folder faders sit after
+the folder's plug-ins, so a folder's children are lifted only until its bus input reaches -6 dBFS peak or -18 LUFS.
+A folder fader the engineer set by hand is left alone.
+
+### Revisions: finding a pop
+
+Bounce every bus in one pass. The bus with the HF burst names the folder, and a one-sample step in that bus over
+smooth raw stems means a plug-in or automation did it. Check every fix with a bounce from the song start, because
+time-based and triggered plug-ins carry state from where playback begins. `declick.py` repairs a few milliseconds of a
+bounced file by AR interpolation.

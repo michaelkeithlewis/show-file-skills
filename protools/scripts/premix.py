@@ -3,7 +3,10 @@
   premix.py trim   --out F.json [--headroom -6]         ONE fader value for every stem: loudest bus peak = headroom
   premix.py plan   --ref REF.wav --out F.json          balance: loudness-match inside each folder, reference
                                                         band match between folders, then the headroom trim
-  premix.py apply  F.json [--force]                    type the faders into each track's Output window
+  premix.py topdown --faders F.json --out G.json       move what a group shares onto its folder fader, parent first
+                                                        in effect (bus inputs stay <= -6 dBFS peak, -18 LUFS); --live
+                                                        reads the current faders from Pro Tools instead of F.json
+  premix.py apply  F.json [--force]                    type the faders (stems + "folder_faders") into the Output windows
   premix.py verify [--faders F.json] [--ref REF.wav]   offline-bounce every bus in one pass; peaks + bands vs ref
   premix.py check  --faders F.json --bpm N             4-bar windows: each folder's loudness vs the whole mix; flags
                                                         any folder (not kick/bass) within 2 LU of the mix = sticking out
@@ -52,6 +55,7 @@ def bands(y):
     return {nm: float(acc[(fr >= lo) & (fr < hi)].sum()) for lo, hi, nm in BANDS}
 
 # ---------- the session as Pro Tools sums it ----------------------------------------------------
+TOPO = [{}]   # routing folders: {name: {bus, out, parent, fader}}, filled by session_map()
 def session_map():
     with engine() as e:
         tl = e.track_list()
@@ -78,6 +82,15 @@ def session_map():
                    if str(ptax.attr(el, "AXTitle") or "").startswith("Audio Pan indicator")]
             v = ind[0].split()[-1] if ind else ">0<"
             pans[t.name] = 0 if v == ">0<" else (-int(v.strip("<")) if v.startswith("<") else int(v.strip(">")))
+    folders = {}
+    for t in tl:
+        if "Folder" not in kind[t.name] or g.get(t.name) is None: continue
+        vol = [ptax.attr(el, "AXValue") for el, d, _ in ptax.walk(g[t.name], max_depth=2)
+               if ptax.attr(el, "AXTitle") == "Volume" and ptax.attr(el, "AXRole") == "AXSlider"]
+        bus = next((k for k, v in inp.items() if v == t.name), None)
+        folders[t.name] = {"bus": bus, "out": out.get(t.name), "parent": t.parent_folder_name,
+                           "fader": (int(vol[0]) / 10.0) if vol and vol[0] is not None else 0.0}
+    TOPO[0] = folders
     tracks = {}
     for t in tl:
         if "Audio" not in kind[t.name] or t.name not in rows or not rows[t.name]: continue
@@ -135,6 +148,51 @@ def bus_sums(tracks, faders, n):
             sums[b] += y
     return {b: {"peak": float(20 * np.log10(np.abs(s).max() + 1e-12)), "lufs": kloud(s)} for b, s in sums.items()}
 
+def bus_sums_ff(tracks, faders, ffaders, n):
+    """Like bus_sums, but each routing folder's fader scales its output into the next bus up."""
+    bus2folder = {v["bus"]: k for k, v in TOPO[0].items() if v["bus"]}
+    sums = collections.defaultdict(lambda: np.zeros((n, 2), np.float32))
+    for name, tr in tracks.items():
+        y = np.load(cache(name)); g = faders.get(name, 0.0)
+        for b in tr["chain"]:
+            sums[b] += y * np.float32(10 ** (g / 20))
+            f = bus2folder.get(b)
+            if f: g += ffaders.get(f, 0.0)
+    return {b: {"peak": float(20 * np.log10(np.abs(s).max() + 1e-12)), "lufs": kloud(s)} for b, s in sums.items()}
+
+def topdown(tracks, faders, n, bus_headroom=-6.0, bus_lufs=-18.0, max_up=6.0):
+    """Rule: what a whole group shares belongs on the group fader, all the way up to the
+    parent group, so track faders sit near unity with good resolution. Folder faders sit AFTER the folder's
+    plug-ins, so lifting a folder's children raises that folder's bus input: lift only as far as the bus stays
+    at or below bus_headroom peak and bus_lufs average (pre-plug-in; the bus plug-ins get the same -18 the stems
+    get). Deepest folders first; the sum of faders on every path is kept, so the mix itself does not move."""
+    folders = TOPO[0]
+    fad = dict(faders); ff = {f: v["fader"] for f, v in folders.items()}
+    bus2folder = {v["bus"]: k for k, v in folders.items() if v["bus"]}
+    def depth(f):
+        d = 0
+        while folders.get(f, {}).get("parent"): f = folders[f]["parent"]; d += 1
+        return d
+    moves = {}
+    hand_set = {f for f, v in folders.items() if abs(v["fader"]) > 0.05}
+    for f in sorted(folders, key=depth, reverse=True):
+        b = folders[f]["bus"]
+        if not b: continue                                   # no bus (FX GROUP): its tracks bypass the fader
+        if f in hand_set: continue   # the engineer set this folder by hand (a folder driven hot into its own plug-ins):
+                                     # never change what feeds it; its fader still absorbs its parent's moves
+        kids_t = [x for x, t in tracks.items() if t["chain"] and t["chain"][0] == b]
+        kids_f = [c for c, v in folders.items() if v["out"] == b and c != f]
+        levels = [fad[x] for x in kids_t] + [ff[c] for c in kids_f]
+        if not levels: continue
+        st = bus_sums_ff(tracks, fad, ff, n).get(b, {"peak": -200, "lufs": -200})
+        r = min(-float(np.median(levels)), bus_headroom - st["peak"], bus_lufs - st["lufs"])   # raise the children by r ...
+        r = max(r, -(max_up - ff[f]))                             # ... the folder fader comes down by r
+        r = math.floor(r * 2) / 2
+        if r == 0: continue
+        for x in kids_t: fad[x] += r
+        for c in kids_f: ff[c] += r
+        ff[f] -= r; moves[f] = -r
+    return fad, ff, moves
 def band_shares(stats, faders, members=None):
     tot = {nm: 0.0 for _, _, nm in BANDS}
     for name, s in stats.items():
@@ -155,7 +213,7 @@ def ref_shares(ref):
 # Group loudness targets, LU relative to the kick group, gated over the parts where each group plays.
 # First-blend defaults; edit here. Matched against the folder name (first hit wins).
 ROLE_TARGETS = [("KICK", 0.0), ("SNARE", 0.0), ("BASS", -1.0), ("TOM", -3.0), ("GUITAR", -4.0), ("KEYS", -4.0),
-                ("ORCH", -4.0), ("BGV", -6.0), ("LV", 2.0), ("OH", -9.0), ("PERC", -9.0), ("FX", -9.0)]
+                ("ORCH", -4.0), ("BGV", -6.0), ("LV", 0.0), ("OH", -9.0), ("PERC", -9.0), ("FX", -9.0)]
 def role_target(folder):
     for k, v in ROLE_TARGETS:
         if k in folder.upper(): return v
@@ -227,13 +285,13 @@ def bounce_buses(buses, base):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["model", "trim", "plan", "apply", "verify", "check"])
+    ap.add_argument("cmd", choices=["model", "trim", "plan", "topdown", "apply", "verify", "check"])
     ap.add_argument("file", nargs="?"); ap.add_argument("--faders"); ap.add_argument("--ref"); ap.add_argument("--out")
     ap.add_argument("--headroom", type=float, default=-6.0); ap.add_argument("--force", action="store_true")
-    ap.add_argument("--bpm", type=float, default=120.0)
+    ap.add_argument("--bpm", type=float, default=120.0); ap.add_argument("--live", action="store_true")
     a = ap.parse_args()
     if a.cmd == "apply":
-        fad = json.load(open(a.file))["faders"]
+        doc = json.load(open(a.file)); fad = dict(doc["faders"]); fad.update(doc.get("folder_faders", {}))
         if user_idle_secs() < 120 and not a.force:
             sys.exit(f"someone used the Mac {user_idle_secs():.0f} s ago; rerun when Pro Tools is free (or --force)")
         guard_start()
@@ -266,6 +324,26 @@ def main():
             os.remove(os.path.join(bf, f))
         print(json.dumps(res, indent=1)); return
     stats = analyze(tracks, cg, n)
+    if a.cmd == "topdown":
+        if a.live:
+            g = ptax.track_groups(ptax.window("Mix:")); live = {}
+            for x in tracks:
+                v = [ptax.attr(el, "AXValue") for el, d, _ in ptax.walk(g[x], max_depth=2)
+                     if ptax.attr(el, "AXTitle") == "Volume" and ptax.attr(el, "AXRole") == "AXSlider"]
+                live[x] = int(v[0]) / 10.0 if v and v[0] is not None else 0.0
+            src = {"faders": live}
+        else:
+            src = json.load(open(a.faders))
+        fad, ff, moves = topdown(tracks, src["faders"], n)
+        before = bus_sums_ff(tracks, src["faders"], {f: v["fader"] for f, v in TOPO[0].items()}, n)
+        after = bus_sums_ff(tracks, fad, ff, n)
+        json.dump({**src, "faders": {x: round(v * 2) / 2 for x, v in fad.items()}, "folder_faders": ff, "topdown_moves": moves},
+                  open(a.out, "w"), indent=1)
+        print("folder faders:", {f: v for f, v in ff.items() if v})
+        print("track faders now", min(fad.values()), "to", max(fad.values()), "median", float(np.median(list(fad.values()))))
+        for bname in sorted(after):
+            print(f"BUS {bname:14} peak {before[bname]['peak']:6.1f} -> {after[bname]['peak']:6.1f}   {before[bname]['lufs']:6.1f} -> {after[bname]['lufs']:6.1f} LUFS")
+        return
     if a.cmd == "check":
         fad = json.load(open(a.faders))["faders"]
         sums = collections.defaultdict(lambda: np.zeros((n, 2), np.float32))
@@ -277,7 +355,7 @@ def main():
             m = kloud(mix[s0:s0 + win]); row = []
             for f in sorted(sums):
                 g = kloud(sums[f][s0:s0 + win]); row.append(f"{g - m:6.1f}" if g > -100 else "     .")
-                if g > -100 and g - m > -2.0 and "KICK" not in f.upper() and "BASS" not in f.upper():
+                if g > -100 and g - m > -2.0 and not any(k in f.upper() for k in ("KICK", "BASS", "LV")):   # anchors + the lead vocal
                     flags.append((1 + 4 * i, f, round(g - m, 1)))
             print(f"{1 + 4 * i:3}  {m:6.1f} " + " ".join(row))
         print("STICKING OUT (folder within 2 LU of the mix; fine when it is the only thing playing):", flags)
