@@ -1,5 +1,12 @@
 # Avid VENUE / D-Show show file (.dsh) format notes
 
+**Correction (2026-10-26).** The show these notes came from is an S6L show saved by VENUE 8.2, not a classic show.
+The token table below is also wrong in part: `0x0B` is a dictionary (a u32 count, then key and value pairs), `0x0C`
+is an array and `0x0D` is a blob (a u32 length, then raw bytes), and `0x06` is a signed 32-bit integer.
+`S6L-FORMAT.md` section 1 has the full container grammar. Classic shows use the same container: Avid's VENUE 2.9
+and 4.5 demo shows parse and write back byte for byte. The rest of this file stays as the record of the first
+decode, and `dshow_tool.py` still works the way it describes.
+
 Decoded by hand from one show saved by a classic VENUE system (Profile / SC48 / D-Show
 family, show path `D:\D-Show\User Data\Shows\...`). Avid does not publish this format.
 These notes cover what was observed in that file. Other software versions and console

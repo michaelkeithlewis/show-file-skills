@@ -10,9 +10,10 @@ patch. This repo holds the tools and the notes so you do not have to decode them
 
 ## Use it in the browser
 
-The `digico/` and `dlive/` folders power [I Don't Own a PC](https://idontownapc.com), a free web
-tool built on this code. Drop an input list or a show file and edit it on a console view in the
-browser: [DiGiCo sessions](https://idontownapc.com) and [dLive shows](https://idontownapc.com/dlive). The
+The `digico/`, `dlive/`, `yamaha/` and `venue/` folders power [I Don't Own a PC](https://idontownapc.com), a free
+web tool built on this code. Drop an input list or a show file and edit it on a console view in the
+browser: [DiGiCo sessions](https://idontownapc.com), [dLive shows](https://idontownapc.com/dlive),
+[Yamaha CL, QL and DM7 shows](https://idontownapc.com/yamaha) and [Avid S6L shows](https://idontownapc.com/s6l). The
 [DiGiCo Session Converter](https://idontownapc.com/digico-session-converter) writes a session for older DiGiCo
 software, which DiGiCo's SD & Q Convert can't do.
 
@@ -26,7 +27,8 @@ software, which DiGiCo's SD & Q Convert can't do.
 | [`logic/`](logic/) | Apple Logic Pro `ProjectData` | Read channel strips, insert slots and routing, measure plug-in latency, bounce through Accessibility |
 | [`livetrax/`](livetrax/) | LiveTrax 3 (Ardour XML) | Generate multitrack record templates from an input list |
 | [`liveprofessor/`](liveprofessor/) | LiveProfessor `.rack2` (JUCE ValueTree) | Read, write and generate pre-routed sessions byte-exact |
-| [`venue/`](venue/) | Avid VENUE / D-Show `.dsh` | Read the show tree and rename channels safely |
+| [`venue/`](venue/) | Avid VENUE `.dsh`: S6L, and classic D-Show, Profile and SC48 | Read a whole S6L show, plug-in racks included. On VENUE 8.2 shows: names, faders, colours and rack slot clears, each loaded back in VENUE Standalone. Classic shows: config and strip names |
+| [`yamaha/`](yamaha/) | Yamaha CL and QL (`.CLF`), DM7 and DM5 (`.dm7f`, `.dmxf`), DM3 and TF | Read the show. On CL, QL and DM7 V2.01: names, colours, faders, ON keys, HPF, input patch and head amps, each loaded back in the Yamaha editor |
 | [`macos-accessibility/`](macos-accessibility/) | macOS Accessibility (AX) | Drive Logic, Pro Tools and save panels by name, with no screenshots or mouse |
 
 Each folder is a [Claude Code](https://claude.com/claude-code) skill: copy it into
@@ -58,6 +60,6 @@ belong to someone else.
 ## License and trademarks
 
 MIT, see [LICENSE](LICENSE). No warranty. This project is not affiliated with or endorsed by
-Allen & Heath, DiGiCo, Avid, Apple, Harrison, Ardour or the makers of LiveProfessor. All
+Allen & Heath, DiGiCo, Avid, Yamaha, Apple, Harrison, Ardour or the makers of LiveProfessor. All
 product names are trademarks of their owners. Part of the dLive field map credits
 [jaylenjinx/dlive-show-editor](https://github.com/jaylenjinx/dlive-show-editor).
