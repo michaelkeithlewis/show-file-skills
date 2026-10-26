@@ -8,25 +8,46 @@ from ApplicationServices import AXUIElementPerformAction, AXUIElementSetAttribut
 from Quartz import (CGEventCreateKeyboardEvent, CGEventPostToPid, CGEventKeyboardSetUnicodeString, CGEventSetFlags,
                     kCGEventFlagMaskControl, kCGEventFlagMaskShift)
 
-def user_idle_secs():
-    """Seconds since the last keyboard/mouse input on the Mac (HIDIdleTime)."""
+LAST = "/tmp/ptgui_lastkey"
+def hid_idle():
+    """Seconds since the last keyboard/mouse input on the Mac (HIDIdleTime). Our own CGEventPostToPid
+    keystrokes reset it too (verified 2026-10-26: a posted Shift took it from 90 s to 1 s)."""
     import subprocess
     out = subprocess.run(["ioreg", "-c", "IOHIDSystem"], capture_output=True, text=True).stdout
     m = re.search(r'"HIDIdleTime" = (\d+)', out)
     return int(m.group(1)) / 1e9 if m else 0.0
+def _mark():
+    open(LAST, "w").write(str(time.time()))
+def since_my_last_key():
+    try: return time.time() - float(open(LAST).read())
+    except Exception: return float("inf")
+def user_idle_secs():
+    """Seconds since the last input that was NOT one of our keystrokes (inf when the newest input is ours)."""
+    hid, mine = hid_idle(), since_my_last_key()
+    return float("inf") if abs(hid - mine) < 2.0 else hid
+RUN_START = [time.time()]
+def guard_start():
+    """Call once the idle check passes; user_touched() then watches for input after this moment."""
+    RUN_START[0] = time.time()
+def user_touched():
+    """True if someone typed or moved the mouse after the run started and after our last keystroke."""
+    return hid_idle() + 2.0 < min(since_my_last_key(), time.time() - RUN_START[0])
 
 PID = ptax.pt_pid()
 def text(s):
+    _mark()
     for ch in s:
         for d in (True, False):
             ev = CGEventCreateKeyboardEvent(None, 0, d); CGEventKeyboardSetUnicodeString(ev, len(ch), ch)
             CGEventPostToPid(PID, ev)
         time.sleep(0.04)
+    _mark()
 def key(code, flags=0):
     for d in (True, False):
         ev = CGEventCreateKeyboardEvent(None, code, d)
         if flags: CGEventSetFlags(ev, flags)
         CGEventPostToPid(PID, ev); time.sleep(0.03)
+    _mark()
 def close_floating():
     for w in ptax.children(ptax.app()):
         if ptax.attr(w, "AXSubrole") == "AXFloatingWindow":

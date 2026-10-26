@@ -9,12 +9,12 @@ Average = mean power of 400 ms blocks above -60 dBFS and within 20 dB of the mea
 PTSL cannot read clip gain, so run this on FRESH clips (right after prep, clip gain 0). Tracks with
 edited clips (more than one clip per channel, or a clip that starts past the file start) are skipped
 unless named with --tracks. Never run it while the engineer is working: the keystrokes hit his selection."""
-import argparse, collections, math, os, sys
+import argparse, collections, json, math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np, soundfile as sf
 from ptctl import engine
 from ptsl import PTSL_pb2 as pt
-from ptgui import nudge_clip_gain, posix, paged, edl, user_idle_secs
+from ptgui import nudge_clip_gain, posix, paged, edl, user_idle_secs, user_touched, guard_start
 
 NUDGE = 0.5
 
@@ -44,11 +44,16 @@ with engine() as e:
     tl = {t.name: t for t in e.track_list()}
     clips = {c["clip_full_name"]: c for c in paged(e, pt.CId_GetClipList, {}, "clip_list")}
     files = {f["file_id"]: posix(f["path"]) for f in paged(e, pt.CId_GetFileLocation, {"file_filters": ["FLTFilter_AllFiles"]}, "file_locations")}
+    st = e.client.run_command(pt.CId_GetSessionPath, {})
+    log = os.path.join(os.path.dirname(posix(st["session_path"]["path"])), ".premix_clipgain.json")
+    applied = json.load(open(log)) if os.path.exists(log) else {}
     plan, skipped = [], []
     for name, rows in edl(e).items():
         t = tl.get(name)
         if t is None or not rows or (a.tracks and name not in a.tracks) or (a.folders and t.parent_folder_name not in a.folders):
             continue
+        if name in applied and not a.tracks:
+            continue   # already clip-gained (see .premix_clipgain.json); name it with --tracks to add more
         cs = [clips.get(r[2]) for r in rows]
         per_ch = collections.Counter(r[0] for r in rows)
         edited = (not all(cs) or max(per_ch.values()) > 1 or any(c["src_start_point"]["position"] != 0 for c in cs)
@@ -72,7 +77,11 @@ with engine() as e:
     if a.dry: sys.exit()
     if user_idle_secs() < 120 and not a.force:
         sys.exit(f"someone used the Mac {user_idle_secs():.0f} s ago; rerun when Pro Tools is free (or --force)")
+    guard_start()
     for name, rms, peak, steps in plan:
+        if user_touched(): sys.exit("STOPPED: someone used the Mac mid-run; rerun to finish (tracks already in .premix_clipgain.json are skipped)")
         nudge_clip_gain(e, name, steps)
+        applied[name] = applied.get(name, 0.0) + steps * NUDGE   # premix.py reads this: PTSL cannot read clip gain
+        json.dump(applied, open(log, "w"), indent=1)
         print("GAINED", name, f"{steps * NUDGE:+.1f}", flush=True)
     print("NORMALIZE DONE", len(plan), flush=True)
