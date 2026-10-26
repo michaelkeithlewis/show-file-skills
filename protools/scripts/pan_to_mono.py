@@ -1,6 +1,5 @@
 """pan_to_mono.py [--folders LV BGV] [--tracks NAME...] [--dry] [--no-comp]
-Stereo tracks that are really ONE mono signal printed with a pan (the quiet side is an exact
-scaled copy of the loud side; -10.0 dB on L = pan 61 R) waste a
+Stereo tracks that are really ONE mono signal printed with a pan (the quiet side is an exact scaled copy of the loud side; -10.0 dB on L = pan 61 R) waste a
 stereo voice and stereo plug-ins. For each one, with the session open:
   1. Rename the stereo track "<name> ~stereo" and create a MONO "<name>" just before it (same folder).
   2. Spot the LOUDER side's clip at sample 0.
@@ -19,7 +18,7 @@ import numpy as np, soundfile as sf
 import ptax
 from ptctl import engine
 from ptsl import PTSL_pb2 as pt
-from ptgui import set_pan, nudge_clip_gain, strip, posix, paged, edl, user_idle_secs
+from ptgui import set_pan, nudge_clip_gain, strip, posix, paged, edl, user_idle_secs, user_touched, guard_start
 
 def classify(path):
     y, _ = sf.read(path, dtype="float64", always_2d=True)
@@ -61,7 +60,9 @@ with engine() as e:
     if a.dry: sys.exit()
     if user_idle_secs() < 120 and not a.force:
         sys.exit(f"someone used the Mac {user_idle_secs():.0f} s ago; rerun when Pro Tools is free (or --force)")
+    guard_start()
     for name, t, side, info in todo:
+        if user_touched(): sys.exit("STOPPED: someone used the Mac mid-run; rerun to finish (converted tracks no longer qualify)")
         s = strip(name)
         bus = ptax.out_label(ptax.find(s, "AXPopUpButton", "Audio Output Path selector")).rsplit(" (", 1)[0]
         soloed, muted = bool(t.track_attributes.is_soloed), bool(t.track_attributes.is_muted)

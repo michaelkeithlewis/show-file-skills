@@ -391,3 +391,20 @@ track. Without one, use Accessibility.
   gain stops at +36 dB. PTSL has no clip gain command, so the script sends Ctrl+Shift+Up/Down (one Clip
   Gain Nudge each) to the Pro Tools process after `SelectAllClipsOnTrack`. Run it only on fresh clips,
   and never while someone is working in the session.
+
+### Premix: a first balance
+
+1. `clipgain_normalize.py`: clip gain puts every stem's gated average at -18 dBFS.
+2. `premix.py trim --out trim.json`, then `premix.py apply trim.json`: one fader value for every stem,
+   so the loudest bus peaks at -6 dBFS before plug-ins.
+3. `premix.py verify --ref <reference>`: offline-bounces every bus in one pass
+   (`EM_DF_FilePerMixSource`) and reports peaks, loudness and tonal bands against the reference.
+4. `premix.py plan --ref <reference> --out plan.json`, then `apply`, then `verify`. Each stem is
+   loudness-matched inside its folder. Each folder goes to a role offset from the kick (`ROLE_TARGETS`).
+   The reference nudges each folder by at most ±3 dB. A free spectral fit is degenerate, because
+   group spectra overlap.
+5. `premix.py check --faders plan.json --bpm N`: flags any folder that comes within 2 LU of the whole
+   mix in a 4-bar window.
+
+Faders are typed into each track's Output window (`Volume Numerical`). Posted keystrokes reset the
+Mac's HID idle timer, so `ptgui.py` records its own last keystroke to tell its input from a person's.
