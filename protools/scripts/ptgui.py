@@ -74,6 +74,19 @@ def nudge_clip_gain(e, track, steps):
     for _ in range(abs(steps)):
         key(126 if steps > 0 else 125, kCGEventFlagMaskControl | kCGEventFlagMaskShift); time.sleep(0.06)
     time.sleep(0.3)
+def nudge_clip_gain_range(e, track, t0, t1, steps):
+    """Clip gain on part of a track: select the track, set the timeline selection t0-t1 (seconds), nudge.
+    Pro Tools adds clip-gain breakpoints at the selection edges, so put the edges where the audio is quiet or masked."""
+    if not steps: return
+    close_floating()
+    ew = ptax.window("Edit:"); AXUIElementPerformAction(ew, "AXRaise"); AXUIElementSetAttributeValue(ew, "AXMain", True)
+    time.sleep(0.3)
+    e.client.run_command(pt.CId_SelectTracksByName, {"track_names": [track], "selection_mode": "SM_Replace"})
+    e.client.run_command(pt.CId_SetTimelineSelection, {"in_time": str(int(t0 * 48000)), "out_time": str(int(t1 * 48000)), "location_type": "TLType_Samples"})
+    time.sleep(0.2)
+    for _ in range(abs(steps)):
+        key(126 if steps > 0 else 125, kCGEventFlagMaskControl | kCGEventFlagMaskShift); time.sleep(0.06)
+    time.sleep(0.3)
 def posix(p): return "/" + p.split(":", 1)[1].replace(":", "/") if ":" in p and not p.startswith("/") else p
 def paged(e, cid, body, k):
     out, off = [], 0

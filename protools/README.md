@@ -1,8 +1,10 @@
 # protools: Pro Tools control and session prep for Claude Code
 
 A Claude Code skill that drives a running Pro Tools session through Avid's Pro
-Tools Scripting SDK (PTSL), and turns a folder of stems into a templated,
-organized, routed and marked-up session.
+Tools Scripting SDK (PTSL), and covers the whole studio chain: a folder of stems
+becomes a templated, organized, routed and marked-up session, gets a first premix,
+and goes back out as a properly named, versioned bounce delivered to the client on
+Samply (with the [`samply/`](../samply/) skill) or to mastering.
 
 You ask in plain words ("mute the drums", "drop a marker at the chorus", "prep
 this song from these stems", "route the stems to their groups") and Claude runs
@@ -23,6 +25,19 @@ the scripts in this folder on your Mac.
   instrumentals (`scripts/ptprep.py`, `scripts/stemqc.py`).
 - **Stem QC:** dead or clipped stems, per-group activity in bars, and
   identification of unnamed stems by listening (`scripts/stemid.py`).
+- **Premix:** clip-gain staging to -18 dBFS, one headroom trim, a role-based balance
+  checked against a reference, top-down folder faders, and a check for anything that
+  sticks out (`scripts/clipgain_normalize.py`, `scripts/premix.py`).
+- **Reference and headphones:** a song's reference loaded into ADPTR Metric AB synced
+  to the timeline, with its offset against the stems measured first
+  (`scripts/metricab_ref.py`, `scripts/ref_align.py`, `scripts/hp_metricab.py`).
+- **Files, bounces and delivery:** a song-folder layout, one bounce name used
+  everywhere (`<Song>_<Initials>_V<n>_PtMst.wav`), versioning, a FINALS folder for
+  mastering, and upload to Samply as a new track or a new version
+  (`references/session-prep.md`, "Bounce, name, version, deliver").
+- **Live captures:** stems onto a streaming or broadcast template's own tracks from a
+  map, and section markers for a service or a show with no click
+  (`scripts/place_onto.py`, `scripts/envelopes.py`, `scripts/tx_regions.py`).
 - **GUI gaps:** PTSL cannot set a track's output. `scripts/ptax.py` does it through
   the macOS Accessibility API, by control name, with no mouse or screen coordinates.
 
@@ -40,7 +55,9 @@ The playbooks and format notes are in `references/`.
 
 ## Install
 
-1. Copy this folder to `~/.claude/skills/protools`.
+1. Copy this folder to `~/.claude/skills/protools` (Claude Code loads every folder in
+   `~/.claude/skills/` that has a `SKILL.md`). For delivery, also copy
+   [`samply/`](../samply/) to `~/.claude/skills/samply` and follow its README.
 2. Create the venv and install the packages:
    ```
    cd ~/.claude/skills/protools
@@ -73,7 +90,8 @@ $PY scripts/route_folders.py --dry
 ```
 
 In Claude Code, just ask: "prep this song from the stems in <folder> using my
-template <group>/<name>".
+template <group>/<name>", "premix it against the reference", "bounce V2 and put it
+on Samply as a new version".
 
 ## Status: what is proven and what is not
 
@@ -83,13 +101,17 @@ Proven on real sessions:
   foldering with EDL verification, color, markers) on a 2026 build, including a
   64-stem drop with no input from the engineer.
 - `route_folders.py`: 51 of 51 tracks routed on a test session.
+- `set_tempo.py`, `clipgain_normalize.py`, `pan_to_mono.py`, `premix.py` (all verbs),
+  `merge_pairs.py`, `resample_session.py`, the Metric AB reference flow and the
+  template-update helpers, on real sessions on a 2026 build.
 - `stemid.py`: 45 of 51 folders and 25 of 25 L/R pairs on a 76-file test drop.
 - Offline bounces with `export_mix`.
 
 Known limits (PTSL has no command for these):
 - Meter, pan, faders, plug-in insert or bypass, track order, move into
-  folder, combine two monos to stereo. Tempo has no PTSL command either, but
-  `set_tempo.py` sets it at bar 1 through the Tempo Change dialog (Accessibility).
+  folder, combine two monos to stereo. Tempo, pan and faders have no PTSL command
+  either, but `set_tempo.py`, `pan_to_mono.py` and `premix.py apply` set them through
+  Accessibility. Spotting clips by id combines two monos into one stereo track.
 - Setting outputs needs the Private API (an Avid-issued key), so this skill uses
   Accessibility instead. Accessibility controls only exist for tracks Pro Tools has
   drawn on screen.
@@ -102,6 +124,9 @@ Verified for this release (on a machine without Pro Tools):
 - Offline smoke tests on synthetic audio: `prep_session.py channels` and `grid`,
   `stemqc.py levels` and `arrangement`, `analyze.py`, `interleave.py`,
   `envelopes.py`, `ref_compare.py`.
+- `place_onto.py`, `ref_align.py`, `tx_regions.py`, `hp_metricab.py` and
+  `metricab_ref.py` were generalized for publication (hard-coded maps and paths became
+  arguments) and have not been re-run in that form.
 - The PTSL and Accessibility scripts were not re-run against Pro Tools after the
   clean-up for publication (paths and names changed, logic did not).
 

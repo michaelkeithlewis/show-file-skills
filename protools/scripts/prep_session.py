@@ -102,7 +102,7 @@ def resample_stems(stems_dir, rate=48000, out_dir=None, files=None):
     `<stems_dir> <rate/1000>k/`. Originals are kept. Returns the file list to import:
     converted copies for the mismatched stems, originals for the rest.
     AOperations_AddAudio LINKS a file without converting it, so a 44.1k stem imported
-    into a 48k session plays 8.8% fast and 1.5 semitones sharp ."""
+    into a 48k session plays 8.8% fast and 1.5 semitones sharp."""
     import subprocess
     from concurrent.futures import ThreadPoolExecutor
     out_dir = out_dir or f"{stems_dir.rstrip('/')} {rate // 1000 if rate % 1000 == 0 else rate / 1000}k"
@@ -148,7 +148,7 @@ def import_stems(file_list):
 # ---------- channel analysis (FULL FILE - never sample the head) -------------
 
 def channel_kind(path):
-    """Returns 'mono' | 'dual-mono' | 'stereo' | 'L-only' | 'R-only' analysing the
+    """Returns 'mono' | 'dual-mono' | 'panned-mono' | 'stereo' | 'L-only' | 'R-only' analysing the
     WHOLE file. (Head-sampling misclassifies stems whose intro is identical L/R but whose body is stereo.)
     'L-only'/'R-only' = a stereo file with one side dead, i.e. one half of a
     hard-panned pair. Those must be merged with their partner by lr_pairs(), not kept

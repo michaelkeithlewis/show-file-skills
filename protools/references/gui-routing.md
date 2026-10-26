@@ -70,6 +70,10 @@ Work in the **Edit window**; its I/O column shows each track's output selector.
 in the session.** Never click with Option alone. Output changes are not on the undo
 list; fix a wrong route by routing again.
 
+**Utility tracks** (board feed, click, talkback) go to a monitor output, not a bus.
+Same steps; search for the output name. Loose tracks already feed the main bus, so
+leave them alone (or use `ptax.py route <output> <track>...`).
+
 After the last folder, save with the SDK (`e.save_session()`).
 
 ## Step 3: optional bounce check

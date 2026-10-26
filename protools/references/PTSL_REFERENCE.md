@@ -237,8 +237,15 @@ bounce source.
   control values and automation, but they are Private API (see below).
 
 Pick one naming pattern for bounces and keep it, for example
-`<Song>_<initials>_V<n>_<bus>.wav`. Pass that string (minus `.wav`) as `base_name`.
-To find the next version number, list `Bounced Files/`.
+`<Song>_<Initials>_V<n>_PtMst.wav` (`PtMst` = post master bus, `PrMst` = pre master bus).
+Pass that string (minus `.wav`) as `base_name`, and use the same string as the file
+name when you deliver it. To find the next version number, list `Bounced Files/`.
+The full naming, versioning and delivery convention is in `session-prep.md`
+("Bounce, name, version, deliver"); uploading to Samply is in `../../samply/`.
+
+To bounce several buses in one pass (one file per bus), pass every bus as a source
+and set `EM_DF_FilePerMixSource`. With `SingleFile` and several sources, Pro Tools
+writes one multichannel file instead.
 
 ## Create a session from scratch + import audio (2026 build)
 
@@ -286,6 +293,32 @@ route is the Accessibility API (`ptax.py`, `route_folders.py`).
 There is also no PTSL command for: tempo or meter, pan, fader or volume, plug-in
 insert or bypass, track reorder, moving a track into a folder, split-to-mono, or
 combine-to-stereo.
+
+## Field notes: revisions and markers
+
+- **Memory locations:** `CId_CreateMemoryLocation` takes `number` (not `memory_number`; a wrong
+  field fails silently). `start_time` and `end_time` must share a reference type: copy Bars|Beats
+  strings from existing markers and pass `reference: "MLR_BarBeat"`, or pass samples with
+  `"MLR_Absolute"`.
+- **Fades:** `CId_CreateFadesBasedOnPreset` with "Only New Fades" plus `auto_adjust_bounds` turns
+  a gap into a crossfade. For a real gap, use "Only Fade Outs" or "Only Fade Ins" with
+  `auto_adjust_bounds: false` on a selection that ends or starts at the gap.
+- **Range clip gain:** `ptgui.nudge_clip_gain_range(e, track, t0, t1, steps)` selects the track,
+  sets the timeline selection and nudges. Pro Tools puts the clip-gain breakpoints at the
+  selection edges, so put the edges where the audio is quiet or masked. On one test, a 39 s
+  range measured exactly -4.0 dB inside, with no clicks at the edges.
+- **Check a fix with a bounce from the song start, never a short range.** Time-based and
+  triggered plug-ins (motion panners, auto-panners, LFOs) carry state from where playback
+  starts. A retrigger pop from a motion panner did not appear in a 5-second bounce, but it did
+  in the full bounce.
+- **A silent gap does not stop a triggered plug-in.** A 10 ms hole moved the pop 26 ms later,
+  to just after the audio came back. A 3 ms AR interpolation on the bounced file
+  (`declick.py`) hides it; the real fix is automation or a bypass for that moment.
+- **Find a pop by bus, then by sample.** Bounce every bus in one `EM_DF_FilePerMixSource` pass.
+  The bus with the HF burst names the folder. A one-sample step in that bus, with smooth raw
+  stems under it, means automation or a plug-in did it. The stem whose raw value matches the
+  size of the step is the source. When a pop shows on a folder bus over smooth stems, check
+  that folder's motion and auto-pan plug-ins first.
 
 ## Discovering anything else
 

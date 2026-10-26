@@ -23,7 +23,8 @@ software, which DiGiCo's SD & Q Convert can't do.
 | --- | --- | --- |
 | [`dlive/`](dlive/) | Allen & Heath dLive show (`.tar.gz`, firmware 2.x) | Names, colours, patch, mixer config, mixes and sends, processing, preamps, SoftKeys, layout, plus a validator |
 | [`digico/`](digico/) | DiGiCo SD and Quantum session (`.ses`) | Read any session, build and edit sessions from an input list or plain description on an editor-made baseline |
-| [`protools/`](protools/) | Avid Pro Tools (PTSL scripting) | Drive a running session: transport, tracks, markers, routing, import, bounce, session prep and stem QC |
+| [`protools/`](protools/) | Avid Pro Tools (PTSL scripting) | Drive a running session: transport, tracks, markers, routing, import, bounce. Stems to a prepped session, stem QC, a first premix, bounce naming and versioning |
+| [`samply/`](samply/) | Samply (samply.app API) | Deliver mixes and show audio: upload to a project or folder, add a new mix as a version, rename, build L/R timecode + audio files for lighting |
 | [`logic/`](logic/) | Apple Logic Pro `ProjectData` | Read channel strips, insert slots and routing, measure plug-in latency, bounce through Accessibility |
 | [`livetrax/`](livetrax/) | LiveTrax 3 (Ardour XML) | Generate multitrack record templates from an input list |
 | [`liveprofessor/`](liveprofessor/) | LiveProfessor `.rack2` (JUCE ValueTree) | Read, write and generate pre-routed sessions byte-exact |
@@ -35,6 +36,36 @@ Each folder is a [Claude Code](https://claude.com/claude-code) skill: copy it in
 `~/.claude/skills/` and ask for what you need ("set up the IEM sends in my dLive show",
 "build a Q225 session from this input list"). Every folder also works without Claude:
 the scripts are plain Python and each folder README shows the commands.
+
+## Install as Claude Code skills
+
+```
+git clone https://github.com/michaelkeithlewis/show-file-skills.git
+mkdir -p ~/.claude/skills
+cp -R show-file-skills/protools show-file-skills/samply ~/.claude/skills/   # or any other folder
+```
+
+Claude Code picks up every folder in `~/.claude/skills/` that has a `SKILL.md`; start a
+new session after copying. Then follow that folder's README for its own setup (a
+Python venv for `protools/`, an API token for `samply/`).
+
+## Studio chain: Pro Tools and Samply
+
+[`protools/`](protools/) and [`samply/`](samply/) together take a song from a stem drop
+to the client's ears on a Mac running Pro Tools:
+
+1. **Prep:** file the drop in a song folder, create the session from your template,
+   import, fix channel formats, fold into routing folders, route each track to its
+   folder bus, clip-gain every stem, color, detect tempo, place section markers, load
+   the reference into Metric AB.
+2. **Premix (on request):** headroom trim, role-based balance against the reference,
+   top-down folder faders, a check for anything sticking out.
+3. **Bounce:** one name everywhere, `<Song>_<Initials>_V<n>_PtMst.wav`, into
+   `Bounced Files/`, with versions that never overwrite a delivered mix.
+4. **Deliver:** upload to the artist's Samply project, a new mix landing as a new
+   version of the song, or zip a FINALS folder for mastering.
+
+The playbook is [`protools/references/session-prep.md`](protools/references/session-prep.md).
 
 ## Safety
 
@@ -60,6 +91,6 @@ belong to someone else.
 ## License and trademarks
 
 MIT, see [LICENSE](LICENSE). No warranty. This project is not affiliated with or endorsed by
-Allen & Heath, DiGiCo, Avid, Yamaha, Apple, Harrison, Ardour or the makers of LiveProfessor. All
+Allen & Heath, DiGiCo, Avid, Yamaha, Apple, Harrison, Ardour, Samply, ADPTR Audio or the makers of LiveProfessor. All
 product names are trademarks of their owners. Part of the dLive field map credits
 [jaylenjinx/dlive-show-editor](https://github.com/jaylenjinx/dlive-show-editor).

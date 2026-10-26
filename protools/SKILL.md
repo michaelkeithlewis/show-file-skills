@@ -1,6 +1,6 @@
 ---
 name: protools
-description: Control and prep a running Pro Tools session on this Mac through the Pro Tools Scripting SDK (PTSL) - transport, track state (mute, solo, record-enable, safes, input monitor, inactive, hidden, freeze), track selection and creation, markers and memory locations, timeline selection, session info, save, import, and bounces - plus a stems-to-session prep pipeline (create from your template, import, fix channel formats, fold into routing folders, route each track to its folder bus through the Accessibility API, color by group, detect tempo and key, place verse/chorus/bridge markers on the click grid) and stem QC (dead stems, levels, arrangement map, identify unnamed stems by listening). Trigger on "Pro Tools", "PTSL", "mute the drums", "solo the lead vocal", "play from the chorus", "drop a marker", "list my tracks", "bounce a mix", "prep this song", "set up a session from these stems", "route the stems to their groups", "find the tempo/key", "auto-mark the sections", "what are these stems". NOT for console show files.
+description: Control and prep a running Pro Tools session on this Mac through the Pro Tools Scripting SDK (PTSL) - transport, track state (mute, solo, record-enable, safes, input monitor, inactive, hidden, freeze), track selection and creation, markers and memory locations, timeline selection, session info, save, import, and bounces - plus a stems-to-session prep pipeline (create from your template, import, fix channel formats, fold into routing folders, route each track to its folder bus through the Accessibility API, color by group, detect tempo and key, place verse/chorus/bridge markers on the click grid), stem QC (dead stems, levels, arrangement map, identify unnamed stems by listening), a first premix (clip-gain staging, headroom trim, role-based balance, top-down folder faders), and the way out: file layout, bounce naming and versioning, and delivery to Samply or a mastering FINALS folder. Trigger on "Pro Tools", "PTSL", "mute the drums", "solo the lead vocal", "play from the chorus", "drop a marker", "list my tracks", "bounce a mix", "prep this song", "set up a session from these stems", "route the stems to their groups", "find the tempo/key", "auto-mark the sections", "what are these stems", "premix this", "bounce V2", "deliver the mix". NOT for console show files.
 ---
 
 # Pro Tools control and session prep (PTSL)
@@ -91,15 +91,47 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
    first. Then set the tempo with `$PY scripts/set_tempo.py <BPM>`: it types the BPM
    into the Tempo ruler's Tempo Change dialog at bar 1 through Accessibility and reads
    it back. Absolute markers and sample-based audio do not move.
-7. Save and report, including what the engineer must do by hand (meter, pans,
-   faders, plug-in bypass, track order).
+   Then `clipgain_normalize.py` (every stem's average at -18 dBFS by clip gain).
+   Optional per song: `hp_metricab.py` (headphone send off the master bus, Metric AB
+   reference preset from `metricab_ref.py`, aligned with `ref_align.py`).
+7. Save and report, including what the engineer must do by hand (meter, plug-in
+   bypass, track order, VCA membership).
+
+Run `pt_dialog_watch.py` (or `demo_guard.py`) in its own terminal for any unattended
+run, and stop it before anyone works in Pro Tools.
+
+## Premix (only when asked)
+
+`clipgain_normalize.py`, then `premix.py trim`, `verify --ref`, `plan --ref`, `topdown`,
+`apply` and `check`. Steps and numbers: `references/session-prep.md`, "Premix". Every
+script that types into Pro Tools refuses to run if the Mac had input in the last 2
+minutes and stops if someone touches it mid-run.
+
+## Bounce, name, version, deliver
+
+Full convention: `references/session-prep.md`, "Bounce, name, version, deliver".
+
+- One name everywhere (bounce `base_name`, `Bounced Files/`, Samply):
+  `<Song>_<Initials>_V<n>_PtMst.wav`. Title Case song, V1 for a first mix, V2 and up for
+  new mixes, `PtMst` (post master bus) or `PrMst` (pre master bus). List
+  `Bounced Files/` for the next number. Never overwrite a delivered version.
+- Default bounce: `PtMst`, 24-bit / 48 kHz stereo WAV, offline, over the song's
+  selection memory location. Recipe in `references/PTSL_REFERENCE.md`.
+- Deliver the `_PtMst` to the client on Samply with the `samply` skill in this repo
+  (`../samply/`): a new mix of an existing song goes in as a new version of its stack.
+- Mastering gets a `<Project> FINALS` folder with the latest `_PrMst` and `_PtMst` of
+  every song, zipped.
 
 Other tools: `ptprep.py` (marker CLI on an open session; `clear-prep` removes only
 its own markers), `analyze.py` (tempo/key/sections of one file), `interleave.py`
 (two monos to one stereo WAV), `envelopes.py` (per-second activity of long
 captures), `ref_compare.py` (stem sum against a reference mix), `ptax.py` (GUI
 through Accessibility: `outputs`, `route <bus> <track>...`, `windows`, `click`,
-`menu`), `demo_guard.py` (answers routine dialogs while a session opens).
+`menu`), `demo_guard.py` and `pt_dialog_watch.py` (log and answer routine dialogs),
+`place_onto.py` (stems onto a template's own tracks from a JSON map), `tx_regions.py`
+(Whisper on chosen regions of a long capture), `declick.py` (repair a pop in a bounced
+file), `merge_pairs.py`, `pan_to_mono.py` and `resample_session.py` (fix a session
+that is already built).
 
 ## Safety
 
@@ -108,8 +140,12 @@ through Accessibility: `outputs`, `route <bus> <track>...`, `windows`, `click`,
   `save_session`, `save_session_as`, `export_mix`, `export_clips_as_files`,
   `close_session`, `create_session*`, clearing memory locations, bulk clip edits,
   `CId_DeleteTracks` (it deletes every track with that name).
-- **Bounces:** ask for format, file name, source bus and offline/realtime unless the
-  engineer has a standing convention. `export_mix` bounces the timeline selection.
+- **Bounces:** follow the naming convention above. Ask for format, source bus and
+  offline/realtime only when there is no standing convention. `export_mix` bounces
+  the timeline selection.
+- **Never type into Pro Tools while someone works in it.** `clipgain_normalize.py`,
+  `pan_to_mono.py`, `premix.py apply` and the template helpers send keystrokes, and a
+  keystroke lands on whatever is selected.
 - **Do not start playback** unless asked. It makes sound.
 - **Never kill a hung PTSL client.** It can leave Pro Tools refusing every new
   connection until it restarts. Run long calls with output to a log and read the log.

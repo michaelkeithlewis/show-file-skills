@@ -1,9 +1,50 @@
 # Session prep: stems to a mix-ready Pro Tools session
 
 The playbook for turning a folder of stems into a templated, organized,
-marked-up session. The scripts are in `scripts/`. Run every one with the venv
-python (`PY=.venv/bin/python`, see README.md). Pro Tools must be running with a
-session open where noted.
+marked-up session, and for getting the mix back out: file layout, premix, bounce
+naming and versioning, and delivery. The scripts are in `scripts/`. Run every one
+with the venv python (`PY=.venv/bin/python`, see README.md). Pro Tools must be
+running with a session open where noted.
+
+The whole chain, in order:
+
+1. File layout: put the drop where the session will live (below).
+2. Pre-flight: Pro Tools up, iCloud handled, dialog watcher running.
+3. The pipeline: read the drop, create from template, import, channel formats,
+   folders, routing, clip gain, color, tempo and markers, headphones and reference.
+4. Premix (only when asked): a first balance.
+5. Bounce, name, version, deliver (to Samply with `../../samply/`, or a FINALS
+   folder for mastering).
+
+## File layout
+
+Pick one layout and keep it, so a script (and the next person) can find every song:
+
+```
+<projects root>/<Artist>/<Project>/<Song>/          e.g. STUDIO PROJECTS/<Artist>/2026 EP/<Song>/
+    <Song>.ptx                                       the session (Pro Tools names it)
+    Audio Files/  Bounced Files/  Session File Backups/
+    <Song> Reference.wav                             the client's demo or rough mix
+    Stems/                                           the drop as it arrived (keep the sender's subfolders)
+```
+
+- Stems arrive as a zip or folder in Downloads, or as a cloud-drive share. Copy them
+  into the song's `Stems/` and check the copy (file count and sizes, or
+  `rclone check --size-only` for a share) before you build.
+- Name the artist folder the way the artist bills themselves on their own material.
+- Name a capture or one-off session folder by what it is and when it was recorded
+  (`<MM.DD.YY> - Full Set`), not by the year you mixed it.
+- If the drop has no song title (a share named `MULTITRACKS`), build under
+  `UNTITLED <MM.DD.YY>` and let the engineer rename it. Do not guess a title.
+- Keep docs (advances, input lists, contracts, stage plots) in a separate tree from
+  audio, so a session folder only holds session data.
+- `Bounced Files/` is where every bounce lands (`export_mix` writes there). Never
+  rename or delete a delivered bounce; a new mix is a new version (see "Bounce, name,
+  version, deliver").
+- If the projects root is iCloud-synced, build in a `.nosync` folder (below) and
+  move the finished song folder in afterwards. A shell `mv` into iCloud can drop
+  empty scaffold folders (`Bounced Files`, `Clip Groups`, `Video Files`); `mkdir`
+  them back or let Pro Tools recreate them.
 
 ## Pre-flight
 
@@ -50,6 +91,14 @@ background with output to a log, and read the log.
 
 `scripts/demo_guard.py` answers the routine dialogs (plug-in demo offers, Missing
 plug-ins, Session Notes) while a session opens. Run it in a second terminal.
+
+For any unattended run, also start `scripts/pt_dialog_watch.py` in its own terminal. It
+logs every dialog's title, text and buttons, and saves a screenshot to `~/pt-dialog-shots/`
+once Screen Recording is granted (without it, the logged text is the record). It answers
+`Session Notes` ("Some inputs are missing") with **No** and untitled OK-only alerts (plug-in
+info notices, `"Follow Main Pan" will be disabled`, which appears when a main output is set
+to `no output`) with **OK**. Stop it with `touch /tmp/pt_dialog_watch.stop` before anyone
+works in Pro Tools again: it clicks dialogs for them.
 
 ## The pipeline
 
@@ -140,6 +189,7 @@ session open, then run it without `--dry`. It swaps each affected track's clips 
 | `channels` says | Do |
 |---|---|
 | dual-mono (identical L/R) | One mono track. `dualmono_to_mono` spots the louder side's clip. No rebounce, half the DSP. |
+| panned-mono (the quiet side is an exact scaled copy of the loud side) | One mono track from the loud side, panned to match. Build it as stereo, route it (4b), then run `pan_to_mono.py` (see "Panned-mono stems" below). |
 | stereo | Keep stereo. |
 | mono | Mono. |
 | L-only + R-only (a stereo file pair, one side dead in each), or an L/R-named pair of mono files | ONE stereo track, always. `channels` lists the pairs at the end. `merge_lr_pair(e, name, folder, l_clip, r_clip)` spots the L file's left clip onto ch1 and the R file's right clip onto ch2. The clips can come from different files. No rebounce and no new file. For a session that is already built, run `scripts/merge_pairs.py "<stems dir>"` with it open. |
@@ -165,9 +215,10 @@ and place the audio on it:
 - `fold_into_folder` (copy/paste) is the older method. It has silently left
   foldered tracks empty. Avoid it, or verify every track.
 - To keep the template's own tracks (their inserts, sends and VCAs are the point),
-  put the audio ONTO them with `move_onto(e, src, dest)`. It pastes at the
-  session start time. A session that starts at `01:00:00:00` would otherwise get
-  every clip an hour early.
+  put the audio ONTO them with `move_onto(e, src, dest)`, or for a whole map
+  `scripts/place_onto.py map.json --dry` (a list of `[stem track, template track]`
+  pairs). Both paste at the session start time. A session that starts at
+  `01:00:00:00` would otherwise get every clip an hour early.
 
 Read the template's structure first:
 `$PY scripts/ptctl.py exec "import json;print(json.dumps([(t.name,t.parent_folder_name) for t in e.track_list()]))"`.
@@ -222,7 +273,13 @@ when you want proof by audio rather than by selector labels.
 
 Do not report a prep as done while any foldered track still outputs to the main bus.
 
-### 5. Color by group
+### 5. Gain-stage with clip gain (never a rebounce)
+
+`$PY scripts/clipgain_normalize.py --dry`, then the same command without `--dry`. Every
+stem's gated average lands at -18 dBFS (details under "Panned-mono stems and clip-gain
+staging" below). Run it on fresh clips only, and never while someone works in the session.
+
+### 5b. Color by group
 
 `ps.color_by_group(e)` sets each foldered audio track to its parent folder's palette
 color. Do not run it on a template whose tracks carry their own colors inside a
@@ -265,13 +322,44 @@ Place markers on bar lines with `ps.place_grid_markers(e, sections, bpm)` (bar 1
 0:00, Absolute reference). Always dry-run first. `ptprep.py clear-prep` removes
 only the markers these tools placed.
 
-PTSL cannot write tempo. Tell the engineer the BPM; they type it into the tempo
-ruler. Absolute markers do not move when they do.
+PTSL cannot write tempo, but the Tempo ruler's Tempo Change dialog can:
+`$PY scripts/set_tempo.py <BPM>`. It presses `Add Tempo Change`, refuses unless the
+dialog opens at `1| 1| 000` (insertion point at the session start), types the BPM (an
+AXValue write is ignored), presses OK, and reads back the Edit window's tempo. Check
+the timebases first: every audio track must be sample-based (`t.timebase == 1`), so
+audio and Absolute markers do not move. The meter stays at the template's.
+
+### 6b. Headphones and the reference (per song, if your template uses them)
+
+- **Headphones off the master bus.** If you monitor through a separate output (for
+  example the computer's headphone jack), put a pre-fader send on the master bus to
+  that output and set the bus's main output to `no output`, with the print coming off
+  a bus above it. `$PY scripts/hp_metricab.py --track "MASTER BUS" --hp "<output name>"`
+  sets and checks it. `$PY scripts/strips.py "MASTER BUS" "Click 1"` shows a strip's
+  inserts, sends and output.
+- **Reference into Metric AB.** If the template carries ADPTR Metric AB on the master
+  bus, put the client's demo or reference in slot 1, synced to the timeline. PTSL cannot
+  load a file into a plug-in and Metric AB's file slots are not exposed to Accessibility,
+  so go through a preset:
+  1. Save any Metric AB preset once as a seed (Settings menu > Save Settings As). Keep
+     your standing references in its other slots; they are kept.
+  2. `$PY scripts/ref_align.py "<song folder>"` cross-correlates the reference with the
+     summed stems (stems sit at Pro Tools 0) and prints the offset. Fix an offset in the
+     file, not in Metric AB: pad a negative offset with that much silence at the front
+     (same rate and format), save it as `<Song> Reference ALIGNED.wav`, and leave the
+     client's original untouched. Before padding, check that the offset holds in several
+     40 s windows: a steady value is a trimmed print, a drifting one is a different edit.
+  3. `$PY scripts/metricab_ref.py seed.tfx "<song folder>/<Song> Reference.wav"
+     "~/Documents/Pro Tools/Plug-In Settings/ADPTR MetricAB/<Song> - REF.tfx"`.
+  4. `$PY scripts/hp_metricab.py "<Song> - REF"` opens the insert and picks the preset
+     from the Librarian menu. Save the session. Delete the `.tfx` afterwards if you do
+     not want it in the Librarian.
 
 ### 7. Save and report
 
 `e.save_session()`, then report: stems imported, foldered and routed, channel
-decisions, BPM and section bars, and the manual steps below.
+decisions, BPM and section bars, and the manual steps below. Do not report a prep as
+done while any foldered track still outputs to the main bus.
 
 ## Updating your template (and pushing the change into built sessions)
 
@@ -283,7 +371,8 @@ a time, so every step closes the open session. Save that session first. Do not e
 session-wide table entries.
 
 1. Back up the template `.ptxt`.
-2. Create a session from the template into a `.nosync` scratch folder.
+2. Start `pt_dialog_watch.py`. It answers the `Session Notes` report each import raises.
+   Then create a session from the template into a `.nosync` scratch folder.
 3. Run `scripts/push_session_data.sh "<source song .ptx>" "<scratch session .ptx>"`. It runs two imports:
    - `FX_TRACKS` (default: the vocal FX returns) replace their same-named tracks with all track data.
    - `MASTER_TRACKS` (default: `MASTER BUS`) take only main outputs and sends. The target keeps its
@@ -294,6 +383,7 @@ session-wide table entries.
 5. For each unmixed song, run `push_session_data.sh "<source .ptx>" "<song .ptx>"...`. One call
    takes several targets. Then run `merge_pairs.py "<stems dir>"` and `route_folders.py --dry` while each
    song is open.
+6. Stop the watcher (`touch /tmp/pt_dialog_watch.stop`).
 
 The helpers use Accessibility only and never type into the frontmost app:
 `ax_open_panel.py` (moves through the Open panel by selecting rows and pressing Open; keystrokes
@@ -303,10 +393,10 @@ posted to the app do not reach that panel), `isd.py` (Import Session Data destin
 
 ## Manual steps PTSL cannot do
 
-- Set the tempo and meter.
+- Set the meter. (Tempo: `set_tempo.py`.)
 - Pan. (Hard-panned pairs do not need it: they become one stereo track in step 3.)
-- Faders and volume. Bypass plug-ins. Reorder tracks (for example move utility
-  tracks to the top).
+- Bypass plug-ins. Reorder tracks (for example move utility tracks to the top).
+  (Faders: `premix.py apply` types them through Accessibility.)
 - Set the main output of a track that is not in a folder: use
   `ptax.py route <bus or output> <track>...` (Accessibility).
 - VCA membership for tracks you created.
@@ -314,7 +404,12 @@ posted to the app do not reach that panel), `isd.py` (Import Session Data destin
 ## Long live captures (one file per input, a whole show)
 
 - Put the audio ONTO the template's tracks and keep every template track
-  (`move_onto`). The engineer migrates plug-in settings themselves.
+  (`place_onto.py`). The engineer migrates plug-in settings themselves. Stems the
+  template has no slot for get a new track in the right folder.
+- Read `e.session_start_time()` first. A broadcast or streaming template often starts
+  at `01:00:00:00`, and pasting at zero puts every clip an hour early.
+- Do not run `color_by_group` on a template whose tracks carry their own colors. Color
+  only the tracks you create, matching a sibling.
 - Mono L/R pairs for a stereo template track: `interleave.py L.wav R.wav out.wav`
   into the session's `Audio Files`, import, place on the stereo track.
 - Keep console channel numbering in track names stable week to week, even when a
@@ -329,14 +424,20 @@ posted to the app do not reach that panel), `isd.py` (Import Session Data destin
 - Give each song (its marker and its sections) one marker color, cycling through
   high-contrast colors with no adjacent repeats.
 - A common convention: crowd mics in a basic folder routed straight to the main
-  bus; utility tracks (board feed, click, talkback) muted and uncolored.
+  bus (`ptax.py route <bus> <tracks>...`); utility tracks (board feed, click,
+  talkback) at the top, muted and uncolored (`color_index: -1`); drum triggers in a
+  basic folder at the bottom, muted.
+- Still manual afterwards: VCA membership for new tracks, and inserts on them.
 
 ### Captures with no click (a service, a talk, a festival set)
 
 Build a per-second envelope of every stem with `envelopes.py`, then read the show
 off it: band stems active = a song; spoken mics active with the band quiet = talk;
-only crowd mics active = a quiet section. Transcribe only those regions (mix them
-to 16 kHz mono and run `lyrics.transcribe`) to name songs and speakers.
+only crowd mics active = a quiet section. Transcribe only those regions with
+`tx_regions.py <stems dir> regions.json` (it mixes each region to 16 kHz mono and runs
+Whisper) to name songs and speakers. Place the markers Absolute and color them by kind,
+for example songs green (10), spoken amber (7), message or talk blue (12), structural
+grey (15).
 
 ## Reference-mix pass
 
@@ -377,7 +478,7 @@ the unlock would be: `EnableAPI(key)`, `GetTrackControlInfo` on a correctly rout
 track to read its `signalpath_id`, then `SetTrackMainOutputAssignments` on the new
 track. Without one, use Accessibility.
 
-### Panned-mono stems and clip-gain staging
+## Panned-mono stems and clip-gain staging
 
 - **Panned-mono:** a mono part printed into a stereo file with a pan. The quiet side is an exact
   scaled copy of the loud side, and `channel_kind` returns `panned-mono`. Build it as stereo and
@@ -392,7 +493,7 @@ track. Without one, use Accessibility.
   Gain Nudge each) to the Pro Tools process after `SelectAllClipsOnTrack`. Run it only on fresh clips,
   and never while someone is working in the session.
 
-### Premix: a first balance
+## Premix: a first balance
 
 1. `clipgain_normalize.py`: clip gain puts every stem's gated average at -18 dBFS.
 2. `premix.py trim --out trim.json`, then `premix.py apply trim.json`: one fader value for every stem,
@@ -400,26 +501,92 @@ track. Without one, use Accessibility.
 3. `premix.py verify --ref <reference>`: offline-bounces every bus in one pass
    (`EM_DF_FilePerMixSource`) and reports peaks, loudness and tonal bands against the reference.
 4. `premix.py plan --ref <reference> --out plan.json`, then `apply`, then `verify`. Each stem is
-   loudness-matched inside its folder. Each folder goes to a role offset from the kick (`ROLE_TARGETS`).
-   The reference nudges each folder by at most ±3 dB. A free spectral fit is degenerate, because
-   group spectra overlap.
+   loudness-matched inside its folder. Each folder goes to a role offset from the kick (`ROLE_TARGETS`
+   in `premix.py`: snare 0, bass -1, toms -3, guitars, keys and orchestra -4, lead vocal 0, BGV -6,
+   cymbals, percussion and FX -9). The reference nudges each folder by at most +/-3 dB. A free
+   spectral fit is degenerate, because group spectra overlap: on one song it matched every band
+   within 2 dB and put the toms 12 LU over the kick.
 5. `premix.py check --faders plan.json --bpm N`: flags any folder that comes within 2 LU of the whole
-   mix in a 4-bar window.
+   mix in a 4-bar window (kick, bass and the lead vocal are exempt). A flag is fine when that folder
+   is the only thing playing, as in a keys-only intro.
+6. Save. Copy the plan to `<session>/.premix_faders.json`, and report folder loudness against the
+   kick, bus peaks, and bands against the reference.
+
+Every premix script refuses to run if someone used the Mac in the last 2 minutes, and stops if anyone
+touches it mid-run. Back up the `.ptx` first. Clip gains are logged in `<session>/.premix_clipgain.json`,
+because PTSL cannot read clip gain back; a rerun skips tracks that are already gained.
 
 Faders are typed into each track's Output window (`Volume Numerical`). Posted keystrokes reset the
 Mac's HID idle timer, so `ptgui.py` records its own last keystroke to tell its input from a person's.
 
-### Premix: top-down faders
+## Premix: top-down faders
 
 After `plan`, run `premix.py topdown --faders plan.json --out td.json`, then `premix.py apply td.json`.
 Use `--live` instead of `--faders` if the session changed. What a folder's children share moves onto the folder fader,
 deepest first and then up to the parent, so stem faders sit near unity with good resolution. Folder faders sit after
 the folder's plug-ins, so a folder's children are lifted only until its bus input reaches -6 dBFS peak or -18 LUFS.
-A folder fader the engineer set by hand is left alone.
+A folder fader the engineer set by hand is left alone (a folder driven hot into its own plug-ins
+sounds different if you move what feeds it). The sum of faders on every path stays the same, so the
+mix does not move. `apply` types the folder faders too.
 
-### Revisions: finding a pop
+## Revisions: finding a pop
 
 Bounce every bus in one pass. The bus with the HF burst names the folder, and a one-sample step in that bus over
 smooth raw stems means a plug-in or automation did it. Check every fix with a bounce from the song start, because
 time-based and triggered plug-ins carry state from where playback begins. `declick.py` repairs a few milliseconds of a
 bounced file by AR interpolation.
+
+`ptgui.nudge_clip_gain_range(e, track, t0, t1, steps)` puts clip gain on part of a track (see
+`PTSL_REFERENCE.md`, "Field notes").
+
+## Bounce, name, version, deliver
+
+### Naming
+
+Use one name for a bounce everywhere: the `export_mix` `base_name`, the file in
+`Bounced Files/`, and the name on Samply or in a delivery folder. A convention that works:
+
+```
+<Song>_<Initials>_V<n>_PtMst.wav        e.g. Song Title_AB_V2_PtMst.wav
+```
+
+- `<Song>` in Title Case. Not the project's track-number name (`06 - SONG`), and not
+  `SONG V2`.
+- `<Initials>`: the mixer's initials, so a client folder with several mixers stays clear.
+- `V<n>`: V1 for a song's first mix, then V2, V3. Use V2.1 for a small fix on V2. To find
+  the next number, list `Bounced Files/`. Never overwrite a delivered version.
+- The bus: `PtMst` (post master bus, what the artist approves) or `PrMst` (pre master
+  bus, the print for mastering). Live records follow the same rule.
+
+### Bounce
+
+- Default: the `PtMst` bus, 24-bit / 48 kHz stereo interleaved WAV, offline, over the
+  song's selection memory location (`ptctl.py locate <n>`, then `export_mix`). Recipe in
+  `PTSL_REFERENCE.md`.
+- Ask for format, source bus and offline or realtime only when there is no standing
+  convention. Bouncing writes to disk: confirm first.
+- Some sessions print one 4-channel 32-bit float file with the post-master mix on
+  channels 1-2 and the pre-master mix on 3-4. Check by level: channels 1-2 match the
+  separate PtMst, channels 3-4 are several dB quieter. Split 3-4 out for the PrMst.
+
+### Deliver to the client (Samply)
+
+Use the `samply/` skill in this repo (`../../samply/`):
+
+- Upload the `_PtMst` bounce into the artist's project (or its mix folder), under the
+  same name. Never send the `_PrMst` to a client.
+- A new mix of a song that is already on Samply is a new **version** of that song's
+  stack, not a new track: upload with `--version-of <stack id>`. Uploading with the
+  same name alone makes a duplicate track.
+- Verify in the web app that the upload shows a duration. A 200 from the API is not
+  proof that it processed.
+- A client reference or demo can sit in the song's stack as its oldest version, so the
+  client can A/B (do that in the web app; the API cannot reorder versions).
+
+### Deliver to mastering (a FINALS folder)
+
+In `Bounced Files/`, make `<Song or Project> FINALS/` holding the latest `_PrMst`
+(32-bit float) and `_PtMst` of every song, plus a short note to the mastering engineer
+that explains Pr (pre master bus, for mastering) and Pt (post master bus, approved by the
+artist) and states the bit depth of each. Zip it Finder-style:
+`ditto -c -k --sequesterRsrc --keepParent "<dir> FINALS" "<dir> FINALS.zip"`.
