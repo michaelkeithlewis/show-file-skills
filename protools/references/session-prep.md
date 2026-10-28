@@ -590,3 +590,11 @@ In `Bounced Files/`, make `<Song or Project> FINALS/` holding the latest `_PrMst
 that explains Pr (pre master bus, for mastering) and Pt (post master bus, approved by the
 artist) and states the bit depth of each. Zip it Finder-style:
 `ditto -c -k --sequesterRsrc --keepParent "<dir> FINALS" "<dir> FINALS.zip"`.
+
+### Stems and instrumentals (solo-in-place)
+
+`stems.py plan` maps folders to stems: every top-level folder and every folder directly in BAND or VOCALS is one stem.
+`stems.py bounce --song "<Song>" --in S --out S --mode both --final <final.wav> --zip` solos each stem in turn
+and bounces the post-master bus, so solo-safe returns, bus chains and the master chain all run. It writes
+`<Song> FINALS/<Song> STEMS/<Song>_<STEM>.wav`, plus an `Instrumental` print, which solos everything except VOCALS.
+Use the final master's exact range, so stems line up sample for sample.
