@@ -598,3 +598,4 @@ artist) and states the bit depth of each. Zip it Finder-style:
 and bounces the post-master bus, so solo-safe returns, bus chains and the master chain all run. It writes
 `<Song> FINALS/<Song> STEMS/<Song>_<STEM>.wav`, plus an `Instrumental` print, which solos everything except VOCALS.
 Use the final master's exact range, so stems line up sample for sample.
+Files are 16-bit WAV at the session's native sample rate. A 96 kHz session bounces at 48 kHz. `--bits 24` and `--rate N` override this.

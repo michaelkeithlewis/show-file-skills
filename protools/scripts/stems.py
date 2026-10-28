@@ -10,8 +10,8 @@ Layout:
   Bounced Files/<Song> FINALS/<Song> STEMS/<Song>_<STEM>.wav   STEM in caps: DRUMS, PERC, BASS, AGs, EGs, KEYS, PIANO,
                                                                ORCH, FX, LVs, BGVs, CLICK ... ; <Song> STEMS.zip beside it
   Bounced Files/<Song> FINALS/<Song>_MKL_<ver>_Instrumental_PtMst.wav   everything but the VOCALS folder
-WAV, interleaved stereo, 48 kHz 24-bit (the session's bounce settings). Older deliveries were 16-bit; pass
---bits 16 if a client asks. Solo and mute states are restored afterwards."""
+WAV, interleaved stereo, 16-bit at the session's native sample rate,
+except a 96 kHz session bounces at 48 kHz. --bits 24 / --rate N override. Solo and mute states are restored afterwards."""
 import argparse, json, os, re, shutil, subprocess, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np, soundfile as sf
@@ -68,10 +68,14 @@ def vocal_free_solo(tl, kind):
     return [t.name for t in tl if not t.parent_folder_name and t.name != VOCAL_ROOT
             and ("Folder" in kind[t.name] or "Audio" in kind[t.name])]
 
-def bounce(e, base, t_in, t_out, bits):
+def delivery_rate(e):
+    sr = int(e.session_sample_rate())
+    return 48000 if sr == 96000 else sr
+
+def bounce(e, base, t_in, t_out, bits, rate):
     e.client.run_command(pt.CId_SetTimelineSelection, {"in_time": str(t_in), "out_time": str(t_out), "location_type": "TLType_Samples"})
     ai = pt.EM_AudioInfo(compression_type=pt.CT_PCM, export_format=pt.EF_Interleaved, bit_depth=pt.Bit16 if bits == 16 else pt.Bit24,
-                         sample_rate=pt.SR_48000, pad_to_frame_boundary=pt.TB_False, delivery_format=pt.EM_DF_SingleFile)
+                         sample_rate=getattr(pt, f"SR_{rate}"), pad_to_frame_boundary=pt.TB_False, delivery_format=pt.EM_DF_SingleFile)
     loc = pt.EM_LocationInfo(import_after_bounce=pt.TB_False, file_destination=pt.EM_FD_SessionFolder)
     e.export_mix(base_name=base, file_type=pt.EMFType_WAV, sources=[pt.EM_SourceInfo(source_type=pt.EMSType_Bus, name="PtMst")],
                  audio_info=ai, video_info=pt.EM_VideoInfo(), location_info=loc, dolby_atmos_info=pt.EM_DolbyAtmosInfo(), offline_bounce=pt.TB_True)
@@ -87,7 +91,8 @@ def main():
     ap.add_argument("--song"); ap.add_argument("--in", dest="t_in", type=int); ap.add_argument("--out", dest="t_out", type=int)
     ap.add_argument("--mode", default="both", choices=["stems", "instrumental", "both"]); ap.add_argument("--version", default="")
     ap.add_argument("--map"); ap.add_argument("--only", nargs="*"); ap.add_argument("--click", action="store_true")
-    ap.add_argument("--final"); ap.add_argument("--zip", action="store_true"); ap.add_argument("--bits", type=int, default=24)
+    ap.add_argument("--final"); ap.add_argument("--zip", action="store_true"); ap.add_argument("--bits", type=int, default=16)
+    ap.add_argument("--rate", type=int, help="override the delivery sample rate")
     a = ap.parse_args()
     with engine() as e:
         tl, kind = session_tracks(e)
@@ -98,6 +103,7 @@ def main():
         if a.cmd == "plan":
             for k, v in smap.items(): print(f"STEM {k:10} solo {v}")
             print("INSTRUMENTAL solo", inst); return
+        rate = a.rate or delivery_rate(e); print(f"FORMAT WAV {a.bits}-bit {rate} Hz", flush=True)
         sess = posix(e.client.run_command(pt.CId_GetSessionPath, {})["session_path"]["path"])
         bf = os.path.join(os.path.dirname(sess), "Bounced Files")
         finals = os.path.join(bf, f"{a.song} FINALS"); stems_dir = os.path.join(finals, f"{a.song} STEMS")
@@ -113,7 +119,7 @@ def main():
             for base, solo, dest in jobs:
                 e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": all_names, "enabled": False})
                 e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": solo, "enabled": True})
-                t0 = time.time(); bounce(e, base, a.t_in, a.t_out, a.bits)
+                t0 = time.time(); bounce(e, base, a.t_in, a.t_out, a.bits, rate)
                 src = os.path.join(bf, base + ".wav"); dst = os.path.join(dest, base + ".wav")
                 shutil.move(src, dst); y, pk, rm = stats(dst); made.append((dst, y))
                 print(f"BOUNCED {base}  {time.time() - t0:.0f} s  peak {pk:6.1f}  rms {rm:6.1f}  solo {solo}", flush=True)
