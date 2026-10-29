@@ -100,6 +100,12 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
 Run `pt_dialog_watch.py` (or `demo_guard.py`) in its own terminal for any unattended
 run, and stop it before anyone works in Pro Tools.
 
+**A producer's session that is already built** gets checked, not rebuilt: `session_map.py` (its own tempo
+grid, whether the audio sits on it, key, lyric sections, the producer's markers, stem QC), `io_map.py`
+instead of `route_folders.py`, `channel_check.py`, `ref_offset.py`. A session that deadlocks on open
+(`-9004` in the Avid log) can still be read with `stems_offline.py`. See "Producer sessions" in
+`references/session-prep.md`.
+
 ## Premix (only when asked)
 
 `clipgain_normalize.py`, then `premix.py trim`, `verify --ref`, `plan --ref`, `topdown`,

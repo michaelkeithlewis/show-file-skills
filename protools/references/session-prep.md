@@ -97,7 +97,10 @@ logs every dialog's title, text and buttons, and saves a screenshot to `~/pt-dia
 once Screen Recording is granted (without it, the logged text is the record). It answers
 `Session Notes` ("Some inputs are missing") with **No** and untitled OK-only alerts (plug-in
 info notices, `"Follow Main Pan" will be disabled`, which appears when a main output is set
-to `no output`) with **OK**. Stop it with `touch /tmp/pt_dialog_watch.stop` before anyone
+to `no output`) with **OK**, and plug-in `Free 14-Day Demo` / `Demo Expired` prompts with **Cancel**
+(they repeat once per track that uses the plug-in). Each click is logged with the dialog it hit. If the
+same dialog window survives 5 presses it logs `STUCK` and stops pressing: Pro Tools is wedged behind
+another modal. It exits when Pro Tools quits. Stop it with `touch /tmp/pt_dialog_watch.stop` before anyone
 works in Pro Tools again: it clicks dialogs for them.
 
 ## The pipeline
@@ -449,6 +452,39 @@ and the reference is compressed and limited, so a fit confidently returns nonsen
 ("cymbals -79 dB"), and regularizing it just returns "every group +0.0 dB". Band
 shares and band ownership are stable. The constrained search at the end is a
 starting point and says when it hits its +/-12 dB clamp.
+
+## Producer sessions: check them, do not rebuild
+
+A session the producer built, already moved onto your template. The tempo map, section markers and
+routing are the producer's. Read them; do not replace them.
+
+1. Back up the `.ptx`, start `pt_dialog_watch.py`, open it (`opensess.py`).
+2. `$PY scripts/session_map.py /tmp/<song>` (read-only). `GRID` is the session's own tempo/meter, read with
+   `CId_GetTimeAsType` (bar|beat to samples), because PTSL has no tempo read. `PHASE` proves the audio sits on
+   that grid: the share of strong onsets within 20 ms of the 8th-note grid, swept over +/-3% and every phase.
+   The real click wins sharply (98% at 170.00, about 11% at 169 or 171). A best phase of 20 to 50 ms is
+   onset-detector lag. Do not run `set_tempo.py` on a producer session.
+3. Markers: `PRODUCER_MARKERS` lists the producer's own. If they already mark the sections, add none. The
+   lyric `SECTIONS` are a cross-check; producers mark a section a bar or two before the vocal comes in.
+4. Routing: run `$PY scripts/io_map.py`, not `route_folders.py`. On a producer session, `route_folders.py --dry`
+   also lists tracks that feed a producer aux on purpose (kick/snare/overheads -> Bus 7-8 -> the producer's
+   drum aux -> DRUMS). Routing them bypasses that aux. Fix only the tracks `io_map.py` flags `NOBODY LISTENS`.
+5. Channels: `$PY scripts/channel_check.py` and `pan_to_mono.py --dry`. `merge_pairs.py` has no dry run;
+   to list pairs only, call `prep_session.lr_pairs("<Audio Files>")`.
+6. Look for a mix in progress before you change anything: a `Bounced Files/<SONG>_V1_*.wav`, many
+   `Session File Backups`, or a master chain that differs from the template. Leave that session as it is.
+7. Color by group. Align the reference with `$PY scripts/ref_offset.py <ref.wav> /tmp/<song>/mix.wav --write`.
+   One whole-song correlation peak lies on repetitive songs (a 60 BPM song: the peak said -6991 ms, the true
+   offset is -7991.7). The script lets 10 s windows vote among the top peaks, breaks the one-beat tie with a
+   mel-spectrogram match, and refines to about 0.1 ms. Save.
+
+**Some producer sessions deadlock Pro Tools while they open.** The Avid log (`~/Library/Logs/Avid/`) fills
+with `-9173`, then `CHostSignalNet::StopProcessing - returning -9004`: a CPU overload while the plug-ins
+instantiate. The UI stops answering Accessibility, and `pt_dialog_watch.py` logs `STUCK` when the same dialog
+survives 5 presses. Pressing OK or Cancel, or a Return posted to the app, does nothing. Only a force-quit and
+`ptctl.py launch` clear it. Nothing was saved, so the `.ptx` is unchanged. Poll the log for `returning -9004`
+rather than waiting on the open RPC. For tempo, key and stem QC on a session that will not open, run
+`$PY scripts/stems_offline.py "<Audio Files>"`.
 
 ## Housekeeping
 

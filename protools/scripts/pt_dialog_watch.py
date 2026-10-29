@@ -32,6 +32,7 @@ def shot(tag):
         return f"shot failed {ex}"
 
 seen = set()
+pressed = []  # [window, presses]: the SAME dialog window surviving 5 presses means a modal behind it has Pro Tools wedged
 while not os.path.exists(STOP):
     try:
         for w in ptax.children(ptax.app()):
@@ -49,10 +50,22 @@ while not os.path.exists(STOP):
                 seen.add(key)
                 print(time.strftime("%H:%M:%S"), "DIALOG", repr(title), texts[:8], buttons, shot("dialog"), flush=True)
             want = AUTO.get(title)
-            if want and want in buttons and (title or buttons == ["OK"]):
+            if texts and texts[0].startswith(("Free 14-Day Demo", "Demo Expired")):  # plug-in trial offers: never start or buy one
+                want = "Cancel"
+            if want and want in buttons and (title or buttons == ["OK"] or want == "Cancel"):
+                # trial prompts repeat once per track as NEW windows; only the same window surviving presses is a wedge
+                if pressed and pressed[0] == w:
+                    pressed[1] += 1
+                else:
+                    pressed[:] = [w, 1]
+                if pressed[1] == 6:
+                    print(time.strftime("%H:%M:%S"), "STUCK: 5 presses of", repr(want), "did not close", repr(title or texts[0]),
+                          "- Pro Tools is likely wedged; not pressing again", flush=True)
+                if pressed[1] > 5:
+                    continue
                 for el, d, _ in ptax.walk(w, max_depth=8):
                     if ptax.attr(el, "AXRole") == "AXButton" and str(ptax.attr(el, "AXTitle")) == want:
-                        ptax.press(el); print(time.strftime("%H:%M:%S"), "clicked", want, flush=True); break
+                        ptax.press(el); print(time.strftime("%H:%M:%S"), "clicked", want, "on", repr(title or (texts[0] if texts else "")), flush=True); break
     except Exception as ex:
         print("watch err", ex, flush=True)
     time.sleep(3)
