@@ -1,10 +1,11 @@
 """stems.py: stem and instrumental bounces, solo-in-place through the whole chain.
-  stems.py plan  [--map auto|map.json]                      list the stems this session would print (no bouncing)
+  stems.py plan  [--map auto|producer|map.json]                      list the stems this session would print (no bouncing)
   stems.py bounce --song "The Gift" --in S --out S [--mode stems|instrumental|both] [--version V2]
                   [--map map.json] [--only DRUMS BASS] [--click] [--final <final PtMst.wav>] [--zip]
 How the engineer prints stems: SOLO IN PLACE, so every stem gets all the processing. Solo the stem's folder,
 everything else goes implicitly muted, and the solo-safe returns (MASTER BUS, GLUE VERB, K/S Para, every FX return in
 the template) still run, so the stem carries its reverbs, the bus chain and the master chain. Bounce PtMst.
+--map producer (use it when the client's multitracks came in category folders) names stems after those folders.
 Range: use the FINAL master's exact range (sample in/out), so stems and instrumental line up with it sample for sample.
 Layout:
   Bounced Files/<Song> FINALS/<Song> STEMS/<Song>_<STEM>.wav   STEM in caps: DRUMS, PERC, BASS, AGs, EGs, KEYS, PIANO,
@@ -17,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np, soundfile as sf
 from ptctl import engine
 from ptsl import PTSL_pb2 as pt
-from ptgui import posix
+from ptgui import posix, paged, edl
 
 # Template folder -> stem name. A folder not listed here becomes a stem named after itself.
 STEM_NAMES = {"DRUM GROUP": "DRUMS", "PERC GROUP": "PERC", "BASS GROUP": "BASS", "GUITAR GROUP": "EGs", "AGs": "AGs",
@@ -63,6 +64,58 @@ def auto_map(tl, kind):
         stems[name] = [f.name]
     return stems
 
+RENAME = {"CCM DRUMS": "DRUMS", "PERCUSSION": "PERC", "EG": "EGs", "AG": "AGs", "SYNTH": "SYNTHS", "SYNTHESIZER": "SYNTHS"}
+LV_FOLDERS = ("LV", "LVS")
+
+def producer_map(e, tl, kind):
+    """{stem: [tracks]} from the producer's own stem folders: each audio track goes to the MULTITRACKS*/<CATEGORY>/ folder
+    its source file came from (e.g. CCM DRUMS, DRUM ENHANCEMENT, STRINGS, BRASS, SYNTHESIZER, VOX), so the stem
+    list follows each song's material. Tracks built in the session (comps, merged pairs, mono conversions) match by name.
+    VOX splits into LVs (tracks under LV / LV DBLS) and BGVs. Returns (map, unmatched track names)."""
+    sess = posix(e.client.run_command(pt.CId_GetSessionPath, {})["session_path"]["path"])
+    clips = {c["clip_full_name"]: c for c in paged(e, pt.CId_GetClipList, {}, "clip_list")}
+    files = {f["file_id"]: posix(f["path"]) for f in paged(e, pt.CId_GetFileLocation, {"file_filters": ["FLTFilter_AllFiles"]}, "file_locations")}
+    song = os.path.dirname(os.path.dirname(sess))
+    norm = lambda x: re.sub(r"[^A-Z0-9]", "", re.sub(r"(_\d+)?(\.(aif|aiff|wav|L|R))+$", "", x, flags=re.I).upper())
+    byname = {}
+    for d in sorted(os.listdir(song)):
+        if not d.startswith("MULTITRACKS"): continue
+        for root, _, fs in os.walk(os.path.join(song, d)):
+            cat = os.path.relpath(root, os.path.join(song, d)).split(os.sep)[0]
+            if cat != ".": [byname.setdefault(norm(f), cat) for f in fs]
+    parent = {t.name: t.parent_folder_name for t in tl}
+    def under(n, folders):   # any ancestor folder named LV, LVs, LV DBLS ...
+        while n:
+            n = parent.get(n)
+            if n and n.upper().split()[0] in folders: return True
+        return False
+    cats, unmatched = {}, []
+    for name, rows in edl(e).items():
+        if not rows or "Audio" not in kind.get(name, ""): continue
+        cat = None
+        for r in rows:
+            c = clips.get(r[2]); p = files.get(c["file_id"]) if c else None
+            rel = p.split("/MULTITRACKS", 1)[1].split("/") if p and "/MULTITRACKS" in p else []
+            if len(rel) > 2: cat = rel[1]; break
+        if not cat:
+            k = re.sub(r"(RX|DYN|COMP|V\d)+$", "", norm(name))
+            cat = byname.get(k) or next((v for n, v in byname.items() if n and (k.startswith(n) or n.startswith(k))), None)
+        if cat: cats.setdefault(cat, []).append(name)
+        else: unmatched.append(name)
+    stems = {}
+    for cat, names in cats.items():
+        if cat == "VOX":
+            lv = [n for n in names if under(n, LV_FOLDERS)]
+            if lv: stems["LVs"] = lv
+            if len(lv) < len(names): stems["BGVs"] = [n for n in names if n not in lv]
+        elif cat == "EG":   # some producers file every guitar under EG: acoustics become AGs, the rest EGs
+            ag = [n for n in names if "ACOUSTIC" in n.upper()]
+            if ag: stems.setdefault("AGs", []).extend(ag)
+            if len(ag) < len(names): stems.setdefault("EGs", []).extend(n for n in names if n not in ag)
+        else:
+            stems.setdefault(RENAME.get(cat, cat), []).extend(names)
+    return stems, unmatched
+
 def vocal_free_solo(tl, kind):
     """What to solo for an instrumental: every top-level folder and top-level audio track except VOCALS."""
     return [t.name for t in tl if not t.parent_folder_name and t.name != VOCAL_ROOT
@@ -96,7 +149,11 @@ def main():
     a = ap.parse_args()
     with engine() as e:
         tl, kind = session_tracks(e)
-        smap = json.load(open(a.map)) if a.map else auto_map(tl, kind)
+        if a.map == "producer":
+            smap, unmatched = producer_map(e, tl, kind)
+            if unmatched: print("NOT IN ANY PRODUCER FOLDER (left out of the stems):", unmatched, flush=True)
+        else:
+            smap = json.load(open(a.map)) if a.map else auto_map(tl, kind)
         if a.click and any(t.name == "Click 1" for t in tl): smap["CLICK"] = ["Click 1"]
         if a.only: smap = {k: v for k, v in smap.items() if k in a.only}
         inst = vocal_free_solo(tl, kind)
@@ -121,7 +178,10 @@ def main():
                 e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": solo, "enabled": True})
                 t0 = time.time(); bounce(e, base, a.t_in, a.t_out, a.bits, rate)
                 src = os.path.join(bf, base + ".wav"); dst = os.path.join(dest, base + ".wav")
-                shutil.move(src, dst); y, pk, rm = stats(dst); made.append((dst, y))
+                shutil.move(src, dst); y, pk, rm = stats(dst)
+                if pk < -80:   # nothing in this stem plays over the range: the stem list follows the song's material
+                    os.remove(dst); print(f"SILENT {base} (peak {pk:.1f}), dropped", flush=True); continue
+                made.append((dst, y))
                 print(f"BOUNCED {base}  {time.time() - t0:.0f} s  peak {pk:6.1f}  rms {rm:6.1f}  solo {solo}", flush=True)
         finally:
             e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": all_names, "enabled": False})

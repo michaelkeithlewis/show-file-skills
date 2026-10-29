@@ -598,4 +598,7 @@ artist) and states the bit depth of each. Zip it Finder-style:
 and bounces the post-master bus, so solo-safe returns, bus chains and the master chain all run. It writes
 `<Song> FINALS/<Song> STEMS/<Song>_<STEM>.wav`, plus an `Instrumental` print, which solos everything except VOCALS.
 Use the final master's exact range, so stems line up sample for sample.
+`--map producer` names stems after the producer's own multitrack folders (`MULTITRACKS/<CATEGORY>/`): each track joins
+the stem its source file came from, so the stem list follows each song's material. VOX splits into LVs and BGVs, EG into
+AGs and EGs, and a stem that is silent over the range is dropped.
 Files are 16-bit WAV at the session's native sample rate. A 96 kHz session bounces at 48 kHz. `--bits 24` and `--rate N` override this.
