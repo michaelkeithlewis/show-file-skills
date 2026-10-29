@@ -75,8 +75,13 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
 ## Name  [done](≤8) [todo](long/variable)
 - short name length-prefixed slot (≤8 chars, ~20 copies). Long names overflow to a variable region. [todo]
 
-## Other channel types (for IR completeness)  [todo]
+## Other channel types (for IR completeness)  [partial]
 - Aux/Group/Matrix outputs: input/trim differs; output EQ may be 4-band+HPF/LPF or **8-band** (pre/post-insert).
-- Routing/patching, bus sends (6 positions), bus assignments. [todo]
+  [done] Output buses have **8 EQ bands**: bands 0-3 post-insert (defaults 8k, 4k, 100, 50 Hz), bands 4-7 pre-insert
+  (2k, 1k, 500, 250 Hz; UI bands 5-8 = band bytes 7-4). The pre-insert bands have no dynamic EQ and no bell / shelf
+  switch; their curve turns the outer two into a 24 dB/oct filter. (04, 7b, 0) is the strip's "pre-insert eq /
+  post-insert eq" switch: which four bands the surface and screen show; never kept in a snapshot. Bus trim (0b, 01, 0),
+  phase (0b, 02, 0), merge input route (0b, 00, 1), level (0b, 01, 1), on (0b, 0e, 0).
+- Routing/patching, bus sends (6 positions), bus assignments. [done] `FORMAT.md` "FX units, sends, buses and patch".
 
 Later findings (stereo inputs, Mustard comp keys, Spice Rack, SD FX, dynamic EQ, levels): `FORMAT.md`.

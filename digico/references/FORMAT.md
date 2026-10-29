@@ -119,7 +119,8 @@ input patch/routing; bus sends/assignments; long-name write; freq/gain quantizat
 - Editor binary `Quantum2.exe` is 32-bit Delphi 10.3; its record RTTI names the slot type `tControllerSnapshot`.
 - **Header** 0x100 B, then a **section table**: int32 offsets[40] at 0x100, section ids u8[40] at 0x1a0. The editor
   rejects a file unless offsets ascend and the last one equals the file size. Ids seen: 201 channel records,
-  211 live channel/bus modules, 219 snapshot copies of channel blocks, 243 surface.
+  211 live channel/bus modules, 219 the preset library (not snapshot copies; layout under "FX units" below), 243 banks,
+  212 bank placement.
 - **Module record**: `da 00 | 3a 00 (header len from type) | type u16 | 00 00 | name ShortString[31] (32 B) | TDateTime |
   count u16 | ... | count x slot | ff x8 00 x4`.
 - **Slot** = `[param u8][module u8][band u8][flags u8][float32]`. Every offset in this file points at the float; the
@@ -169,6 +170,9 @@ input patch/routing; bus sends/assignments; long-name write; freq/gain quantizat
 - **Surface banks** (section 243): u16 | u32 bank count | banks of 0x169 B: u16 size | u16 index |
   name ShortString[15] | ... | 12 strips of (index u8, type u8) at +0x23 (01 input = internal index - 1, 05 aux,
   06 group, 0a CG, 10 matrix) | ... | 12 view bytes at the end of the bank (0 SD view, 2 Mustard view).
+  +0x6b: per slot the four locked encoder rows as keys (16 B: param, module, band, 0 each; inputs default analog gain,
+  aux send 1, aux send 2, pan); +0x12b: per slot which of those rows are locked (bits). +0x137 label, +0x147 button
+  colour (R, G, B, 0).
   The SD/M strip buttons only switch this view. Mustard is active once any Mustard module is on, and the strip
   then shows "active" over M. `ses.py`: `Session.banks()`, `Session.set_strip_view()`.
 
@@ -176,7 +180,9 @@ input patch/routing; bus sends/assignments; long-name write; freq/gain quantizat
 Writers: `scripts/sessionmaker/fx.py`, `sends.py`, `buses.py`, `patch.py`; the session maker drives them through
 `scripts/sessionmaker/options.py`. Each module's docstring holds its full field map. The longer research write-ups
 behind them are not published.
-- **Routes** are 4 raw bytes in a float slot: `00 <side> <index> <type>` (00 00 00 00 = none). Types: 01 input,
+- **Routes** are 4 raw bytes in a float slot: `<tap> <side> <index> <type>` (00 00 00 00 = none). The tap byte is 00 for
+  a strip's output and 08 for an insert send, with side 10 = insert B; side 01 = the right leg of a stereo input;
+  `00 0e` / `00 0f` = monitoring headphones L / R (console samples). Types: 01 input,
   05 aux, 06 group, 07 right side of a stereo bus, 0e FX unit, 10 matrix, 18 Spice Rack, 1b INTERNAL inputs,
   1c + k input sockets of I/O port k, 4d INTERNAL outputs, 4e + k output sockets of port k.
 - **FX unit**: section 201 record in the "FX" group (type 0e; +41 width 2, +42 i32 preset index, +84 EngineChannel),
@@ -192,6 +198,10 @@ behind them are not published.
   "<name> R"): module 0c 21 fader, 22 mute, 0f link pans (0 off, 1 on, 2 reversed; the editor rewrites send pans
   from it); module 0e fe output route = one of its sockets. Output socket (module 12) (00,0) = its source bus. The
   editor does not mirror L to R, so both sides are written.
+  Console samples: patching Aux 1 to a second socket moved (0e, fe, 0) to the second one, and unpatching the first
+  cleared only that socket's (12, 00, 0); so (0e, fe) is a "last patched" pointer and the socket's (12, 00, 0) is what
+  the console routes. Writing both, as `buses.py` does, is right. An input socket patched straight to an output
+  (Copy Audio) is (12, e2, 0) on the output and (11, fe, 0) on the input; snapshots never keep either.
 - **Bus layout**: header u16 0x36/0x38 mono/stereo auxes, 0x46/0x48/0x4a groups. Section 201 aux, group and 07
   records in surface order; per-aux and per-group slots in module 02/03/21 of every input and bus, banded by internal
   index. Budget per console (mono equivalents, stereo 2): Q112 26, Q225 38, Q338 66, Q5 130, Q7 130, Q852 194,
@@ -203,4 +213,12 @@ behind them are not published.
   socket.
 - **I/O devices**: section 246 = `f6 00 | u16 10500 | 50 x 210-byte records`; record k owns input sockets 1c + k and
   output sockets 4e + k; +0 device type (02 SD Rack, 04 D-Rack, 07 D2-Rack, 0b MQ-Rack, 19 Std MADI, 21 MADI 64...).
+- **Preset library** (section 219): `db 00 | u32 count`, then per preset `d7 00 | u32 n | n strip records` (inline
+  modules, as in section 211), three u16-length strings (name, group, notes), then u16 14, f64 time stored (0 on
+  factory presets), u8 lock (2 = factory), u16 FX preset id (factory FX presets, else 0), u16 channel count (a stereo
+  pair counts once), u8 mix preset. Besides the factory FX presets it holds user FX, Spice Rack and GEQ presets,
+  channel presets (whole strips: an input, or a stereo group with its right side, up to 48 inputs) and mix presets
+  (only the aux send modules, up to 74 strips). Every one of 189 console-saved sessions parses to the last byte with
+  this layout. `fx.library()` reads one strip and no notes per entry, so presets with several strips or with notes
+  read wrong there.
 
