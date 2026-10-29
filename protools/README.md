@@ -35,6 +35,10 @@ the scripts in this folder on your Mac.
   everywhere (`<Song>_<Initials>_V<n>_PtMst.wav`), versioning, a FINALS folder for
   mastering, and upload to Samply as a new track or a new version
   (`references/session-prep.md`, "Bounce, name, version, deliver").
+- **Stems and instrumentals:** solo-in-place prints of every stem and a no-vocal
+  version through the full master chain, named and zipped for delivery, with a click
+  scan for edits the full mix hides (`scripts/stems.py`, `scripts/snapscan.py`,
+  `references/stems.md`).
 - **Live captures:** stems onto a streaming or broadcast template's own tracks from a
   map, and section markers for a service or a show with no click
   (`scripts/place_onto.py`, `scripts/envelopes.py`, `scripts/tx_regions.py`).

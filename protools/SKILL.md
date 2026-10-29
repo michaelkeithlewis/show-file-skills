@@ -121,6 +121,9 @@ Full convention: `references/session-prep.md`, "Bounce, name, version, deliver".
   (`../samply/`): a new mix of an existing song goes in as a new version of its stack.
 - Mastering gets a `<Project> FINALS` folder with the latest `_PrMst` and `_PtMst` of
   every song, zipped.
+- Stems and instrumentals: solo-in-place through the whole chain, bounced from PtMst
+  with `stems.py plan|bounce`, scanned with `snapscan.py`. Playbook, delivery layout and
+  album-flow previews: `references/stems.md`.
 
 Other tools: `ptprep.py` (marker CLI on an open session; `clear-prep` removes only
 its own markers), `analyze.py` (tempo/key/sections of one file), `interleave.py`

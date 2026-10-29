@@ -20,6 +20,9 @@ scripts in this folder.
 - **Housekeeping:** `list-projects`, `list-folders`, `create-folder`, `stack` (a song's
   versions), `rename`.
 - **L/R interleave:** `scripts/interleave_lr.sh LEFT RIGHT OUT.wav` (FFmpeg `join`).
+- **Album flow:** `scripts/player.js` builds a gapless Samply Player of several songs
+  in a set order, and `scripts/player_check.js` confirms a logged-out listener hears it
+  gapless (needs Node and Playwright, and a logged-in Chrome for the first one).
 - **Notes:** `SKILL.md` lists what the Samply API cannot do (move, delete, download,
   access settings, version order) so Claude does not go looking for endpoints that are
   not there, and how to verify that an upload really processed.

@@ -48,6 +48,17 @@ search the machine for it.
   and labels such as `demo` are done in the web app.
 - Anything you create with `POST` stays until someone deletes it by hand. Never create
   scratch or test projects in a live account.
+- **No Player endpoint.** A Player (a gapless playlist link of several stacks) is made
+  through the web app. `scripts/player.js` does it in a logged-in Chrome over CDP:
+
+  ```bash
+  SAMPLY_CDP=http://127.0.0.1:9222 node scripts/player.js <projectId> "A -> B (album flow)" <stackA> <stackB>
+  node scripts/player_check.js https://samply.app/p/<share>   # expect gaplessAvailable: true
+  ```
+
+  Use it for album flow (one song cuts straight into the next, but the songs stay
+  separate tracks). A Player shows each stack's first upload name but plays the newest
+  version.
 
 ## Workflow
 
