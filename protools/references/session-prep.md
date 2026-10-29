@@ -460,23 +460,32 @@ starting point and says when it hits its +/-12 dB clamp.
   Find All relinks by name. For a self-contained copy, use File > Save Copy In with
   audio files.
 
-## Output routing through PTSL: what was tried (do not retry)
+## Output routing through PTSL: original probes and newer findings
 
 | Route | Result |
 |---|---|
 | `CId_SetTrackMainOutputAssignments` | Works, but needs a `signalpath_id`. |
-| `CId_GetTrackControlInfo` (the only id source) | "Private API has not been enabled". `CId_EnableAPI` needs an Avid-issued encrypted key. |
+| `CId_GetTrackControlInfo` (id source used in the original probes) | "Private API has not been enabled". `CId_EnableAPI` needs an Avid-issued encrypted key. |
 | A bus name as the id | "Signal path with ID ... was not found". |
 | Enumerating ids | 0 to 63 all rejected. Ids are 128-bit GUIDs. |
 | A track's own `.id` / `.id_compressed` | A different id space; rejected. |
 | `CId_CreateSignalPath` for a bus | "Creating signal paths of type 'SPType_Bus' is not yet implemented". |
-| `CId_Import` with `IType_Session` (Import Session Data) | Fails headlessly with a generic `PT_InvalidParameter`. |
+| `CId_Import` with `IType_Session` (Import Session Data) | Original request failed with `PT_InvalidParameter`; a later explicit prepared-template request completed on 2026.4.1 (see below). |
 
 `CId_GetExportMixSourceList` lists only buses something already feeds, so a bus
 missing from it may still exist. Never hard-code a bus list. With a Private API key,
 the unlock would be: `EnableAPI(key)`, `GetTrackControlInfo` on a correctly routed
 track to read its `signalpath_id`, then `SetTrackMainOutputAssignments` on the new
-track. Without one, use Accessibility.
+track. Accessibility remains a working fallback.
+
+Later Pro Tools 2026.4.1 / SDK 2026.4 tests retrieved an already-assigned output's
+`signalpath_ids` using `CId_GetTrackMainOutputAssignments`, then used the setter
+for grouped output assignment without an EnableAPI call. Session-data import
+also completed with an explicit prepared-template request, including
+`audio_handle_size: 1000`, Import As New Track and Do Not Import playlists.
+Neither result establishes a universal fix for older request/version failures.
+See [macOS session-prep field notes](macos-session-prep-field-notes.md) for the
+payload, checks, MonoMate handoff findings and sanitized full-run timing.
 
 ## Panned-mono stems and clip-gain staging
 

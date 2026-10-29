@@ -38,8 +38,9 @@ the scripts in this folder on your Mac.
 - **Live captures:** stems onto a streaming or broadcast template's own tracks from a
   map, and section markers for a service or a show with no click
   (`scripts/place_onto.py`, `scripts/envelopes.py`, `scripts/tx_regions.py`).
-- **GUI gaps:** PTSL cannot set a track's output. `scripts/ptax.py` does it through
-  the macOS Accessibility API, by control name, with no mouse or screen coordinates.
+- **GUI gaps:** The existing routing scripts use `scripts/ptax.py` and the macOS
+  Accessibility API, by control name, with no mouse or screen coordinates. Newer
+  SDK output-ID reuse is documented in the field notes below.
 
 The playbooks and format notes are in `references/`.
 
@@ -112,9 +113,10 @@ Known limits (PTSL has no command for these):
   folder, combine two monos to stereo. Tempo, pan and faders have no PTSL command
   either, but `set_tempo.py`, `pan_to_mono.py` and `premix.py apply` set them through
   Accessibility. Spotting clips by id combines two monos into one stereo track.
-- Setting outputs needs the Private API (an Avid-issued key), so this skill uses
-  Accessibility instead. Accessibility controls only exist for tracks Pro Tools has
-  drawn on screen.
+- The original output-ID lookup needed the Private API (an Avid-issued key), so
+  the existing scripts use Accessibility. Newer 2026.4.1 tests reused an assigned
+  route through `GetTrackMainOutputAssignments`; see the field notes below.
+  Accessibility controls only exist for tracks Pro Tools has drawn on screen.
 - `import_audio` in py-ptsl is broken; the scripts call the raw command.
 - Tempo detection is an estimate. Read the candidate table and confirm by ear.
 
@@ -129,6 +131,15 @@ Verified for this release (on a machine without Pro Tools):
   arguments) and have not been re-run in that form.
 - The PTSL and Accessibility scripts were not re-run against Pro Tools after the
   clean-up for publication (paths and names changed, logic did not).
+
+## Additional macOS field notes
+
+[Franklin Rice's session-prep field notes](references/macos-session-prep-field-notes.md)
+record version-scoped 2026.4.1 output-ID reuse, a successful prepared-template
+session-data import request, Accessibility pitfalls, optional MonoMate handoff
+measurements and checkpoint findings. These supplement the existing scripts;
+they do not change their behavior or imply that every reported SDK limitation
+is resolved on every version.
 
 ## No warranty
 

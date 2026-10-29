@@ -284,11 +284,18 @@ e.client.run_command(pt.CommandId.CId_Import, req)
 
 ## Private API and output routing
 
-`CId_SetTrackMainOutputAssignments` is public but needs a `signalpath_id`. The only
-command that returns one, `CId_GetTrackControlInfo`, needs the Private API, which
-needs an Avid-issued encrypted key (`CId_EnableAPI`). Without that key PTSL cannot
-set a track's output. Full table of what was tried: `session-prep.md`. The working
-route is the Accessibility API (`ptax.py`, `route_folders.py`).
+`CId_SetTrackMainOutputAssignments` is public but needs a `signalpath_id`.
+The original tests could not retrieve one through `CId_GetTrackControlInfo`
+without the Private API / an Avid-issued encrypted key (`CId_EnableAPI`).
+
+**Newer tested path:** with Pro Tools 2026.4.1 and SDK 2026.4 bindings,
+`CId_GetTrackMainOutputAssignments` returned `signalpath_ids` for an already
+routed track, and the setter assigned those IDs to other tracks. No EnableAPI
+call or private key was supplied by those test scripts. This is assigned-route
+reuse, not bus-name enumeration or new-bus creation. See the exact scope and
+request shapes in [macOS session-prep field notes](macos-session-prep-field-notes.md).
+Keep Accessibility (`ptax.py`, `route_folders.py`) for unsupported versions,
+seeding the route by name and remaining GUI gaps.
 
 There is also no PTSL command for: tempo or meter, pan, fader or volume, plug-in
 insert or bypass, track reorder, moving a track into a folder, split-to-mono, or
