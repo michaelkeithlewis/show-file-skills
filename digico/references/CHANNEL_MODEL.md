@@ -6,7 +6,7 @@ Offsets are the early fixed offsets of one 48-channel Q225 default; use the keys
 
 ## Signal flow (input channel)
 Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ <-> Dynamics -> [Insert B] -> Mute -> Fader
-- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [todo]
+- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [done] (04, 81, 0), see Input / Trim.
 - **Mustard** (Quantum) runs alongside, insertable at 1 of **5 positions**. [todo]
 
 ## Input / Trim  [done](trim,polarity) [todo](phantom,gaintrack,alt)
@@ -30,21 +30,30 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
 - **Dynamic EQ** per band (rel band freq) [done] FULL: enable+0x28, threshold+0x30, attack+0x38(s), release+0x40(s), ratio+0x48, over/under+0x50 (over=0/under=1).
 
 ## Dynamics: 2 modules (order switchable)
-### Dyn1 = Compressor | Multiband | De-esser   [done]mode/comp [todo](multiband, deesser)
+### Dyn1 = Compressor | Multiband | De-esser   [done](mode, comp, multiband) [partial](de-esser)
 - mode @0x143a7 (comp=0, multi=1, deesser=2). [done]
 - **Compressor**: threshold, attack, release, ratio, gain(makeup), **auto gain**, **knee hard/mid/soft**. [done]
   (in@0x143af, thr@0x143bf[x3 mirror], knee@0x143c7 hard0/med1/soft2, atk@0x143cf[s], rel@0x143d7[s],
    ratio@0x143df, makeup@0x143e7, autogain@0x143ef)
-- **Multiband**: 3 bands, each = full comp param set + on; 2 crossover freqs (20Hz–20kHz); all-on; listen. [todo]
-- **De-esser**: comp-like + bandpass sidechain (centre freq + width), listen, **no makeup**. [todo]
+- **Multiband**: 3 bands, each = full comp param set + on; 2 crossover freqs (20Hz–20kHz); all-on; listen. [done]
+  Band byte per band: **lo = 0, mid = 2, hi = 1** (console-confirmed: the console's multiband screen, and a session
+  written by bytes showed each value on the right band on a Quantum 112). Per band (module 05, band b): on 03,
+  threshold 0e, attack 11 (s), release 12 (s), ratio 10, gain 09. Crossovers: lo (05, 05, 0) default 130 Hz, hi
+  (05, 05, 1) default 1 kHz. Keys `mb1_*` / `mb2_*` / `mb3_*` = lo / mid / hi.
+- **De-esser**: comp-like + bandpass sidechain (centre freq + width), listen, **no makeup**. [partial]
+  Threshold, attack, release and ratio use the compressor's keys (band 0); the side-chain band is not mapped.
 
-### Dyn2 = Gate | Ducker | Compressor   [done]mode/gate [todo](sidechain, key)
+### Dyn2 = Gate | Ducker | Compressor   [done](mode, gate, comp, key, key filter)
 - mode @0x14497 (gate=0, duck=1, comp=2). [done]
-- **Gate**: threshold, attack, hold, release, range; **key route** [done] @0x14491 (u16: 0=off,
-  else 0x0100|(target_ch-1)); ripple/key-listen [todo]; bandpass sidechain (freq+width) [todo]. [done]params+key
+- **Gate**: threshold, attack, hold, release, range; **key** [done]: key input (05, 16, 0) = the source as a route
+  `00 00 <index> <type>` (a channel 01, or an input socket 1c + k; 0 = none), key on (05, 37, 0). Console sample: keying
+  input 3's gate from input 4 wrote `00 00 03 01` and 1.0, nothing else. Key filter [done]: high-pass (05, 05, 3), low-pass
+  (05, 05, 2). ripple/key-listen [todo]. The 0x14491 noted here before sits inside (05, 14, 0), the dynamics' stereo
+  link (each half of a stereo bus names the other there; `buses.py` KEY_ROUTE). [done]params+key
   (in@0x1449f, thr@0x144a7, atk@0x144af[s], rel@0x144b7[s], hold@0x144bf[s], range@0x144c7[dB +ve])
 - **Ducker**: same controls as gate (opposite action). [done]params(shared)
-- **Compressor**: = Dyn1 single-band comp + sidechain bandpass + S/C external input. [todo](sidechain)
+- **Compressor**: = Dyn1 single-band comp + sidechain bandpass + S/C external input. [done]: ratio (05, 10, 3),
+  gain (05, 09, 3), threshold / attack / release as the gate; key and key filter as the gate.
 
 ## Inserts A & B  [done](A on/pos, B on) [todo](B pos, routing)
 - [done] Insert A on @0x140eb, Insert B on @0x14133, Insert A position @0x1411d (u16):
