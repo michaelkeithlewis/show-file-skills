@@ -56,6 +56,6 @@ the contract is in the comment above it in `intake.py`. The names `jev_*` and `J
 - Output for the Quantum 225 at V2242 has been loaded in the real editor and re-saved. The other consoles and builds
   are built from their own editor defaults with the same writers and pass `validate.py`, but are marked untested in
   the console table until someone loads them.
-- Long names (over 8 characters) are not written; names are cut to 8.
+- Names are cut to 8 characters (the report keeps the full name). This is a naming choice: the format holds 31 (`FORMAT.md` "Names").
 - Snapshots: a session with snapshots blocks structural edits (count, order, stereo), because the snapshot copies of
   the channel blocks are not rewritten.

@@ -36,7 +36,7 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 SCHEMA_VERSION = 1
-MAX_NAME = 8          # ses.py writes names up to 8 chars in place (references/FORMAT.md "Names")
+MAX_NAME = 8          # console names cut to 8 by choice; the format holds 31 (references/FORMAT.md "Names")
 
 # --------------------------------------------------------------------------------------------
 # vocabulary

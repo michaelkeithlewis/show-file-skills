@@ -313,8 +313,9 @@ class Session:
         return bytes([len(b)]) + b + b'\x00' * (31 - len(b))
 
     def rename(self, ch, name, max_len=8):
-        """Write `name` into every copy for input channel `ch`. Names over 8 chars are
-        untested on a console, so they are refused unless max_len is raised."""
+        """Write `name` into every copy for input channel `ch`. Every copy is a fixed 32-byte field
+        (up to 31 chars, references/FORMAT.md "Names"); names over max_len (8, the tools' naming choice)
+        are refused unless max_len is raised."""
         if len(name) > max_len:
             raise ValueError('%r is longer than %d chars' % (name, max_len))
         c = self.by_index[ch]

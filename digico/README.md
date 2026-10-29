@@ -62,7 +62,8 @@ Verified for this release:
 - None of these release outputs were loaded on a console.
 
 Not covered:
-- Names longer than 8 characters.
+- Names longer than 8 characters: the tools cut names to 8, although the format holds 31 and longer names load on a
+  console (`references/FORMAT.md` "Names").
 - Structural edits on a session with snapshots (refused).
 - Consoles and builds other than the Quantum 225 V2242 are built with the same writers from their own editor
   defaults but have not been loaded in their editors by this release.
