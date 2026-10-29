@@ -47,11 +47,14 @@ with engine() as e:
     st = e.client.run_command(pt.CId_GetSessionPath, {})
     log = os.path.join(os.path.dirname(posix(st["session_path"]["path"])), ".premix_clipgain.json")
     applied = json.load(open(log)) if os.path.exists(log) else {}
-    plan, skipped = [], []
+    plan, skipped, parked = [], [], []
     for name, rows in edl(e).items():
         t = tl.get(name)
         if t is None or not rows or (a.tracks and name not in a.tracks) or (a.folders and t.parent_folder_name not in a.folders):
             continue
+        at = t.track_attributes
+        if any(pt.TrackAttributeState.Name(x).endswith(("Explicitly", "Implicitly")) for x in (at.is_inactive, at.is_hidden)):
+            parked.append(name); continue   # keystrokes cannot reach the clips of an inactive or hidden track
         if name in applied and not a.tracks:
             continue   # already clip-gained (see .premix_clipgain.json); name it with --tracks to add more
         cs = [clips.get(r[2]) for r in rows]
@@ -74,6 +77,7 @@ with engine() as e:
         capped = " (peak cap)" if a.target - rms > a.peak_cap - peak else (" (+36 max)" if a.target - rms > 36 else "")
         print(f"{name:40} avg {rms:6.1f}  peak {peak:6.1f}  clip gain {steps * NUDGE:+5.1f} dB{capped}", flush=True)
     print(f"{len(plan)} tracks, skipped (edited): {skipped}", flush=True)
+    if parked: print(f"skipped (inactive or hidden): {parked}", flush=True)
     if a.dry: sys.exit()
     if user_idle_secs() < 120 and not a.force:
         sys.exit(f"someone used the Mac {user_idle_secs():.0f} s ago; rerun when Pro Tools is free (or --force)")

@@ -8,6 +8,8 @@
                                                         reads the current faders from Pro Tools instead of F.json
   premix.py apply  F.json [--force]                    type the faders (stems + "folder_faders") into the Output windows
   premix.py verify [--faders F.json] [--ref REF.wav]   offline-bounce every bus in one pass; peaks + bands vs ref
+  premix.py plugcomp --faders G.json --out H.json   solo + bounce each group of stems sharing an insert chain; move
+                                                        their faders until the real bus lands on the planned loudness
   premix.py check  --faders F.json --bpm N             4-bar windows: each folder's loudness vs the whole mix; flags
                                                         any folder (not kick/bass) within 2 LU of the mix = sticking out
 The model is the PRE-PLUG-IN linear sum (clip gain from .premix_clipgain.json, fader, Pro Tools' sin/cos pan
@@ -31,7 +33,14 @@ KB1, KA1 = [1.53512485958697, -2.69169618940638, 1.19839281085285], [1.0, -1.690
 KB2, KA2 = [1.0, -2.0, 1.0], [1.0, -1.99004745483398, 0.99007225036621]
 
 def db(x): return 10 * math.log10(max(x, 1e-30))
-def cache(name): return "/tmp/premix_" + hashlib.md5(name.encode()).hexdigest() + ".npy"
+CACHED = set()
+def cache(name):
+    p = "/tmp/premix_" + hashlib.md5(name.encode()).hexdigest() + ".npy"; CACHED.add(p); return p
+def _drop_cache():   # each command re-renders its stems; ~90 MB a stem, 25 GB after one album (2026-10-29)
+    for p in CACHED:
+        try: os.remove(p)
+        except OSError: pass
+import atexit; atexit.register(_drop_cache)
 def kloud(y):
     """Gated BS.1770 loudness (LUFS) of an (n, ch) block at 48k."""
     k = lfilter(KB2, KA2, lfilter(KB1, KA1, y, axis=0), axis=0)
@@ -55,6 +64,9 @@ def bands(y):
     return {nm: float(acc[(fr >= lo) & (fr < hi)].sum()) for lo, hi, nm in BANDS}
 
 # ---------- the session as Pro Tools sums it ----------------------------------------------------
+def silent(t):
+    a = t.track_attributes
+    return pt.TrackAttributeState.Name(a.is_inactive).endswith(("Explicitly", "Implicitly")) or bool(a.is_muted)
 TOPO = [{}]   # routing folders: {name: {bus, out, parent, fader}}, filled by session_map()
 def session_map():
     with engine() as e:
@@ -63,7 +75,7 @@ def session_map():
         sess = posix(st["session_path"]["path"])
         clips = {c["clip_full_name"]: c for c in paged(e, pt.CId_GetClipList, {}, "clip_list")}
         files = {f["file_id"]: posix(f["path"]) for f in paged(e, pt.CId_GetFileLocation, {"file_filters": ["FLTFilter_AllFiles"]}, "file_locations")}
-        rows = edl(e)
+        rows = edl_samples(e)
     g = ptax.track_groups(ptax.window("Mix:"))
     def sel(n, title):
         s = g.get(n); b = ptax.find(s, "AXPopUpButton", title) if s is not None else None
@@ -94,13 +106,14 @@ def session_map():
     tracks = {}
     for t in tl:
         if "Audio" not in kind[t.name] or t.name not in rows or not rows[t.name]: continue
+        if silent(t): continue   # producer tracks parked inactive or muted (a muted synth bass) do not sound: keep them out of the model
         segs = []
         for r in rows[t.name]:
             c = clips.get(r[2])
-            if c is None: continue
+            if c is None or r[-1].strip().lower() == "muted": continue
             sfx = c["clip_full_name"][len(c["clip_root_name"]):]
             segs.append((files[c["file_id"]], 1 if sfx.endswith(".R") else 0, int(c["src_start_point"]["position"]),
-                         int(c["src_end_point"]["position"]), int(r[0]) - 1))
+                         int(c["src_end_point"]["position"]), int(r[0]) - 1, int(r[3])))
         chain, b, seen = [], out.get(t.name), set()
         while b and b not in seen and b not in ("no output", "?"):
             seen.add(b); chain.append(b)
@@ -110,22 +123,41 @@ def session_map():
                           "segs": segs, "chain": chain}
     return sess, tracks
 
+def edl_samples(e):
+    """Track EDLs with clip start/end in samples from session start (each clip sits where it plays, so producer
+    comps and section pieces sum in time). Rows: [channel, event, clip, start, end, duration, state]."""
+    t = e.client.run_command(pt.CId_ExportSessionInfoAsText, {"include_track_edls": True, "include_file_list": False,
+                             "track_offset_options": "TOOptions_Samples", "output_type": "ESI_String"}).get("session_info", "")
+    st = re.search(r"SESSION START:\s*(\d+)", t); st = int(st.group(1)) if st else 0
+    out = {}
+    for b in re.split(r"\nTRACK NAME:\t", t)[1:]:
+        rows = []
+        for l in b.split("\n"):
+            if not re.match(r"^\d+\s*\t\s*\d+\s*\t", l): continue
+            x = [v.strip() for v in l.split("\t")]
+            if len(x) < 7 or not x[3].isdigit() or x[6] not in ("Muted", "Unmuted"): continue   # marker list rows (Ticks)
+            x = x[:7]; x[3] = str(int(x[3]) - st); rows.append(x)
+        out[re.sub(r" \((Stereo|Mono)\)$", "", b.split("\n")[0].strip())] = sorted(rows)
+    return out
+
 def render(tr, n):
     """Pre-fader, post-clip-gain, post-pan stereo output of one track (clip gain applied by the caller)."""
     y = np.zeros((n, 2), np.float32)
     mono = tr["format"] == 1
-    for path, ch, s0, s1, dst in tr["segs"]:
+    for path, ch, s0, s1, dst, at in tr["segs"]:
+        if at >= n: continue
         x, sr = sf.read(path, start=s0, stop=s1, dtype="float32", always_2d=True)
-        x = x[:, min(ch, x.shape[1] - 1)][:n]
+        x = x[:, min(ch, x.shape[1] - 1)][:n - max(at, 0)]
+        if at < 0: x = x[-at:]; at = 0
         if mono:
             th = (tr["pan"] / 100 + 1) * math.pi / 4
-            y[:len(x), 0] += x * math.cos(th); y[:len(x), 1] += x * math.sin(th)
+            y[at:at + len(x), 0] += x * math.cos(th); y[at:at + len(x), 1] += x * math.sin(th)
         else:
-            y[:len(x), dst] += x
+            y[at:at + len(x), dst] += x
     return y
 
 def song_len(tracks):
-    return max(s1 - s0 for t in tracks.values() for _, _, s0, s1, _ in t["segs"]) + 2 * SR
+    return max(at + s1 - s0 for t in tracks.values() for _, _, s0, s1, _, at in t["segs"]) + 2 * SR
 
 def clipgains(sess):
     p = os.path.join(os.path.dirname(sess), ".premix_clipgain.json")
@@ -175,13 +207,17 @@ def topdown(tracks, faders, n, bus_headroom=-6.0, bus_lufs=-18.0, max_up=6.0):
         return d
     moves = {}
     hand_set = {f for f, v in folders.items() if abs(v["fader"]) > 0.05}
+    live = set()
+    for t in tracks.values():
+        f = t["folder"]
+        while f and f not in live: live.add(f); f = folders.get(f, {}).get("parent")
     for f in sorted(folders, key=depth, reverse=True):
         b = folders[f]["bus"]
         if not b: continue                                   # no bus (FX GROUP): its tracks bypass the fader
         if f in hand_set: continue   # the engineer set this folder by hand (a folder driven hot into its own plug-ins):
                                      # never change what feeds it; its fader still absorbs its parent's moves
         kids_t = [x for x, t in tracks.items() if t["chain"] and t["chain"][0] == b]
-        kids_f = [c for c, v in folders.items() if v["out"] == b and c != f]
+        kids_f = [c for c, v in folders.items() if v["out"] == b and c != f and c in live]   # skip empty folders (ORCH GRP, BGV with no stems)
         levels = [fad[x] for x in kids_t] + [ff[c] for c in kids_f]
         if not levels: continue
         st = bus_sums_ff(tracks, fad, ff, n).get(b, {"peak": -200, "lufs": -200})
@@ -212,7 +248,7 @@ def ref_shares(ref):
 
 # Group loudness targets, LU relative to the kick group, gated over the parts where each group plays.
 # First-blend defaults; edit here. Matched against the folder name (first hit wins).
-ROLE_TARGETS = [("KICK", 0.0), ("SNARE", 0.0), ("BASS", -1.0), ("TOM", -3.0), ("GUITAR", -4.0), ("KEYS", -4.0),
+ROLE_TARGETS = [("KICK", 0.0), ("SNARE", 0.0), ("DRUM", 0.0), ("BASS", -1.0), ("TOM", -3.0), ("GUITAR", -4.0), ("KEYS", -4.0),
                 ("ORCH", -4.0), ("BGV", -6.0), ("LV", 0.0), ("OH", -9.0), ("PERC", -9.0), ("FX", -9.0)]
 def role_target(folder):
     for k, v in ROLE_TARGETS:
@@ -225,25 +261,58 @@ def group_lufs(tracks, faders, n):
         sums[tr["folder"] or "(none)"] += np.load(cache(name)) * np.float32(10 ** (faders.get(name, 0.0) / 20))
     return {f: kloud(y) for f, y in sums.items()}
 
-def plan(tracks, stats, ref, headroom, n, ref_cap=3.0):
+# Printed effect returns on producer sessions ("v lead apollo fx", "LV verb.dup3", "bgv harm 1 verb", "Vocal Echos").
+# Loudness-matching them to the dry stems would put a reverb print as loud as the vocal (producer session, 2026-10-29), so
+# they keep the producer's printed wet/dry ratio: fader = dry partner's fader + partner clip gain - own clip gain.
+WET = re.compile(r"\b(fx|verb|reverb|delay|dly|echos?|throw|wet)\b", re.I)
+WET_WORDS = re.compile(r"\b(apollo|fx|verb|reverb|delay|dly|echos?|throw|wet|print)\b", re.I)
+def is_wet(name): return bool(WET.search(re.sub(r"\.(dup\d+|cm)\b", " ", name)))
+def wet_partners(x, dry, tracks):
+    base = re.sub(r"\s+\.", ".", re.sub(r"\s+", " ", WET_WORDS.sub(" ", x))).strip()
+    if base in dry: return [base]
+    alias = [d for d in dry if re.sub(r"\.(rx|cm|comp)$", "", d.strip()) == base]   # "v lead apollo fx" -> "v lead.rx"
+    if alias: return alias
+    f = tracks[x]["folder"]
+    while True:
+        sib = [d for d in dry if tracks[d]["folder"] == f]
+        if sib: return sib
+        f = TOPO[0].get(f, {}).get("parent")
+        if not f: return list(dry)
+
+def plan(tracks, stats, ref, headroom, n, ref_cap=3.0, cg=None):
     """1. inside each folder, match every stem's loudness to the folder median (nothing sticks out);
     2. set each folder's loudness to its ROLE_TARGETS offset from the kick folder;
     3. let the reference nudge folders by at most +/-ref_cap dB toward its tonal balance (a free fit
        is degenerate: on a test song it put the toms folder at +12 dB, 12 LU over the kick);
-    4. one trim so the loudest bus peaks at the headroom."""
+    4. one trim so the loudest bus peaks at the headroom.
+    Printed effect returns (is_wet) sit out of 1-3 and follow their dry partner (see WET)."""
+    cg = cg or {}
+    wet = {x for x in tracks if is_wet(x)}
+    dry = {x: t for x, t in tracks.items() if x not in wet}
+    if not dry: dry, wet = dict(tracks), set()
+    part = {x: wet_partners(x, dry, tracks) for x in wet}
     fold = collections.defaultdict(list)
-    for name, tr in tracks.items(): fold[tr["folder"] or "(none)"].append(name)
+    for name, tr in dry.items(): fold[tr["folder"] or "(none)"].append(name)
     within = {}
     for f, names in fold.items():
         live = [stats[x]["lufs"] for x in names if stats[x]["lufs"] > -100]
         med = float(np.median(live)) if live else 0.0
         for x in names:
             within[x] = float(np.clip(med - stats[x]["lufs"], -12, 12)) if stats[x]["lufs"] > -100 else 0.0
-    gl = group_lufs(tracks, within, n)
-    anchor = next((f for f in gl if "KICK" in f.upper()), max(gl, key=gl.get))
-    base = {f: (gl[anchor] + role_target(f)) - gl[f] if gl[f] > -100 else 0.0 for f in gl}
+    gl = group_lufs(dry, within, n)
+    # Anchor = the kick folder, else the whole kit (producer sessions keep drums in DRUM GROUP), else the lead
+    # vocal, else the loudest folder; every folder lands on its role offset from the anchor's ROLE level. (Picking the
+    # loudest folder as "kick" put one song's BGVs 3 LU over the lead and another's bass 4 LU over it, 2026-10-29.)
+    live_f = [f for f in gl if gl[f] > -100]
+    anchor = next((f for k in ("KICK", "DRUM", "LV") for f in live_f if k in f.upper()), max(gl, key=gl.get))
+    ref_level = gl[anchor] - role_target(anchor)
+    base = {f: (ref_level + role_target(f)) - gl[f] if gl[f] > -100 else 0.0 for f in gl}
     if anchor in base: base[anchor] = 0.0
-    def faders_for(gn): return {x: within[x] + gn[tracks[x]["folder"] or "(none)"] for x in tracks}
+    def faders_for(gn):
+        fd = {x: within[x] + gn[dry[x]["folder"] or "(none)"] for x in dry}
+        for x in wet:
+            fd[x] = float(np.median([fd[d] + cg.get(d, 0.0) for d in part[x]])) - cg.get(x, 0.0)
+        return fd
     nudge = {f: 0.0 for f in fold}
     if ref:
         target, _ = ref_shares(ref)
@@ -259,7 +328,7 @@ def plan(tracks, stats, ref, headroom, n, ref_cap=3.0):
     b = bus_sums(tracks, fad, n)
     trim = headroom - max(v["peak"] for v in b.values())
     fad = {x: round((v + trim) * 2) / 2 for x, v in fad.items()}
-    return fad, {"role": base, "ref_nudge": nudge, "group_lufs_before": gl}, within, trim
+    return fad, {"role": base, "ref_nudge": nudge, "group_lufs_before": gl, "wet_follows": part}, within, trim
 
 # ---------- Pro Tools I/O -----------------------------------------------------------------------
 def set_volume(track, value):
@@ -283,12 +352,130 @@ def bounce_buses(buses, base):
                      location_info=loc, dolby_atmos_info=pt.EM_DolbyAtmosInfo(), offline_bounce=pt.TB_True)
         return [b for b in buses if b in have]
 
+def bounce_all(sess, tracks, n, ref):
+    """Offline-bounce every bus in the chain plus PtMst in one pass; peak + loudness per bus, bands vs ref."""
+    buses = sorted({b for t in tracks.values() for b in t["chain"]}) + ["PtMst"]
+    with engine() as e:
+        e.client.run_command(pt.CId_SetTimelineSelection, {"in_time": "0", "out_time": str(n), "location_type": "TLType_Samples"})
+    base = "ZZPREMIX"
+    bounce_buses(buses, base)
+    bf = os.path.join(os.path.dirname(sess), "Bounced Files")
+    res = {}
+    for f in sorted(os.listdir(bf)):
+        if not f.startswith(base): continue
+        y, _ = sf.read(os.path.join(bf, f), dtype="float32", always_2d=True)
+        res[f] = {"peak": float(20 * np.log10(np.abs(y).max() + 1e-12)), "lufs": kloud(y)}
+        if ref and "PtMst" in f:
+            b = bands(y); t = sum(b.values()); mine = {nm: db(v / t) for nm, v in b.items()}
+            tgt, rl = ref_shares(ref)
+            res["vs_ref"] = {nm: round(mine[nm] - tgt[nm], 1) for _, _, nm in BANDS}; res["ref_lufs"] = rl
+        os.remove(os.path.join(bf, f))
+    return res
+
+def plugin_chains():
+    """{track: (insert names...)} from the session text export (PTSL has no insert read)."""
+    with engine() as e:
+        t = e.client.run_command(pt.CId_ExportSessionInfoAsText, {"include_track_edls": True, "include_file_list": False,
+                                 "output_type": "ESI_String"}).get("session_info", "")
+    out = {}
+    for b in re.split(r"\nTRACK NAME:\t", t)[1:]:
+        name = re.sub(r" \((Stereo|Mono)\)$", "", b.split("\n")[0].strip())
+        pl = next((l for l in b.split("\n") if l.startswith("PLUG-INS:")), "PLUG-INS:")
+        out[name] = tuple(x.strip() for x in pl[9:].split("\t") if x.strip())
+    return out
+
+def wait_idle(limit=1800):
+    t0 = time.time()
+    while user_idle_secs() < 120:
+        if time.time() - t0 > limit: sys.exit("Mac in use for 30 min; rerun plugcomp with --current to finish")
+        time.sleep(10)
+    guard_start()
+
+def plugcomp(sess, tracks, cg, n, doc, out, cur=None, passes=4):
+    """The model is pre-plug-in, so a stem whose own inserts (or a producer aux it feeds) change its level lands
+    off its planned loudness. Solo each group of stems that share an insert chain and route, offline-bounce the
+    folder bus it lands on (several groups per pass when their buses differ), and move the group's faders until
+    the bounce is within 1 LU of the PLANNED loudness (the model at doc's faders). Several passes, secant steps:
+    a producer chain need not move 1 dB per fader dB (one vocal chain moved 2 dB per dB). Faders stop at +12.
+    On one producer session (2026-10-29) the LV chain (Auto-Tune Realtime Access demo + RVox) came out 13 dB under plan while
+    the printed verbs beside it matched, so a folder-fader fix would have pushed the verbs up with the vocal.
+    Printed effects (is_wet) are left as their producer chain makes them. Types the faders itself; writes the
+    full fader file (doc with corrected stem faders) to out."""
+    plan_f = dict(doc["faders"]); fad = dict(cur or plan_f); chains = plugin_chains()
+    bus2folder = {v["bus"]: k for k, v in TOPO[0].items() if v["bus"]}
+    groups = collections.defaultdict(list)
+    for x, t in tracks.items():
+        route = tuple(t["chain"])
+        target = next((b for b in route if b in bus2folder), route[-1] if route else None)
+        if not target or (not chains.get(x) and route and route[0] == target): continue   # no inserts, straight to its folder: model is exact
+        if is_wet(x): continue   # a printed effect keeps its producer chain's level change (an echo print through a saturator + delays read -11 dB)
+        groups[(chains.get(x, ()), route, target)].append(x)
+    tgt = {}
+    for g, members in groups.items():
+        tgt[g] = kloud(sum(np.load(cache(x)) * np.float32(10 ** (plan_f.get(x, 0.0) / 20)) for x in members))
+    hist = collections.defaultdict(list); report = []; open_g = [g for g in groups if tgt[g] > -100]
+    for pas in range(1, passes + 1):
+        if not open_g: break
+        todo, real = list(open_g), {}
+        while todo:
+            batch, used = [], set()
+            for g in todo:
+                if g[2] not in used: batch.append(g); used.add(g[2])
+            todo = [g for g in todo if g not in batch]
+            names = [x for g in batch for x in groups[g]]
+            with engine() as e:
+                e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": names, "enabled": True})
+                e.client.run_command(pt.CId_SetTimelineSelection, {"in_time": "0", "out_time": str(n), "location_type": "TLType_Samples"})
+            try:
+                bounce_buses(sorted(used), "ZZPC")
+            finally:
+                with engine() as e: e.client.run_command(pt.CId_SetTrackSoloState, {"track_names": names, "enabled": False})
+            bf = os.path.join(os.path.dirname(sess), "Bounced Files"); got = {}
+            for f in os.listdir(bf):
+                if f.startswith("ZZPC"):   # one source bounces to "ZZPC.wav" with no bus suffix
+                    y, _ = sf.read(os.path.join(bf, f), dtype="float32", always_2d=True); os.remove(os.path.join(bf, f))
+                    got[f[5:-4] if f.startswith("ZZPC_") else sorted(used)[0]] = kloud(y)
+            for g in batch: real[g] = got.get(g[2], -200.0)
+        moves = {}
+        for g in list(open_g):
+            members = groups[g]; r = real[g]; off = fad[members[0]] - plan_f[members[0]]
+            line = f"pass {pas} {g[2]:14} {', '.join(members)[:50]:50} plan {tgt[g]:6.1f} real {r:6.1f} LUFS at {off:+5.1f}  [{' / '.join(g[0])[:60]}]"
+            if r < -100:
+                line += "  SILENT in the bounce: left as planned"; open_g.remove(g)
+            else:
+                hist[g].append((off, r)); err = tgt[g] - r
+                if abs(err) < 1.0:
+                    open_g.remove(g); line += "  ok"
+                else:
+                    slope = 1.0
+                    if len(hist[g]) >= 2 and abs(hist[g][-1][0] - hist[g][-2][0]) > 0.4:
+                        slope = float(np.clip((hist[g][-1][1] - hist[g][-2][1]) / (hist[g][-1][0] - hist[g][-2][0]), 0.5, 3.0))
+                    step = err / slope; capped = False
+                    for x in members:
+                        v = round(min(max(fad[x] + step, -60.0), 12.0) * 2) / 2
+                        capped |= v >= 12.0 and step > 0
+                        if v != fad[x]: moves[x] = v; fad[x] = v
+                    line += f"  -> {step:+.1f} dB (slope {slope:.2f})" + ("  STOPS AT +12" if capped else "")
+                    if capped or not any(x in moves for x in members): open_g.remove(g)
+            print(line, flush=True); report.append(line)
+        if moves:
+            wait_idle()
+            for x, v in moves.items():
+                if user_touched(): sys.exit("STOPPED: someone used the Mac mid-run; rerun plugcomp with --current")
+                got = set_volume(x, v)
+                if got is None or abs(float(got) - v) >= 0.05: print(f"CHECK {x} {v:+.1f} -> {got}", flush=True)
+            json.dump({**doc, "faders": fad}, open(out, "w"), indent=1)
+    comp = {x: round(fad[x] - plan_f[x], 1) for x in fad if abs(fad[x] - plan_f[x]) > 0.05}
+    json.dump({**doc, "faders": fad, "plugin_comp": comp, "plugcomp_report": report}, open(out, "w"), indent=1)
+    print("stem fader corrections vs plan:", comp, "| not converged:", [", ".join(groups[g]) for g in open_g])
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["model", "trim", "plan", "topdown", "apply", "verify", "check"])
+    ap.add_argument("cmd", choices=["model", "trim", "plan", "topdown", "apply", "verify", "check", "plugcomp"])
     ap.add_argument("file", nargs="?"); ap.add_argument("--faders"); ap.add_argument("--ref"); ap.add_argument("--out")
     ap.add_argument("--headroom", type=float, default=-6.0); ap.add_argument("--force", action="store_true")
     ap.add_argument("--bpm", type=float, default=120.0); ap.add_argument("--live", action="store_true")
+    ap.add_argument("--current", help="plugcomp: fader file of what is typed in Pro Tools now (default: --faders)")
     a = ap.parse_args()
     if a.cmd == "apply":
         doc = json.load(open(a.file)); fad = dict(doc["faders"]); fad.update(doc.get("folder_faders", {}))
@@ -306,24 +493,10 @@ def main():
     sess, tracks = session_map()
     cg = clipgains(sess); n = song_len(tracks)
     if a.cmd == "verify":
-        buses = sorted({b for t in tracks.values() for b in t["chain"]}) + ["PtMst"]
-        with engine() as e:
-            e.client.run_command(pt.CId_SetTimelineSelection, {"in_time": "0", "out_time": str(n), "location_type": "TLType_Samples"})
-        base = "ZZPREMIX"
-        got = bounce_buses(buses, base)
-        bf = os.path.join(os.path.dirname(sess), "Bounced Files")
-        res = {}
-        for f in sorted(os.listdir(bf)):
-            if not f.startswith(base): continue
-            y, _ = sf.read(os.path.join(bf, f), dtype="float32", always_2d=True)
-            res[f] = {"peak": float(20 * np.log10(np.abs(y).max() + 1e-12)), "lufs": kloud(y)}
-            if a.ref and "PtMst" in f:
-                b = bands(y); t = sum(b.values()); mine = {nm: db(v / t) for nm, v in b.items()}
-                tgt, rl = ref_shares(a.ref)
-                res["vs_ref"] = {nm: round(mine[nm] - tgt[nm], 1) for _, _, nm in BANDS}; res["ref_lufs"] = rl
-            os.remove(os.path.join(bf, f))
-        print(json.dumps(res, indent=1)); return
+        print(json.dumps(bounce_all(sess, tracks, n, a.ref), indent=1)); return
     stats = analyze(tracks, cg, n)
+    if a.cmd == "plugcomp":
+        plugcomp(sess, tracks, cg, n, json.load(open(a.faders)), a.out, json.load(open(a.current))["faders"] if a.current else None); return
     if a.cmd == "topdown":
         if a.live:
             g = ptax.track_groups(ptax.window("Mix:")); live = {}
@@ -355,7 +528,7 @@ def main():
             m = kloud(mix[s0:s0 + win]); row = []
             for f in sorted(sums):
                 g = kloud(sums[f][s0:s0 + win]); row.append(f"{g - m:6.1f}" if g > -100 else "     .")
-                if g > -100 and g - m > -2.0 and not any(k in f.upper() for k in ("KICK", "BASS", "LV")):   # anchors + the lead vocal
+                if g > -100 and g - m > -2.0 and not any(k in f.upper() for k in ("KICK", "DRUM", "BASS", "LV")):   # anchors (kick or whole kit) + the lead vocal
                     flags.append((1 + 4 * i, f, round(g - m, 1)))
             print(f"{1 + 4 * i:3}  {m:6.1f} " + " ".join(row))
         print("STICKING OUT (folder within 2 LU of the mix; fine when it is the only thing playing):", flags)
@@ -377,7 +550,7 @@ def main():
         json.dump({"faders": {x: t for x in tracks}, "trim": t, "loudest_bus": loud}, open(a.out, "w"), indent=1)
         print(f"loudest bus {loud} peaks {b[loud]['peak']:.1f} dBFS at unity -> every stem fader {t:+.1f} dB"); return
     if a.cmd == "plan":
-        fad, gain, within, trim = plan(tracks, stats, a.ref, a.headroom, n)
+        fad, gain, within, trim = plan(tracks, stats, a.ref, a.headroom, n, cg=cg)
         json.dump({"faders": fad, "folder_moves": gain, "within": within, "trim": trim}, open(a.out, "w"), indent=1)
         print("role moves:", {k: round(v, 1) for k, v in gain["role"].items()})
         print("reference nudges:", gain["ref_nudge"], "trim", round(trim, 1))

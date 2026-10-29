@@ -109,7 +109,8 @@ instead of `route_folders.py`, `channel_check.py`, `ref_offset.py`. A session th
 ## Premix (only when asked)
 
 `clipgain_normalize.py`, then `premix.py trim`, `verify --ref`, `plan --ref`, `topdown`,
-`apply` and `check`. Steps and numbers: `references/session-prep.md`, "Premix". Every
+`apply`, `plugcomp` and `check`, or all of it with `premix_session.sh`. Switch mix groups off
+(`mixgroups.py`) before you type faders. Steps and numbers: `references/session-prep.md`, "Premix". Every
 script that types into Pro Tools refuses to run if the Mac had input in the last 2
 minutes and stops if someone touches it mid-run.
 

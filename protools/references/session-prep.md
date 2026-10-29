@@ -572,7 +572,32 @@ deepest first and then up to the parent, so stem faders sit near unity with good
 the folder's plug-ins, so a folder's children are lifted only until its bus input reaches -6 dBFS peak or -18 LUFS.
 A folder fader the engineer set by hand is left alone (a folder driven hot into its own plug-ins
 sounds different if you move what feeds it). The sum of faders on every path stays the same, so the
-mix does not move. `apply` types the folder faders too.
+mix does not move. `apply` types the folder faders too. Empty folders are left alone.
+
+## Premix: plug-in correction and producer sessions
+
+`premix_session.sh <tag> <session.ptx> <reference.wav> <check-bpm>` runs the whole premix in order: park
+solos, clip gain, trim, mix groups off, plan, top-down, plug-in correction, verify, check, mix groups and
+solos back on, save. Every typing step waits up to 30 minutes for the Mac to be idle. Add `resume` to start
+again at typing `td.json` into an open session. For a 3/4 song, give `check` the bpm x 4/3.
+
+- **Switch the mix groups off before you type faders.** Use `mixgroups.py off groups.json`, and
+  `mixgroups.py on groups.json` before you save. Producers often group a vocal take with its printed
+  verb. With the group active, typing one fader moves the other. `apply` reads each value back right
+  after it types it, so it reports no error. Run `fader_readback.py <faders.json>` after the pass.
+- **Plug-in correction:** `premix.py plugcomp --faders td.json --out final.json`. The model is
+  pre-plug-in, so a stem whose own inserts, or a producer aux it feeds, change its level lands off the
+  plan. The script solos each group of stems that share one insert chain and route, and offline-bounces
+  the folder bus they land on. Then it moves that group's faders until the bounce is within 1 LU of the
+  planned loudness (up to 4 passes, secant steps, faders stop at +12). Do not correct at the folder
+  fader: when a vocal chain reads low and its verb print beside it does not, a folder move pushes the
+  verb up with the vocal.
+- **Printed effects** (names with fx, verb, delay, echo, throw, wet) are not loudness-matched in `plan`.
+  Each one keeps the printed wet/dry ratio to its dry partner, and `plugcomp` leaves its own chain's level
+  change in place.
+- The model sums each clip where it sits on the timeline (sample-format EDL), and leaves out muted
+  clips and inactive or muted tracks. `clipgain_normalize.py` skips inactive and hidden tracks.
+- A bounce with ONE source writes `<base>.wav` with no bus suffix (`EM_DF_FilePerMixSource`).
 
 ## Revisions: finding a pop
 
