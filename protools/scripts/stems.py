@@ -100,6 +100,7 @@ def producer_map(e, tl, kind):
         if not cat:
             k = re.sub(r"(RX|DYN|COMP|V\d)+$", "", norm(name))
             cat = byname.get(k) or next((v for n, v in byname.items() if n and (k.startswith(n) or n.startswith(k))), None)
+        if not cat and under(name, (VOCAL_ROOT,)): cat = "VOX"   # a renamed vocal comp still belongs to the vocal stems
         if cat: cats.setdefault(cat, []).append(name)
         else: unmatched.append(name)
     stems = {}

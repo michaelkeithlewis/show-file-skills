@@ -610,4 +610,6 @@ Use the final master's exact range, so stems line up sample for sample.
 `--map producer` names stems after the producer's own multitrack folders (`MULTITRACKS/<CATEGORY>/`): each track joins
 the stem its source file came from, so the stem list follows each song's material. VOX splits into LVs and BGVs, EG into
 AGs and EGs, and a stem that is silent over the range is dropped.
+Before delivering, run `snapscan.py` on the non-drum stems and the instrumental: a soloed stem exposes clicks the mix
+hides (auto-panner snaps, unfaded edits). Repair hits with a sample step of 40x or more with `declick.py F F <t> --exact`.
 Files are 16-bit WAV at the session's native sample rate. A 96 kHz session bounces at 48 kHz. `--bits 24` and `--rate N` override this.
