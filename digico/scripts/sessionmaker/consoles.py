@@ -9,12 +9,13 @@ Facts per model:
   family            file-family code at 0x0b. SD10 saves as SD8, SD11 as SD9, SD5CS as SD5, SD12 as SDC,
                     Quantum 7 as SDQ (from the editors' own lookup table, the decode notes (not published).
   max_inputs        input channels (a stereo channel counts as one). DiGiCo's published figures, NOT checked in the
-                    editors yet (max_inputs_verified False), except the SD8 (_MAX_VERIFIED). Where unsure the number
-                    is the lower, safe one.
+                    editors yet (max_inputs_verified False), except the SD8 and the Quantum 112 (_MAX_VERIFIED).
+                    Where unsure the number is the lower, safe one.
   mustard_cap       Mustard instances (a stereo channel uses 2). Quantum 225 = 24 is editor-verified: on load the
                     editor turns off the excess in channel order. The manual gives no per-model table ("dependent on
                     the model of console") and no limit string exists in the editors, so the other Quantums use 24
                     too: every Mustard count seen in a real session (Q5 22, Q338 16, Q225 7) fits it. Unverified.
+                    Quantum 112: 20, from DiGiCo's V2242.4 release notes (24 with Pulse); unverified too.
   spice_rack_slots  live Chilli 6 slots in the default session (type 0x1f records with 67 slots).
   engine_room       input engine channels that fit in the default session (a stereo channel takes 2): on SD models
                     the inputs share one pool with the aux, group and matrix buses, on Quantum TB In caps it at 254
@@ -40,7 +41,7 @@ BASELINE_RE = re.compile(r'^([a-z0-9]+)_v(\d{3,5})\.ses$')
 
 # key, name, family, default inputs (fallback), max inputs, Mustard, Spice Rack slots, note for the UI
 _MODELS = [
-    ('q112', 'Quantum 112', 'Q1', 48, 48, True, 6, ''),
+    ('q112', 'Quantum 112', 'Q1', 48, 80, True, 6, ''),       # 80: console-proven, see _MAX_VERIFIED
     ('q225', 'Quantum 225', 'Q2', 48, 72, True, 6, ''),
     ('q225p', 'Quantum 225 Pulse', 'Q2', 48, 96, True, 6, 'Needs the Pulse extension on the console (V1742 or newer).'),
     ('q338', 'Quantum 326/338', 'Q3', 48, 128, True, 8, ''),
@@ -60,11 +61,14 @@ _MODELS = [
 # max_inputs proven in the console's own editor. SD8: DiGiCo lists 60, but the SD8 editors V1455, V1619 and V2242
 # booted 120-input sessions built on their own defaults and re-saved all 120 names,
 # the decode notes (not published), and a real 65-input SD8 show loads in full. The default session has 60.
-_MAX_VERIFIED = {'sd8'}
+# Q112: a session with 80 inputs, written by bytes, loaded on a Quantum 112 (V2242); the same with 82 was refused on
+# load ("console not supported"). Real Q112 shows run 58 and 71 inputs.
+_MAX_VERIFIED = {'sd8', 'q112'}
 MUSTARD_CAP_Q225 = 24          # editor-verified (README: the editor turns Mustard off past 24 instances)
 MUSTARD_CAP_DEFAULT = 24       # other Quantums: unverified, see module docstring
 # DiGiCo's V1742 release notes (Pulse table): Q338 36, Q338 Pulse 48, Q225 Pulse 36 Mustard channels.
-MUSTARD_CAP_SPEC = {'q225': MUSTARD_CAP_Q225, 'q225p': 36, 'q338': 36, 'q338p': 48}
+# V2242.4 release notes: Q112 20 (Q112 Pulse 24). No Q112 session numbers a Mustard channel above 19 (cb +86).
+MUSTARD_CAP_SPEC = {'q112': 20, 'q225': MUSTARD_CAP_Q225, 'q225p': 36, 'q338': 36, 'q338p': 48}
 
 # Builds whose generated output has been loaded in the real editor (Quantum 225 V2242: the relayout candidates
 # s01-s13 and v2-v7 all loaded in the offline editor).
