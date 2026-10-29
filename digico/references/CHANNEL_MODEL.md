@@ -6,7 +6,7 @@ Offsets are the early fixed offsets of one 48-channel Q225 default; use the keys
 
 ## Signal flow (input channel)
 Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ <-> Dynamics -> [Insert B] -> Mute -> Fader
-- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [todo]
+- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [done] (04, 81, 0), see Input / Trim.
 - **Mustard** (Quantum) runs alongside, insertable at 1 of **5 positions**. [done] (1a, e1, 0), the codes of the inserts below.
 
 ## Input / Trim  [done](trim,polarity) [todo](phantom,gaintrack,alt)
