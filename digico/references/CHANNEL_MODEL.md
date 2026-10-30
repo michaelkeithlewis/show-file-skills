@@ -6,8 +6,8 @@ Offsets are the early fixed offsets of one 48-channel Q225 default; use the keys
 
 ## Signal flow (input channel)
 Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ <-> Dynamics -> [Insert B] -> Mute -> Fader
-- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [todo]
-- **Mustard** (Quantum) runs alongside, insertable at 1 of **5 positions**. [todo]
+- **EQ<->Dyn order is a per-channel switch** (default eq-dyn, reversible to dyn-eq). [done] (04, 81, 0), see Input / Trim.
+- **Mustard** (Quantum) runs alongside, insertable at 1 of **5 positions**. [done] (1a, e1, 0), the codes of the inserts below.
 
 ## Input / Trim  [done](trim,polarity) [todo](phantom,gaintrack,alt)
 - [done] trim @0x13f45 (dB), polarity @0x13f5d (1.0=inv). phantom/gain-track/alt [todo]
@@ -55,22 +55,33 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
 - **Compressor**: = Dyn1 single-band comp + sidechain bandpass + S/C external input. [done]: ratio (05, 10, 3),
   gain (05, 09, 3), threshold / attack / release as the gate; key and key filter as the gate.
 
-## Inserts A & B  [done](A on/pos, B on) [todo](B pos, routing)
+## Inserts A & B  [done](on, position, routing)
 - [done] Insert A on @0x140eb, Insert B on @0x14133, Insert A position @0x1411d (u16):
   pre-EQ/dyn=0x4080(default), pre-processing=0x40a0, post-fade=0x0000. mid-EQ/dyn & post-processing
-  are N/A for Insert A (occupied: matches manual's "2 unavailable"). Insert B position offset [todo], insert routing [todo].
+  are N/A for Insert A (occupied: matches manual's "2 unavailable").
+- [done] Positions are floats (the u16s above are their high halves): (08, e1, 0) insert A, (08, e1, 1) insert B,
+  (1a, e1, 0) Mustard. 5.0 pre-processing (after the filters), 4.0 pre-EQ/dyn, 3.0 mid-EQ/dyn, 2.0 pre-fader,
+  0.0 post-fader. Inserts A, B and Mustard each take a different position; the console refuses a second item in one.
+- [done] Routing (console samples, Quantum 112): the send is the output socket's (12, 00, 0) route with tap `08 00`
+  (insert A) or `08 10` (insert B) as its first two bytes, plus the channel's (08, fe, 0 / 1) pointing at that socket;
+  the return is (08, 00, 0 / 1) = the input socket's route `00 00 <index> <type>`. FX units and Spice Rack slots on an
+  insert use the same two slots, pointing at the unit (`00 00 k 0e`, `00 00 k 18`).
 
-## Mustard (Quantum only): parallel processing, 5 insert positions  [partial] LOCATED, sections need focused captures
+## Mustard (Quantum only): parallel processing, 5 insert positions  [done](position, tube, amp, filters, EQ, comp models, gate/MSE)
 - Mustard lives in the TAIL of each channel's 0x12f6 block (after fader/mute), ch1-equiv offsets:
   Tube ~0x14e4e-0x14e60 (drive @0x14e5f), M-EQ ~0x14f62-0x14feb (b1 gain @0x14feb),
   M-Comp ~0x1503d-0x15048 (ch8 LevelingAmp->8.0 @0x1503d), M-Gate ~0x15157-0x15187 (ducker->2.0 @0x15157).
 - Common noise offsets in this region (ignore): 0x14de0,0x14e2a,0x14edc,0x14f46,0x15020,0x1513a.
-- NEEDS per-section captures w/ distinct values (tube[done], EQ, 4 comp models, gate) to fully map. Below = manual spec:
+- Keys for every section: "Keys" below (written by bytes and shown right on a Quantum 112 unless marked). Manual spec
+  after it:
 - [done] TUBE mapped: type@0x14e47(simple=1/amp=0), on@0x14e4f, preset@0x14e57(oddharm0/evenharm1/overdrive2/
   distortion3/crunch4/highdist5), drive@0x14e5f(0-1,def0.5), output@0x14e97(dB,def-6),
-  amp: drive@0x14e67, bias@0x14e77(def11), saturate@0x14e87. (amp per-stage harmonics/HF-boost still TODO)
+  amp: drive@0x14e67, bias@0x14e77(def11), saturate@0x14e87. [done] amp drive type (1a, 37, 0) 0 even / 1 odd
+  harmonics, bias type (1a, 39, 0) 0 off / 1 even / 2 odd, HF boost (1a, 05, 0) dB.
 - [done] M-EQ mapped: on@0x14f63; 4 bands stride 0x20 (b4->b1 asc), b1 freq@0x14fdb, bandN=0x14fdb-(N-1)*0x20;
-  per band shape@-0x08 (bell1/loshelf3/hishelf4/allpass9), freq+0, Q+8, gain+0x10. M-EQ HPF/LPF still TODO (ch4 cap didn't land).
+  per band shape@-0x08 (bell1/loshelf3/hishelf4/allpass9), freq+0, Q+8, gain+0x10. [done] M-EQ HPF/LPF are module 1b:
+  HPF on / freq (1b, 03, 1) / (1b, 05, 1), LPF (1b, 03, 0) / (1b, 05, 0), as the channel filters (the x 1.25 / x 0.8
+  display factor assumed, not checked).
 - **Tube/Preamp**: type = simple Tube (drive, output gain, 6 presets: odd/even harm, overdrive,
   distortion, crunch, high dist) OR advanced **Amp model** (2-stage, per-stage odd/even harmonics,
   drive, bias[mid=11]+saturate, HF boost >6kHz shelf, output gain).
@@ -80,6 +91,22 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
   FET Limiter (fixed thr, in/out gain, atk/rel, ratio 4/8/12/20:1); all: on, wet/dry mix, output gain,
   sidechain HPF/LPF + s/c listen, external sidechain (shared w/ gate).
 - **Gate/Ducker**: like SD gate/ducker, different atk/rel shapes; external sidechain shareable.
+- **Keys** (band 0 throughout):
+  - Pre-amp 1a: type 3b (1 tube, 0 amp), on 02, position e1 (default 3.0). Tube: mode 45, drive 1b (0-1), output 3c.
+    Amp: drive 38 (dB), drive type 37, bias 1a, bias type 39, saturate 3a (a button), HF boost 05, output 3c.
+  - Comp 1d: model 0b (0 Classic, 3 Vintage VCA, 4 FET, 5 Optical, 8 Leveling amp), on 02, mix 47 (1.0 = 100 %),
+    threshold 0e, knee 0f (1 hard, 0 soft), attack 11 / release 12 (s), ratio 10, gain 09, sensing 46 (0 RMS,
+    1 peak), side-chain filter on 03 with low (05, 1) and high (05, 0), stereo link 3f.
+    Optical: attack 48 and recovery 49 (0 fast, 1 medium, 2 slow); the ratio is a step, 4c: 2, 3, 4, 5 with the ratio
+    10 at 2:1, 3:1, 4:1, 6:1 in real sessions. FET: input 41, ratio button 4a (1 4:1, 2 8:1, 3 12:1, 4 20:1), output 4d.
+    Leveling amp: mode 50 (0 compress, 1 limit), gain 51 (default 25), peak reduction 52 (default 20), side-chain
+    emphasis 53 (51-53 not console-tested).
+    Controls per model: Classic threshold, attack, release, ratio, gain, mix, knee, sensing; Vintage VCA threshold,
+    ratio, gain, mix; FET input, attack, release, output, ratio buttons, mix; Optical threshold, ratio step, gain, mix,
+    attack, recovery; Leveling amp peak reduction, gain, mix, compress / limit.
+  - Gate 1e: mode 0b (0 gate, 1 ducker, 2 **MSE**, Mustard Source Expander), on 02, threshold 0e, range 0a (positive
+    dB), attack 11, hold 13, release 12, MSE release button 4c, side-chain filter on 03 / low (05, 1) / high (05, 0),
+    key input 16 and key on 37 as the SD gate. MSE shows threshold, depth (range) and the release button.
 
 ## Name  [done](≤31)
 - length-prefixed name in a fixed 32-byte slot (≤31 chars, ~20 copies); a longer name moves nothing. [done] (`FORMAT.md` "Names")

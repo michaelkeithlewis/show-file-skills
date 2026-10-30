@@ -161,7 +161,8 @@ input patch/routing; bus sends/assignments; freq/gain quantization grid.
   mix 0x47, threshold 0x0e, knee 0x0f (hard 1), attack 0x11 (s), release 0x12 (s), ratio 0x10, output 0x09.
   FET only: input 0x41 (default -20), ratio button 0x4a (4:1 = 1, 8:1 = 2, 12:1 = 3, 20:1 = 4), output 0x4d.
   Quantum 225 limit: 24 instances, and a stereo channel uses 2. On load, the editor turns off the excess in channel
-  order. The Optical ratio stops at 3:1.
+  order. The Optical ratio is a step, (0x4c, 0): real sessions hold 2, 3, 4, 5 with the ratio (0x10) at 2:1, 3:1, 4:1,
+  6:1 (`CHANNEL_MODEL.md`, Mustard keys).
 - **Spice Rack / Chilli 6**: type 0x1f records with 67 slots in section 211, in Spice Rack slot order (6 slots on a
   Q225). Bands 0-3 are multiband bands 1-4, band 4 is P1, band 5 is P2. Params: 03 bypass, 0e threshold,
   11 attack (s), 12 release (s), 0a range (dB, negative cuts), 07 gain, 05 frequency (crossovers on bands 1-3),
