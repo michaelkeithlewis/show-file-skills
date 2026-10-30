@@ -87,9 +87,15 @@ capture without channel renames (renames confound the per-channel diff).
 
 ## Names
 - Length-prefixed: `[len:u8][chars][nullpad]`, appears ~20x per channel.
-- Slot holds up to 8 chars without growth; **names >8 chars overflow and grow the file**
-  (variable region; +361 B observed for 12 long names). Long-name write path NOT finalized
-  (needs console validation). Writer currently safe up to 8 chars.
+- Every copy is a **fixed 32-byte field: up to 31 characters** (Latin-1). A longer name moves nothing and
+  does not grow the file (see "File structure" below). The console does not clear the rest of the field, so
+  old characters can follow a new, shorter name: read by the length byte. Console-saved sessions hold long
+  names on every Quantum model (1267 input names over 8 characters in 189 sessions from the Q112, Q225, Q326,
+  Q338 and Q852, V1926 to V2242), and names of 9 to 13 characters written in place by bytes loaded on a
+  Quantum 112 (V2242). The +361 B once seen after renaming 12 channels is exactly one bank record (0x169), so
+  that save most likely also gained a bank.
+- The tools here cut channel names to 8 characters by choice (short console names); `ses.rename()` writes
+  up to 31 with `max_len=31`.
 - Bus names: separate region (~0x4cd00), ~15 copies.
 
 ## Console-confirmed
@@ -103,7 +109,7 @@ The early offset tools only fit one 48-channel layout and are not included. `scr
 
 ## Not yet mapped
 Dyn1 knee + which toggle is in; Dyn2 (gate); Mustard EQ/Dyn1/Dyn2; digitube; inserts;
-input patch/routing; bus sends/assignments; long-name write; freq/gain quantization grid.
+input patch/routing; bus sends/assignments; freq/gain quantization grid.
 
 ## Mustard Gate + flag disambiguation + pan/aux (2026-07-16)
 - **Mustard Gate/Ducker** record @0x15157 (8-byte slots): mode @0x15157 (gate=0, duck=1),

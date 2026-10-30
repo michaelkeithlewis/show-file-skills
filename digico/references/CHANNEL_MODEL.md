@@ -72,8 +72,8 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
   sidechain HPF/LPF + s/c listen, external sidechain (shared w/ gate).
 - **Gate/Ducker**: like SD gate/ducker, different atk/rel shapes; external sidechain shareable.
 
-## Name  [done](≤8) [todo](long/variable)
-- short name length-prefixed slot (≤8 chars, ~20 copies). Long names overflow to a variable region. [todo]
+## Name  [done](≤31)
+- length-prefixed name in a fixed 32-byte slot (≤31 chars, ~20 copies); a longer name moves nothing. [done] (`FORMAT.md` "Names")
 
 ## Other channel types (for IR completeness)  [todo]
 - Aux/Group/Matrix outputs: input/trim differs; output EQ may be 4-band+HPF/LPF or **8-band** (pre/post-insert).

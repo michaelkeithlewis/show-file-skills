@@ -44,7 +44,7 @@ from ses import Session  # noqa: E402
 
 from . import consoles, layout, options, process, validate  # noqa: E402
 
-NAME_MAX = 8      # longer names are console-untested (FORMAT.md); the report keeps the long name
+NAME_MAX = 8      # a naming choice: the format holds 31 (FORMAT.md "Names"); the report keeps the long name
 
 # Abbreviations, matched on whole words, case-insensitive. LONG words go first; SHORT ones only when squeezing
 # out the spaces was not enough.
