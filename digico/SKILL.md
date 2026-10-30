@@ -63,3 +63,6 @@ sends, buses, patch, surface banks), `references/CHANNEL_MODEL.md` (the input ch
 mapped), `references/engine-findings.md` (editor-proven limits, load rules and the guards these scripts still lack),
 `references/scope-and-recall.md` (snapshot scope, Global Scope, safes, and what a recall changes and leaves).
 Key by (module, param, band), never by offset: the channel stride changes with the session structure.
+
+`references/snapshots.md`: the snapshot pool, the snapshot record and its options, snapshot groups, setlists, and how
+to add, update and delete a snapshot by bytes.

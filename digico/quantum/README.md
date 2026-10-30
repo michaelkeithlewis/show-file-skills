@@ -50,6 +50,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 
 ### Other findings
 
+- Snapshots: the pool, the snapshot record and its options, snapshot groups, setlists, and how to add, update and delete a snapshot by bytes: [`snapshots.md`](../references/snapshots.md). Proven on a Quantum 112 at V2242 with one-change saves and with files written by bytes that loaded. Shows from the Quantum 225, 326, 338 and 852 (V1742 to V2242) have the same layout.
 - Pulse: header `0x25` bit `0x10` set means Pulse on a Q225 or Q338 file. Every Pulse default session has the bit set, and every plain default has it clear.
 - Quantum 7 V2242: the editor clears 48V on load on the Local I/O Mic/Lin inputs (socket 0:Mic/Lin 1 and 3 proven), main and alt inputs. Gain stays. Switch 48V on at the console.
 - MADI links: a device on a link past the console's links keeps its sockets, but the editor zeroes its device id, which means not connected. Quantum 225 keeps links 0 to 2 (link 4 was zeroed at V1619 and V2242). Quantum 338, 5, 7 and 852 kept links 0, 2 and 4.

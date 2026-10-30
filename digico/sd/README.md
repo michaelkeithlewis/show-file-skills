@@ -98,6 +98,7 @@ Each is from a one-change save or a Session Structure reading. The format side i
 - The bit test on a plain SD11 with an SD11i file: only SD12 was tested.
 - Every SD model and build: same writers and `validate.py`, marked untested. The docs name no generated load on a real SD console.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. SD5 CS, SD7, SD10 and SD11 are not in the tested list.
+- Snapshots ([`snapshots.md`](../references/snapshots.md)): proven on Quantum only, not tested on an SD file.
 - The docs do not list the 18 console and build pairs where FX units booted and re-saved.
 - Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
 - SD7 pool: a contributor reading of the dialog gives one pool of 249 with buses to 122. The table above reads 255 for paths + matrix outputs + bus slots. Needs a reading that settles it.
