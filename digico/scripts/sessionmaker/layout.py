@@ -22,8 +22,12 @@ What a layout change touches (verified on editor-saved baselines and 39 real ses
                      after the objects: a tail that holds a copy of section 212 (bank placement)
   section 243        'f3 00' + u32 bank count + banks of 0x169 bytes (strips name inputs by idx)
   section 212        bank placement: 8 fader-section tables of 42 u16 bank numbers (+15 B each), copied in the
-                     211 tail. A table position is a layer: 0-5 input layers, 6-11 output layers (every default
-                     session). Input banks are dealt round-robin over the sections. The two copies must stay equal.
+                     211 tail. The 42 positions are 7 rows of 6 bank buttons and each row is one layer (Quantum 112
+                     console samples: a new bank went to position 12 = layer 3, first button). Every default
+                     session puts the input banks on layer 1 (positions 0-5) and the output banks on layer 2 (6-11),
+                     which is what INPUT_LAYERS relies on. Of the 15 bytes after a table, byte k of the first 7 is the
+                     button layer k + 1 shows, and the next byte the active layer. Input banks are dealt round-robin
+                     over the sections. The two copies must stay equal.
   section table      int32 offsets[40] @0x100 + ids u8[40] @0x1a0, last offset = file size
 """
 import re
@@ -354,7 +358,7 @@ def _tables(t212):
     return [[struct.unpack_from('<H', t212, 2 + 99 * u + 2 * j)[0] for j in range(42)] for u in range(8)]
 
 
-INPUT_LAYERS = 6   # in each fader-section table, positions 0-5 are input layers and 6-11 output layers
+INPUT_LAYERS = 6   # positions 0-5 (layer 1) hold the input banks and 6-11 (layer 2) the output banks in every default
 
 
 def remap_placement(t212, old_in, new_in):

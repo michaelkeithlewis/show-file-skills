@@ -362,7 +362,7 @@ def _make_banks(tmpl, buses, prefix, kind_type):
     out = []
     filled = next(j for j in range(12) if tmpl[0x24 + 2 * j] == kind_type)
     lock = bytes(tmpl[0x6b + 16 * filled:0x6b + 16 * (filled + 1)])
-    view = tmpl[0x12b + filled]
+    view = tmpl[0x12b + filled]   # +0x12b: which of the slot's locked encoder rows (+0x6b) are locked; the SD / M view is +0x15d
     for k in range(0, len(buses), 12):
         chunk = buses[k:k + 12]
         b = bytearray(tmpl)
