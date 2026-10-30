@@ -77,7 +77,7 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
 
 ## Other channel types (for IR completeness)  [partial]
 - Aux/Group/Matrix outputs: input/trim differs; output EQ may be 4-band+HPF/LPF or **8-band** (pre/post-insert).
-  [done] Output buses have **8 EQ bands**: bands 0-3 post-insert (defaults 8k, 4k, 100, 50 Hz), bands 4-7 pre-insert
+  [done] Quantum output buses have **8 EQ bands**: bands 0-3 post-insert (defaults 8k, 4k, 100, 50 Hz), bands 4-7 pre-insert
   (2k, 1k, 500, 250 Hz; UI bands 5-8 = band bytes 7-4). The pre-insert bands have no dynamic EQ and no bell / shelf
   switch; their curve turns the outer two into a 24 dB/oct filter. (04, 7b, 0) is the strip's "pre-insert eq /
   post-insert eq" switch: which four bands the surface and screen show; never kept in a snapshot. Bus trim (0b, 01, 0),
