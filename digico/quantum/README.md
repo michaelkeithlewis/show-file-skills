@@ -26,6 +26,7 @@ Covers Q112, Q225, Q225 Pulse, Q326/338, Q338 Pulse, Q5, Q7 and Q852. File exten
 - Generated Q225 V2242 sessions loaded in the V2242 offline editor and re-saved unchanged. In-place patches (names, HPF, fader, mute) loaded on a real Quantum 2.
 - Pulse models need the Pulse extension on the console, V1742 or newer. Q326 and Q338 share one key.
 - TB In sits at 254 on Q2, Q3, Q5 and Q7, and at last input + 1 on Q1 and Q8.
+- Snapshot scope, Global Scope, the channel safes and what a recall changes: [`scope-and-recall.md`](../references/scope-and-recall.md). Proven on a Quantum 112 at V2242 and V2242.4 with one-change saves and recalls saved on the console. Shows from the other Quantum models use the same flags.
 
 ### Session Structure limits (measured)
 

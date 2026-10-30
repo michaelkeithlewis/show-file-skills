@@ -60,5 +60,6 @@ Details: `references/filters-and-thresholds.md`.
 
 `references/FORMAT.md` (container, section table, module records, slot keys, stereo, Mustard, Spice Rack, FX units,
 sends, buses, patch, surface banks), `references/CHANNEL_MODEL.md` (the input channel signal flow and what is
-mapped), `references/engine-findings.md` (editor-proven limits, load rules and the guards these scripts still lack).
+mapped), `references/engine-findings.md` (editor-proven limits, load rules and the guards these scripts still lack),
+`references/scope-and-recall.md` (snapshot scope, Global Scope, safes, and what a recall changes and leaves).
 Key by (module, param, band), never by offset: the channel stride changes with the session structure.
