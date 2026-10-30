@@ -12,7 +12,7 @@ Covers Q112, Q225, Q225 Pulse, Q326/338, Q338 Pulse, Q5, Q7 and Q852. File exten
 
 | Key | Model | Family | Default inputs | Max inputs | Mustard cap | Spice Rack slots | Bus budget |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `q112` | Quantum 112 | Q1 | 48 | 48 | 24 | 6 | 26 |
+| `q112` | Quantum 112 | Q1 | 48 | 80 | 20 | 6 | 26 |
 | `q225` | Quantum 225 | Q2 | 48 | 72 | 24 | 6 | 38 |
 | `q225p` | Quantum 225 Pulse | Q2 | 48 | 96 | 36 | 6 | not listed |
 | `q338` | Quantum 326/338 | Q3 | 48 | 128 | 36 | 8 | 66 |
@@ -22,6 +22,7 @@ Covers Q112, Q225, Q225 Pulse, Q326/338, Q338 Pulse, Q5, Q7 and Q852. File exten
 | `q852` | Quantum 852 | Q8 | 72 | 253 | 24 | 32 | 194 |
 
 - Verified: the Q225 Mustard cap of 24 and the Q225 V2242 build. On a Q225, a stereo channel uses 2 Mustard instances, and on load the editor turns off the excess in channel order.
+- Quantum 112 inputs, proven on a real console (V2242): a session with 80 inputs, written by bytes, loaded. The same session with 82 inputs was refused on load with "console not supported".
 - Default inputs are fallbacks. The newest baseline's own count wins. Bus budget is mono equivalents (FORMAT.md).
 - Generated Q225 V2242 sessions loaded in the V2242 offline editor and re-saved unchanged. In-place patches (names, HPF, fader, mute) loaded on a real Quantum 2.
 - Pulse models need the Pulse extension on the console, V1742 or newer. Q326 and Q338 share one key.
@@ -43,7 +44,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 | `q852` | 384 | 194 | fixed | V1926 to V2242 |
 
 - Quantum 5 pool: paths + bus slots must be 290 or fewer. Matrix outputs do not count. At the default 36 bus slots this gives 254 paths.
-- The `consoles.py` caps for Q112 (48), Q5 (124), Q7 (253) and Q852 (253) sit below these limits. They count channels, so stereo inputs can still pass the path limit: 253 channels with 4 stereo is 257 paths on a Q7.
+- The `consoles.py` caps for Q5 (124), Q7 (253) and Q852 (253) sit below these limits, and the Q112 cap (80) equals its limit. They count channels, so stereo inputs can still pass the path limit: 253 channels with 4 stereo is 257 paths on a Q7.
 - The Quantum 5 load check allows 256 inputs and 134 bus paths and does not know the pool. A file can load and then lose inputs at the first Restructure.
 
 ### Other findings
@@ -60,7 +61,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
 - Quantum 852 before V1926 and Quantum 112 before V2126: no editor exists. Pulse before V1742: the extension did not exist.
 - The extension option on Q5, Q7, Q852 and Q112: the Enable Console Extensions panels were not opened.
-- Mustard caps: Q225 Pulse, Q338 and Q338 Pulse come from DiGiCo's V1742 release notes. The 24 on Q112, Q5, Q7 and Q852 is unverified.
+- Mustard caps: Q225 Pulse, Q338 and Q338 Pulse come from DiGiCo's V1742 release notes, and the Q112's 20 from the V2242.4 release notes (no Q112 session numbers a Mustard channel above 19). The 24 on Q5, Q7 and Q852 is unverified.
 - Every other model and build: same writers and `validate.py`, marked untested until someone loads one.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. Both list Q2, Q3, Q5, SD8, SD9 and SD12.
 - Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
