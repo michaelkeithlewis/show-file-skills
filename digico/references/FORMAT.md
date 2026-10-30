@@ -129,9 +129,11 @@ input patch/routing; bus sends/assignments; freq/gain quantization grid.
   211 live channel/bus modules, 219 the preset library (not snapshot copies; layout under "FX units" below), 243 banks,
   212 bank placement.
 - **Module record**: `da 00 | 3a 00 (header len from type) | type u16 | 00 00 | name ShortString[31] (32 B) | TDateTime |
-  count u16 | ... | count x slot | ff x8 00 x4`.
+  count u16 | 00 00 | 10 bytes | count x slot | ff x8 00 x4`. The 10 bytes (record +0x34) hold the snapshot scope
+  flags, the crossfade time and the reference count: `scope-and-recall.md`.
 - **Slot** = `[param u8][module u8][band u8][flags u8][float32]`. Every offset in this file points at the float; the
-  4 bytes BEFORE it name the field (the "field-ID after the value" reading above is off by one slot).
+  4 bytes BEFORE it name the field (the "field-ID after the value" reading above is off by one slot). Flags 0x04 and
+  0x02 take one parameter out of a snapshot's scope (`scope-and-recall.md`).
 - **Input channel** = 18 records (01 input, 09 delay, 07 filters, 08 inserts, 04 EQ, 05 dyn, 0c fader/mute, 02 sends,
   0d pan, 03 groups, 0e, 13, 0a, 1a-1e Mustard) + trailer `27 00 | id (0x0100|idx) | name`. Channel record in
   section 201: `cb 00 79 00 | id | number | name`. All 20 copies of a name are fixed 32-byte fields.

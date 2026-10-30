@@ -83,6 +83,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
 - SD7 Theatre and Broadcast extensions: not tested.
+- Snapshot scope and recall ([`scope-and-recall.md`](../references/scope-and-recall.md)): proven on Quantum only, not tested on an SD file.
 - The bit test on a plain SD11 with an SD11i file: only SD12 was tested.
 - Every SD model and build: same writers and `validate.py`, marked untested. The docs name no generated load on a real SD console.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. SD5 CS, SD7, SD10 and SD11 are not in the tested list.
