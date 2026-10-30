@@ -24,6 +24,8 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           path: target
           persist-credentials: false
+          # Safe here: the PR is read as data and never executed (see top).
+          allow-unsafe-pr-checkout: true
       - name: Scrub check
         env:
           SCRUB_DENYLIST: ${{ secrets.SCRUB_DENYLIST }}
