@@ -162,3 +162,5 @@ More Accessibility rules (save panels, hung jobs, Logic) are in `../../apple/mac
 Built by Michael Lewis, touring engineer and co-founder of
 [Truck Packer](https://truckpacker.com), the truck-pack planning app for touring
 and production crews.
+
+macOS session-prep field notes by [Franklin Rice](https://github.com/franklinricemixes). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

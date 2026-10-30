@@ -1,12 +1,25 @@
 # show-file-skills
 
 Read and write live audio show files and studio sessions without the vendor software open.
-Built on tour by Michael Lewis, a touring FOH and monitor engineer and co-founder of
-[Truck Packer](https://truckpacker.com).
+Started on tour by Michael Lewis, a touring FOH and monitor engineer and co-founder of
+[Truck Packer](https://truckpacker.com), and built out by the working engineers listed under
+[Contributors](#contributors).
 
 Every format here was decoded by hand on real gigs: a console file had to be built on a
 day off, a session had to be prepped on a bus, a recording rig had to match the console
 patch. This repo holds the tools and the notes so you do not have to decode them again.
+
+## Contributors
+
+Each person here proved what they added on their own consoles and sessions.
+
+| Who | Role | Contributed |
+| --- | --- | --- |
+| Michael Lewis ([Instagram](https://www.instagram.com/michaelkeithlewis/), [GitHub](https://github.com/michaelkeithlewis)) | Touring FOH and monitor engineer, co-founder of [Truck Packer](https://truckpacker.com), Nashville | Started and maintains the repo. dLive, DiGiCo, Yamaha, VENUE and S6L, Pro Tools, Logic, LiveTrax, LiveProfessor, Samply |
+| Jan Rosenbauer ([Instagram](https://www.instagram.com/janrosenbauer/), [GitHub](https://github.com/janrosenbauer)) | FOH engineer, [Wellenbrecher Audio](https://www.wellenbrecheraudio.de/jan-rosenbauer), Hamburg | DiGiCo: Quantum 112 limits, name lengths, dynamics, Mustard and inserts, file structure, snapshot scope and recall, each proven on a Quantum 112 |
+| Stefan "Hedde" Hettenbach ([Instagram](https://www.instagram.com/stefan_hettenbach/), [GitHub](https://github.com/HeddeClap)) | Audio engineer, [Clap! Live Solutions](https://clap-live.de), Mannheim | Allen & Heath: the Avantis format notes and the dLive scene safes map, tested on an Avantis Solo and a dLive S3000 |
+| John Merkel ([Instagram](https://www.instagram.com/johnmerkel_mix/), [GitHub](https://github.com/jfmerkel)) | Mix engineer and audio director, Christ Community Chapel, Hudson, Ohio | Yamaha RIVAGE PM: show structure, value paths, scenes, library recall and editor-load tests from real PM5 shows |
+| Franklin Rice ([GitHub](https://github.com/franklinricemixes)) | Mix engineer | Pro Tools: macOS session-prep field notes on Pro Tools 2026.4.1 (routing IDs, session data import, Accessibility dialogs) |
 
 ## Use it in the browser
 
@@ -92,7 +105,8 @@ truck pack before load-in than at it. If you advance tours, try
 Found a field we got wrong, or a firmware we have not seen? Open an issue with the console,
 the firmware or software version, and what you expected. If you want to share a show file or
 session as an example, add it to that format's `examples/` folder in a pull request. Share only
-files that you own or have the right to share.
+files that you own or have the right to share. When your first pull request merges, you go in
+[Contributors](#contributors) with your role and your Instagram.
 
 ## License and trademarks
 
