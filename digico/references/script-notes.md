@@ -10,14 +10,14 @@ Facts that used to sit in code comments, by script. The scripts in this repo car
 - first Mustard module a writer usually needs
 - ---- structure -------------------------------------------------------
 - input channels: records followed (after the ff*8 00*4 tail) by a 27 00 <0x01xx> trailer
-- section 211 holds the live channels; section 219 holds snapshot copies of them
+- section 211 holds the live channels. The input strips found outside it (`snapshot_inputs`) are the preset library copies in section 219, not snapshot copies. Snapshot strips in section 210 point at pool states instead of holding modules, so this scan does not find them ([`snapshots.md`](snapshots.md)). Checked on 121 Quantum shows, V1742 to V2242.
 - display number -> internal index display number -> 1 mono / 2 stereo internal index -> offset of its section 201 record record type -> [{'off', 'id', 'number', 'name', 'width'}] in surface order
 - fallback: scan every channel record in the file
 - bus maps: surface number -> band byte used by the input's send (module 02) / group (module 03) slots
 - ---- surface banks --------------------------------------------------------- Section 243: u16 | u32 bank count | banks. A bank is u16 size (0x169) | u16 index | name ShortString[15] | ... | 12 strips of (index u8, type u8) at +0x23 | ... | 12 view bytes at the end of the bank. Strip type 01 = input channel (index = internal index - 1), 05 aux, 06 group, 0a CG, 10 matrix. View byte: 0 = strip shows SD processing, 2 = strip shows Mustard processing (the SD/M buttons).
 - ---- slot access -----------------------------------------------------
 - ---- names -------------------------------------------------------------
-- every channel record for this id, any build (section 201 and any snapshot copies)
+- every channel record for this id, any build. In 121 Quantum shows (V1742 to V2242) they sit only in section 201.
 
 ## scripts/sesproc.py
 
