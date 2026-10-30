@@ -27,7 +27,7 @@ scripts in this folder.
   access settings, version order) so Claude does not go looking for endpoints that are
   not there, and how to verify that an upload really processed.
 
-It pairs with the [`protools/`](../protools/) skill in this repo: that one bounces
+It pairs with the [`avid/protools/`](../avid/protools/) skill in this repo: that one bounces
 `<Song>_<Initials>_V<n>_PtMst.wav` into `Bounced Files/`, and this one delivers it.
 
 ## Requirements
@@ -79,6 +79,10 @@ scripts/interleave_lr.sh smpte.wav foh.wav "Run - For Lighting.wav"
   `bash -n` on the interleave script.
 
 This project is not affiliated with or endorsed by Samply. No warranty.
+
+## Session notes
+
+*Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 ## Built on tour
 

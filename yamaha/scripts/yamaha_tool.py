@@ -113,9 +113,6 @@ def _number(v, what):
     return x
 
 
-# =====================================================================================================================
-# Generation 1: CL and QL (.CLF). Container facts: FORMAT.md section 2. Value facts: FORMAT.md section 3.
-# =====================================================================================================================
 HEAD, INDEX, DATA = 0x0100, 0x0200, 0x0300
 OUTER_FAMILY = 0x0170
 KIND_ALL, KIND_SCENE, KIND_USER_KEY = 0x05c0, 0x1040, 0x04c0
@@ -148,8 +145,8 @@ class Clf:
         self.data = data
         self.kind = None
         self.comment = b''
-        self.leaves = []            # (path, body offset, body size) of every data record
-        self.scenes = {}            # scene id -> (body offset, [(tag, data offset, data size)])
+        self.leaves = []
+        self.scenes = {}
         self.bad_checksums = 0
         self.checked = 0
 
@@ -297,34 +294,33 @@ def clf_rewrite(c, scenes):
     return bytes(buf)
 
 
-# ---- CL/QL scene values (offsets from the start of a scene's MEMAPI data, big-endian). Test ids: FORMAT.md 1.2 ------
-SCENE_FORMATS = {38824: 5, 39448: 6, 39452: 7}    # MEMAPI data size -> scene format (BB-RESAVE)
-VERSION_OFF = 16                                   # u16 scene format (BB-RESAVE)
+SCENE_FORMATS = {38824: 5, 39448: 6, 39452: 7}
+VERSION_OFF = 16
 NAME_LEN = 8
-IN_NAMES = (29240, 96)          # BB-CSV-1: characters 1-4 of every slot, then 5-8 of every slot
-MIX_NAMES = (30604, 24)         # BB-CSV-1
-MTX_NAMES = (30796, 8)          # BB-CSV-1
-STM_NAMES = (30860, 3)          # BB-CSV-1: ST L, ST R, MONO
-DCA_NAMES = (21524, 16)         # BB-CSV-1
-MUTE_NAMES = (34392, 8)         # BB-LOAD-G
-IN_ICON, IN_COLOUR, IN_PATCH = 30008, 30104, 28971   # BB-CSV-1, BB-CSV-1, BB-CSV-2 (u8 per slot)
-MIX_ICON, MIX_COLOUR = 30884, 30908                  # BB-CSV-1
-MTX_ICON, MTX_COLOUR = 30932, 30940                  # BB-CSV-1
-STM_ICON, STM_COLOUR = 30948, 30951                  # BB-CSV-1
-HPF_FREQ = 6704                 # BB-LOAD-F: u8 index per slot
-CH_ON, HPF_ON = 2382, 6692      # BB-LOAD-F: 12-byte masks, slot n = bit (n-1)%8 of byte (n-1)//8, 1 = on
-DCA_ASSIGN = 10004              # BB-LOAD-G: DCA k mask at 10004 + 12(k-1)
-MUTE_ASSIGN = 9908              # BB-SAVE-H: mute group k mask at 9908 + 12(k-1) (read only here)
+IN_NAMES = (29240, 96)
+MIX_NAMES = (30604, 24)
+MTX_NAMES = (30796, 8)
+STM_NAMES = (30860, 3)
+DCA_NAMES = (21524, 16)
+MUTE_NAMES = (34392, 8)
+IN_ICON, IN_COLOUR, IN_PATCH = 30008, 30104, 28971
+MIX_ICON, MIX_COLOUR = 30884, 30908
+MTX_ICON, MTX_COLOUR = 30932, 30940
+STM_ICON, STM_COLOUR = 30948, 30951
+HPF_FREQ = 6704
+CH_ON, HPF_ON = 2382, 6692
+DCA_ASSIGN = 10004
+MUTE_ASSIGN = 9908
 MASK_LEN = 12
-FADER, FADER_MAX = 2586, 1023   # BB-LOAD-F: u16 per slot
-HA_PHANTOM, HA_GAIN = 1373, 1377  # BB-LOAD-F, BB-QL: 4-byte mask and u8 per local port (dB = value - 6)
-HA_MIN_DB, HA_MAX_DB = -6, 66   # BB-LOAD-F, BB-LOAD-R
+FADER, FADER_MAX = 2586, 1023
+HA_PHANTOM, HA_GAIN = 1373, 1377
+HA_MIN_DB, HA_MAX_DB = -6, 66
 
 HPF_HZ = dict(zip(range(4, 64), (
     20.0, 21.2, 22.4, 23.6, 25.0, 26.5, 28.0, 30.0, 31.5, 33.5, 35.5, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 53.0, 56.0,
     60.0, 63.0, 67.0, 71.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 106.0, 112.0, 118.0, 125.0, 132.0, 140.0, 150.0,
     160.0, 170.0, 180.0, 190.0, 200.0, 212.0, 224.0, 236.0, 250.0, 265.0, 280.0, 300.0, 315.0, 335.0, 355.0, 375.0,
-    400.0, 425.0, 450.0, 475.0, 500.0, 530.0, 560.0, 600.0)))   # BB-LOAD-F: what the editor showed for each index
+    400.0, 425.0, 450.0, 475.0, 500.0, 530.0, 560.0, 600.0)))
 
 
 def fader_db(v):
@@ -359,10 +355,8 @@ def hpf_index(hz):
     return min(HPF_HZ, key=lambda i: abs(math.log(HPF_HZ[i]) - math.log(max(1.0, hz))))
 
 
-# BB-CSV-1: stored colour code -> (our key, label); the CSV word is the label's Yamaha CSV spelling
 CL_COLOURS = [('blue', 'Blue'), ('orange', 'Orange'), ('yellow', 'Yellow'), ('purple', 'Purple'),
               ('cyan', 'Sky blue'), ('magenta', 'Pink'), ('red', 'Red'), ('green', 'Green'), ('off', 'Off (black)')]
-# BB-CSV-1: stored icon code -> Yamaha's CSV icon word (code 0 to 39)
 CL_ICONS = ['Kick', 'Snare', 'Hi-Hat', 'Tom', 'DrumKit', 'Perc.', 'A.Bass', 'Strings', 'E.Bass', 'A.Guitar',
             'E.Guitar', 'BassAmp', 'GuitarAmp', 'Trumpet', 'Trombone', 'Saxophone', 'Piano', 'Organ', 'Keyboard',
             'Male', 'Female', 'Choir', 'Dynamic', 'Condenser', 'Wireless', 'Podium', 'Wedge', '2way', 'In-Ear',
@@ -449,11 +443,9 @@ def _bit(b, off, slot):
     return bool(b[off + i // 8] >> (i % 8) & 1)
 
 
-# Which writes an editor test opened (FORMAT.md section 5). Keys: rename colour icon patch gain phantom hpf fader on
-# dca name_bus, and 'scenes' for the stored scenes.
 GEN1_KEYS = ('rename', 'colour', 'icon', 'patch', 'gain', 'phantom', 'hpf', 'fader', 'on', 'dca', 'name_bus')
 GEN1_FORMATS = {'CL': (5, 6, 7), 'QL': (6, 7)}
-GEN1_SCENE_KEYS = ('rename', 'colour', 'patch')        # BB-SCENE: CL format 7 only
+GEN1_SCENE_KEYS = ('rename', 'colour', 'patch')
 
 
 class Gen1Show:
@@ -473,8 +465,6 @@ class Gen1Show:
                           'Editor and save it again.')
         self.cur = cur
         comment = self.c.comment.split(b'\0', 1)[0]
-        # BB-MODEL: a .CLF does not record the model. The editor's default comment ("CL [" / "QL [") or a patch to
-        # INPUT 9 to 32 (QL only, BB-CSV-2) is a hint, never proof.
         ql_codes = any(193 <= cur[IN_PATCH + i] <= 216 for i in range(88))
         self.said = 'QL' if comment.startswith(b'QL') or ql_codes else 'CL' if comment.startswith(b'CL') else None
         self.hint = self.said or 'CL'
@@ -485,7 +475,6 @@ class Gen1Show:
         self.family, self.model_name, self.inputs, self.mixes = CL_MODELS[self.key]
         self._scene_cache = {}
 
-    # ---- gates ------------------------------------------------------------------------------------------------------
     def write_why(self, key):
         """None when an editor test opened this write here, else the sentence that says why not."""
         if key == 'send':
@@ -502,7 +491,6 @@ class Gen1Show:
                     'editor test yet.' % (self.family, self.fmt, self.family))
         return None
 
-    # ---- reading ----------------------------------------------------------------------------------------------------
     def scene(self, sid):
         if sid not in self._scene_cache:
             loc = self.c.memapi(sid)
@@ -665,12 +653,11 @@ class Gen1Show:
                         'icons': [{'key': icon_key(w), 'label': w, 'code': i} for i, w in enumerate(CL_ICONS)],
                         'name_max': NAME_LEN,
                         'ranges': {'gain': [HA_MIN_DB, HA_MAX_DB], 'hpf': [20, 600], 'fader': [-138, 10]}},
-            'unproven': ['scenes'] if self.fmt == 6 else [],      # stored scene titles: formats 5 and 7 only
+            'unproven': ['scenes'] if self.fmt == 6 else [],
             'writes': {k: {'ok': True} if v is None else {'ok': False, 'why': v} for k, v in writes.items()},
             'warnings': warnings,
         }
 
-    # ---- writing ----------------------------------------------------------------------------------------------------
     def apply(self, ops):
         """Run ops in order. -> (new bytes, changes, refused). Nothing is kept from a call with a refused op."""
         work = {}
@@ -776,7 +763,7 @@ class Gen1Show:
             scenes = self._scenes(op, keys)
             for (sid, kind, n, label, slot) in targets:
                 s = self.strip_slot(slot)
-                pair = [s, s + 1] if kind == 'stin' else [s]     # BB-LOAD-G: the editor's ON click changes L and R
+                pair = [s, s + 1] if kind == 'stin' else [s]
                 for f in fields:
                     v = op[f]
                     if f == 'colour':
@@ -857,7 +844,7 @@ class Gen1Show:
                 raise Refused('Stored scenes take names, colours and patch only. Leave out --all-scenes for this '
                               'change.')
             for (sid, kind, n, label, slot) in targets:
-                code = buf(CURRENT)[IN_PATCH + slot - 1]          # the patch as edited so far in this call
+                code = buf(CURRENT)[IN_PATCH + slot - 1]
                 port = cl_local_port(code, self.family)
                 if not port or (self.family == 'QL' and port > QL_LOCAL[self.key]):
                     lab = cl_port_label(code, self.family)
@@ -939,16 +926,13 @@ class Gen1Show:
         raise Refused('Pick a source from the patch list (run "ports").')
 
 
-# =====================================================================================================================
-# Generation 2: the '#YAMAHA MBDF' container (DM7, DM5, DM3, TF, RIVAGE PM). FORMAT.md section 4.
-# =====================================================================================================================
 MAGIC = b'#YAMAHA MBDF'
 MAX_ENTRY_INFLATED = 4 * 1024 * 1024
 MAX_TOTAL_INFLATED = 160 * 1024 * 1024
 MAX_DEPTH, MAX_RECORDS = 3, 4000
-MAX_COLLECTIONS, MAX_PRS, MAX_COL_DEPTH = 5000, 4096, 16          # per schema
-MAX_FILE_COLLECTIONS, MAX_FILE_PRS = 250000, 600000               # every schema of a file, each use counted
-MAX_BUILT_COLLECTIONS, MAX_BUILT_PRS = 16000, 32000               # schemas parsed fresh (a repeat is reused)
+MAX_COLLECTIONS, MAX_PRS, MAX_COL_DEPTH = 5000, 4096, 16
+MAX_FILE_COLLECTIONS, MAX_FILE_PRS = 250000, 600000
+MAX_BUILT_COLLECTIONS, MAX_BUILT_PRS = 16000, 32000
 END_TAIL = 24
 _PRINTABLE = bytes(range(0x20, 0x7f))
 
@@ -1226,7 +1210,7 @@ def mbdf_parse(data, depth=0, budget=None):
             if z != 0 or ext > n - pos - 36 or ln > n - body or ln < 88:
                 raise _damaged()
             if d[body:body + 8] != b'MMSXLIT\0':
-                raise _damaged()             # a body with no schema of its own (RIVAGE PM's compressed fields)
+                raise _damaged()
             size = 36 + ext + ln
             size += (-size) % 4
             if pos + size > n:
@@ -1295,10 +1279,6 @@ def mbdf_build(m, replace):
     return bytes(out)
 
 
-# ---- generation-2 values. Test ids: FORMAT.md 4.4 --------------------------------------------------------------------
-# The shape (type, sizes, most) every file read so far gives each parameter used here (BB-DM-SHAPE). Type 0 text,
-# 1 signed, 2 unsigned; size 0 is one bit. Any other shape is refused as damaged, so nothing is read or written as
-# the wrong kind of value.
 _NAME, _COLOR = (0, (64,), 1), (0, (8,), 1)
 SHAPES = {
     'Mixing': {
@@ -1317,7 +1297,7 @@ SHAPES = {
     'SceneInfo': {'Info': {'Title': _NAME}},
     'ProjectInfo': {'Info': {'ProductName': (0, (32,), 1), 'ProductSubName': (0, (32,), 1)}},
 }
-FLAT_ON = (2, (0, 1), 1)          # TF Editor and DM3 Editor files store channel on as one byte
+FLAT_ON = (2, (0, 1), 1)
 
 
 def check_shapes(sec, family=None):
@@ -1335,9 +1315,6 @@ def check_shapes(sec, family=None):
                 raise _damaged()
 
 
-# BB-DM-MODEL: the header model is DM7 for DM7, DM7 Compact, DM5 and DM5 Compact; ProjectInfo tells them apart.
-# Only the ProductSubName values an editor-made file showed are here (BB-DM-MODEL, and the DM3 and TF5 sessions of
-# BB-G2-WALK). Any other value falls back to the family name.
 FAMILY_OF = {'DM7': 'DM7', 'DM5': 'DM5', 'DM3': 'DM3', 'TF': 'TF'}
 SUB_MODELS = {'DM7': ('DM7', 'DM7', 'dm7'), 'DM7C': ('DM7', 'DM7 Compact', 'dm7c'), 'DM5': ('DM5', 'DM5', 'dm5'),
               'DM5C': ('DM5', 'DM5 Compact', 'dm5c'), 'DM3': ('DM3', 'DM3', 'dm3'), 'TF5': ('TF', 'TF5', 'tf5')}
@@ -1346,15 +1323,14 @@ G2_BUSES = {'DM7': [('Mix', 'mix', 'MIX'), ('Matrix', 'matrix', 'MATRIX'), ('Ste
                    ('Stereo', 'stereo', 'ST')],
             'DM3': [('Mix', 'mix', 'MIX'), ('Matrix', 'matrix', 'MATRIX'), ('Stereo', 'stereo', 'ST')]}
 G2_BUSES['DM5'] = G2_BUSES['DM7']
-G2_NAME_MAX = 8                   # BB-DM-LOAD: DM Editor's name field shows 8 characters
-# BB-DM-SAVE: the words stored in Label.Color, in DM Editor's Channel List column order -> (our key, label)
+G2_NAME_MAX = 8
 G2_COLOURS = [('Blue', 'blue', 'Blue'), ('Orange', 'orange', 'Orange'), ('Yellow', 'yellow', 'Yellow'),
               ('Purple', 'purple', 'Purple'), ('SkyBlue', 'cyan', 'Sky blue'), ('Pink', 'magenta', 'Pink'),
               ('Red', 'red', 'Red'), ('Green', 'green', 'Green'), ('LtGreen', 'lightgreen', 'Light green'),
               ('White', 'white', 'White'), ('OFF', 'off', 'Off')]
-G2_FADER_MIN, G2_FADER_MAX = -138, 10        # BB-DM-RANGE: Fader.Level 0.01 dB, -32768 = -inf
-G2_HA_MIN, G2_HA_MAX = -6, 66                # BB-DM-LOAD: HeadAmp.Gain 0.01 dB, whole dB written
-G2_HPF_MIN, G2_HPF_MAX = 20, 2000            # BB-DM-RANGE: HPF.Frequency 0.1 Hz
+G2_FADER_MIN, G2_FADER_MAX = -138, 10
+G2_HA_MIN, G2_HA_MAX = -6, 66
+G2_HPF_MIN, G2_HPF_MAX = 20, 2000
 G2_KEYS = ('rename', 'colour', 'patch', 'gain', 'phantom', 'hpf', 'fader', 'on')
 CURRENT_NAMES = ('CurrentBackupFile.bup', 'CurrentBackupFile.bup.old')
 MAX_INPUTS, MAX_BUSES, MAX_SCENES = 144, 128, 1000
@@ -1458,7 +1434,6 @@ class Gen2Show:
             check_shapes(inner.section('SceneInfo'), self.family)
         return inner
 
-    # ---- gates ------------------------------------------------------------------------------------------------------
     def write_why(self, key):
         if key == 'scenes':
             return ('Stored scenes on DM7 wait for a scene recall test in DM Editor. Leave out --all-scenes to change '
@@ -1496,7 +1471,6 @@ class Gen2Show:
                     'dca_names', 'scenes']
         return ['names', 'colours', 'icons', 'fader', 'on', 'bus_names', 'dca_names', 'scenes']
 
-    # ---- reading ----------------------------------------------------------------------------------------------------
     def count(self):
         return self.mix.count('InputChannel')
 
@@ -1651,7 +1625,6 @@ class Gen2Show:
             'warnings': warnings,
         }
 
-    # ---- writing ----------------------------------------------------------------------------------------------------
     def apply(self, ops):
         """Run ops in order on the current backup and its '.old' copy. -> (new bytes, changes, refused)."""
         changes, refused, bufs = [], [], {}
@@ -1817,7 +1790,6 @@ class Gen2Show:
             dst = self._dst(op)
             ci, cur = self.current
             for ch in self._targets(op):
-                # BB-DM-ORDER: the port this channel is patched to now, as edited so far in this call
                 src = self.source(ch, cur.section('Mixing'), buf(ci))
                 port, lab = g2_local_port(src), g2_port_label(src)
                 if port is None:
@@ -1857,9 +1829,6 @@ class Gen2Show:
         raise Refused('Pick a source from the patch list (run "ports").')
 
 
-# =====================================================================================================================
-# Open, check, write
-# =====================================================================================================================
 def open_show(data, console=None):
     if clf_kind(data) is not None:
         return Gen1Show(data, console)
@@ -1915,9 +1884,6 @@ def verify_written(old, new, show, console):
     return again
 
 
-# =====================================================================================================================
-# Command line
-# =====================================================================================================================
 def parse_channels(spec):
     """'1,3,5-8' / 'st1l' / 'all' -> a target."""
     spec = spec.strip().lower()
