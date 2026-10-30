@@ -26,6 +26,7 @@ Folders go manufacturer, then product. A model folder such as [`yamaha/cl/`](yam
 | Folder | Format | What you can do |
 | --- | --- | --- |
 | [`allen-heath/dlive/`](allen-heath/dlive/) | Allen & Heath dLive show (`.tar.gz`, firmware 2.x) | Names, colours, patch, mixer config, mixes and sends, processing, preamps, SoftKeys, layout, plus a validator |
+| [`allen-heath/avantis/`](allen-heath/avantis/) | Allen & Heath Avantis / Avantis Solo show (`.tar.gz`, Bridge-4 and Bridge-5) | Format notes and Avantis and dLive translation notes (docs only so far) |
 | [`digico/`](digico/) | DiGiCo SD and Quantum session (`.ses`) | Read any session, build and edit sessions from an input list or plain description on an editor-made baseline |
 | [`avid/protools/`](avid/protools/) | Avid Pro Tools (PTSL scripting) | Drive a running session: transport, tracks, markers, routing, import, bounce. Stems to a prepped session, stem QC, a first premix, bounce naming and versioning |
 | [`samply/`](samply/) | Samply (samply.app API) | Deliver mixes and show audio: upload to a project or folder, add a new mix as a version, rename, build L/R timecode + audio files for lighting |

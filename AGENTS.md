@@ -34,6 +34,18 @@ Keep notes while you work, not at the end. After each session on a real file, ad
 
 Move a line to `## What we know` when a test proves it. Add a line to `## What we don't know` when you find a gap. State how each fact was proven. Do not write a guess as a fact.
 
+## Translation notes
+
+A translation note says how a show moves from one console to another. It is research. It does not promise a tool.
+
+1. Put the note in the source product's `references/` folder, named `translate-<target>.md`, for example `allen-heath/avantis/references/translate-dlive.md`. One file covers both directions. Link it from the SKILL.md of both products.
+2. Build the target from an empty show that the target's own editor saved. Do not convert a source show in place.
+3. Give each mapping its proof: the translated file loaded in the target editor, or on a console. Mark a mapping that is only read from the two formats as unconfirmed.
+4. List what carries over, what changes, and what gets lost.
+5. Link to the format facts in each product's `references/`. Do not copy them. A format fact that a translation finds goes in that product's `references/` too.
+6. A translated file goes through the target editor before it goes near a console, the same as any written show.
+7. A translation script goes in the target product's `scripts/`, and the target's checker must pass on its output.
+
 ## Python stays free of comments
 
 Put no `#` comments in Python. The reason for the code goes in the README. A docstring holds usage only. `.github/strip-comments.py` removes comments and prints each one, so read that output and move any fact to the README. It refuses a change that alters the AST.

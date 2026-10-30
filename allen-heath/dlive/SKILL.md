@@ -112,3 +112,5 @@ Building from an input list with no template show: `references/show-maker.md`.
   FX rack unit k = rack inputs 2k-1/2k = FX return strip k = FX Return Mixer rows 2k-1/2k (`FX Rtn 2k-1/2k` in plans).
 - dLive thresholds sit on a nominal 0 dB scale (full scale +18). A dBFS console needs them 18 dB lower.
 - How it was decoded and how to extend it: `references/re-toolkit.md`.
+- Scene safes and recall filters field by field: `references/format-scene-safes.md`.
+- Translating to or from Avantis: `../avantis/references/translate-dlive.md`.
