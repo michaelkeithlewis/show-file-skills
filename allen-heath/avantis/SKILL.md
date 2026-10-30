@@ -18,6 +18,8 @@ to plan a conversion, or to check a show by hand. For dLive work use `allen-heat
 - Reading a show: `references/FORMAT.md`, then `references/mixer.md`.
 - Processing values: `references/processing.md` (Bridge-4 needs coefficients, Bridge-5 does not).
 - Patch, preamps, surface: `references/patch-and-io.md`.
+- Talkback, PAFL, AMM, gangs, layers, soft keys: `references/settings-and-surface.md`.
+- SQ and SQ+ (a different, folder-based format): `../sq/references/FORMAT.md`.
 - dLive to Avantis or back: `references/translate-dlive.md`, plus the dLive docs it links.
 
 ## Rules

@@ -44,6 +44,7 @@ console, and do the first load at prep or rehearsal.
 - `scripts/keys_from_offsets.json`: slot keys for the early mapped fields.
 - `references/`: `FORMAT.md` and `CHANNEL_MODEL.md` (the format), `baselines.md`, `filters-and-thresholds.md`,
   `sessionmaker.md`.
+- `references/session-structure.md`: header, sections, objects, strip kinds, ports, macros and snapshots (contributed notes).
 - `examples/`: a synthetic input list, and a build request (made-up band).
 
 ## Status

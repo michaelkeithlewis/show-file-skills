@@ -58,6 +58,16 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Insert points: inserts A and B and the Mustard strip each hold one of the five points, and they never share one. Slot `e1` of module 08: 0 post-fader, 2 pre-fader, 3 mid-EQ/dyn, 4 pre-EQ/dyn, 5 pre-processing. Defaults: A 4, B 2, Mustard 3. Proven on Q225 V2242.
 - Names hold up to 31 characters ([`FORMAT.md`](../references/FORMAT.md), Names). Console-saved sessions from every Quantum model hold longer names, and names of 9 to 13 characters, written in place, loaded on a real Quantum 112 (V2242). The tools write 8 by choice.
 
+### Mustard (contributed notes)
+
+Keys are (module, param) in hex, as in [`FORMAT.md`](../references/FORMAT.md). The full Mustard key list is in [`CHANNEL_MODEL.md`](../references/CHANNEL_MODEL.md).
+
+- Levelling Amp (comp model 8): (1d, 52) peak reduction and (1d, 51) gain, proven by one-change saves on a Quantum 112 at V2242.4. Its attack and release are fixed: no session read holds them.
+- Gate (1e, 4c), the MSE release: 0 slow, 1 medium, 2 fast. Proven by one-change saves on a Quantum 5 at V2025.
+- A comp or gate type change resets that module's controls to the type's defaults. Write the type first, then the controls. Proven by one-change saves; the editor does the same on load.
+- The engine mode at header 0x87 offers 1 (48 kHz) and 4 (96 kHz) only on Quantum ([`session-structure.md`](../references/session-structure.md)).
+- Nodal nodes, Spice Rack objects and the Quantum strip kinds: [`session-structure.md`](../references/session-structure.md).
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -67,7 +77,13 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Every other model and build: same writers and `validate.py`, marked untested until someone loads one.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. Both list Q2, Q3, Q5, SD8, SD9 and SD12.
 - Structural edits on a session with snapshots: refused.
+- Mustard Optical attack and recovery, (1d, 48) and (1d, 49): a contributor reading says 0 slow, 1 medium, 2 fast. `CHANNEL_MODEL.md` says 0 fast, 1 medium, 2 slow. Needs a save that settles it: set one known option on the console and compare.
+- FET ratio button (1d, 4a) value 0: a contributor reading of the screen order says it is ALL. Unconfirmed; no save holds it.
+- Levelling Amp (1d, 50) as Limit or Compress: unconfirmed by a one-change save.
+- DiGiCo's release notes say V1143 added Spice Rack, Mustard and nodal processing (Quantum 7), V20 the Mustard MSE, V22 the Levelling Amp and set lists, and V2242.4 lifts the Quantum 225 Pulse to 120 inputs. The dialog limit read here is 96 at V1742 to V2242. V2242.4 has not been read in the dialog.
 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+- 2026-10-30, Quantum 5 V2025 and Quantum 112 V2242.4, contributed one-change saves on Mustard (Levelling Amp, MSE release, type resets) and nodal nodes ported here and to `references/session-structure.md`.

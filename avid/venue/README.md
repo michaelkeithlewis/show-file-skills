@@ -25,6 +25,7 @@ VENUE-style Inputs, Outputs and Plug-Ins pages.
 - `scripts/dshow_tool.py`: `dump`, `names`, `rename` for classic shows.
 - `references/S6L-FORMAT.md`: the S6L format notes. Every fact carries an evidence label (PROVEN, STRONG or
   UNVERIFIED) and the test behind it.
+- `references/plugins.md`: what a Waves SoundGrid rack slot and an Avid Channel Strip slot hold.
 - `references/FORMAT.md`: the first notes, for classic shows.
 
 ## Requirements

@@ -74,3 +74,34 @@ The masters live outside the Mix Mixer, so a `Mono FX Send Channel` has a name b
 - Any parameter without a confirmed conversion code (reported as `?raw`).
 - UltraFX "step" parameters (for example `HF CutType` 1.812) read as fractions, so their scale is not confirmed.
   On the plates, a nonzero `HF CutGain` points to a shelf, not a cut.
+
+## Dyn8 word laws (markcarlberg, pull request #2)
+
+Saved in dLive Director, one control per band per save. Version 02 layout: `[02][type]`, then 16-bit big-endian
+words from byte 2, then byte 121 bypass (`10`) and bytes 122-129 side chain Wide per band (multiband LF-HF, then
+dynamic EQ LF-HF). [save-proven]
+
+| Words | Control | Law |
+|---|---|---|
+| w00 | master trim | `0x8000 + 10 x dB`, -12 to +12 |
+| w01-04 | multiband threshold | `0x8000 + 32 x dB`, -46 to +18 |
+| w05-08 | multiband in | `0x8000 + 16n` |
+| w09-12 | multiband gain | `0x8000 + 10 x dB`, -6 to +18 |
+| w13-16 | multiband ratio | word - 0x8000: 0 1:1, 120 1.17, 222 1.45, 341 1.9, 416 2.4, 478 2.8, 512 3.4, 536 3.6, 573 4.0, 636 4.8, 689 6, 726 7, 796 10, 832 20:1 |
+| w17-19 | crossovers | `4 x 2^(raw/4608)` Hz, 20 Hz to 18 kHz |
+| w20 | slope | `0x8000 + 16n`: 0 6 dB/oct, 2 24 |
+| w21 | detector | 0 Peak, 1 RMS, 2 Auto Punch, then Auto Opto, Slow Auto, Fast Auto in Director's stepping order |
+| w22 | knee | 0 hard, 1 soft |
+| w23-26 | attack | `65535 x (log10 s + 6) / 11`, 0.3 to 300 ms |
+| w27-30 | release | same law, 50 ms to 2 s |
+| w31-34 | dynamic EQ width | 0 shelf; 72 1.5 oct, 106 1.27, 160 1.05, 256 0.86, 328 0.7, 388 0.45, 512 1/9 |
+| w35-38 | dynamic EQ frequency | `4 x 2^(raw/4608)` Hz |
+| w39-42 | dynamic EQ cut/boost | 54 is 1:1, below 54 a cut (the step to ratio list is not reproduced here) |
+| w43-46 | dynamic EQ threshold | `0x8000 + 32 x dB` |
+| w47-50 | below | 1 = below |
+| w51-54 | release mode | 0 Std, 1 Fast |
+| w55-58 | dynamic EQ in | |
+
+- Under the Auto detector modes Director hides the bands' attack and release.
+- Director keeps each crossover at least 2.42 times the one below; a file with two closer crossovers loads and
+  keeps them.

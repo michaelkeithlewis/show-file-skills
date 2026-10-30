@@ -86,3 +86,73 @@ groups, stereo groups, mono aux, stereo aux, LR, mono matrix, stereo matrix.
 
 Trust a fixed layout only if every row has `4a 80 01` at main + 8. If not, search for the marks instead.
 That rule fixed garbage bus masters when reading Bridge-5 shows.
+
+## More mixer detail (markcarlberg, pull request #2)
+
+From Avantis Director V1.30 and V2.01 saves. Proof in brackets: save-proven, seen in every file (never moved
+alone), or unconfirmed. Differences from the text above are listed under What we don't know in `../README.md`.
+
+### MixConfig bytes
+
+- [7]: 01 a stereo LR, 00 an LR of two mono strips (seen in the V2.01 LCR+ factory shows). [seen in every file]
+- [8] main mode: 00 None, 01 LR, 02 LR+M sum, 03 LR+M, 04 LCR, 06 LCR+. [save-proven]
+- [11]: 1 in nearly every file, 2 where a layout spends 52 legs instead of 54. It is the PAFL count on dLive;
+  on Avantis that reading is unconfirmed.
+- Director recalls an odd mono count as the pair below it and flags the console. Stereo counts may be odd.
+  [seen in every file]
+- The pool is 54 legs (56 buses with dPack less two the desk keeps back): mono 1, stereo 2, FX sends included,
+  LR 2 and any mode past LR 4. No file spends more than 40 without dPack. A file spending 56 was refused whole
+  on recall ("Director - Internal Error"). 54 itself is not recall-tested. [seen in every file]
+- FX sends: twelve at most, a stereo one counting as one of the twelve and two legs of the pool (Director's
+  "FX Remaining" and "Mixes Remaining"). [save-proven]
+
+### Live-scene order
+
+The mix section opens the chain: one run of blocks per strip in the order mono groups, stereo groups, mono FX
+sends, mono auxes, stereo FX sends, stereo auxes, mains, mono matrices, stereo matrices. Per leg on Bridge-4:
+`Mix Delay`, `Digital Attenuator`, `Parametric EQ`, `Graphic EQ`, `Compressor`, `Compressor side chain source`,
+`Insert`, then a `Send Source Select` per leg on everything but a matrix. An FX send has only its
+`Send Source Select`. On Bridge-5 the section is grouped by block kind (every PEQ, then every GEQ, then every
+compressor, then each leg's delay, trim, side chain source and insert, then every `Send Source Select`, then the
+Ultra FX racks' sixteen). An option card block sits after the section. [save-proven]
+
+- Mains: `Main 01` Left/Right in LR; `Main 03` and `Main 04` (mono) are added in every mode past LR, default
+  names M (C in LCR and LCR+) and Msum. Main records in `Mix Mixer` follow the labels, so an LR+M show's M is
+  the second record. [save-proven]
+- LR+M and LR+M sum cannot be told apart by labels; only MixConfig [8] says. Only LR+M has a per-input M
+  assign. [save-proven]
+- Changing the layout re-lays the `Input Mixer`, `FX Return Mixer`, `Ultra FX Return Mixer` and `Mix Mixer`,
+  adds or removes the mixes' own blocks, and rewrites the MixConfig copies in the header and scene safes. It
+  does not touch the `FX Send Mixer`, the name managers, the FX racks, stored scenes, `Talkback.dat` or
+  `SignalGenerator.dat`. Stale per-leg lines are kept by place. [save-proven]
+
+### Input Mixer row length
+
+`S = G + 4 x (mono FX + mono aux + mono matrix) + 5 x (stereo FX + stereo aux + stereo matrix) + 15 + 16 + 8`,
+G the number of groups, plus 40 on Bridge-5 (eight Ultra FX sends). The formula gives every block length seen.
+[save-proven] Record n is at payload +12 + S(n - 1).
+
+The 15-byte main section: +0 LR assign, +1 M assign (LR+M), +2 mute, +3..4 fader, +5 pan [save-proven]; +6
+always 0, +7 0 on exactly the inputs `InputConfig.dat` pairs (02 on every input of the LCR+ factory show),
++8 always 0x4A, +9..10 always `80 01`, +11..14 zero [seen; meanings of +7 and +9..10 unconfirmed]. Then 16
+DCA bytes (1 = member) and 8 mute-group bytes [save-proven]. Bridge-5 adds eight Ultra FX sends,
+`[on][pre][s16 level][pan]` each, reset `01 00 80 01 25` [save-proven].
+
+### FollowPanSettings
+
+`kind,index,follow,0` per stereo mix, index from 0, follow 1 on. Kind 18 is an Ultra FX rack, added by V2.01.
+A send into a flagged mix holds the input's pan byte; one into an unflagged mix holds its own.
+[seen in every file]
+
+### Mix Mixer, FX Send Mixer, DCAs, FX returns
+
+- `Mix Mixer` main record count by mode: 0 None, 1 LR, 2 in every mode past LR. A group feeds auxes, FX sends
+  and matrices; an aux and a main feed only matrices; no group feeds a group. [save-proven by layout]
+- `FX Send Mixer`: `[01]` then 16 records of 29 bytes (465 bytes always): +0..1 fader, +2 mute, +3..4 zero,
+  +5..20 DCA 1-16, +21..28 mute groups 1-8. Record k is FX send k in the desk's order, mono first.
+  [fader save-proven on record 1; DCAs by name; the rest seen in every file]
+- `DCA Levels and Mutes` (97 bytes): version, 16 x `[mute][00][s16 level]`, then eight 4-byte mute-group
+  records. Group n's engaged flag is [61 + 4n]. [save-proven]
+- `FX Return Mixer`: the `Input Mixer` header and 32 records at the input stride: return n is records 2n-1 and
+  2n, both legs holding the same mix except a send pan on the first leg. The return PEQ is
+  `Parametric EQ, FX Channel NN`, an input PEQ block. [seen in every file]

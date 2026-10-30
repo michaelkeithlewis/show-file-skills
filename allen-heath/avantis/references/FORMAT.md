@@ -90,3 +90,47 @@ Plate Gold US, EMT 250, DeEsser Hard) are byte for byte identical between the co
 `translate-dlive.md`.
 
 `Ultra FX Manager NN`: type byte at offset 3, preset name at bytes 5 to 25.
+
+## More container detail (markcarlberg, pull request #2)
+
+From Avantis Director V1.30 and V2.01 saves, compared file by file. How each line was proven is in brackets:
+save-proven (one change, save, the named bytes moved), seen in every file (consistent, never moved alone), or
+unconfirmed. Where these notes read something differently from the text above, the text above stands and the
+difference is listed under What we don't know in `../README.md`.
+
+- Show-wide settings: about fifty `Show/<Area>/<Area>.dat` files, all text (a version line, then lines or comma
+  fields) except `MixConfig.dat` and the scene safes. [seen in every file]
+- Bridge-5 adds `SIPSettings/UFXSIPSettings.dat`, moves `FollowPanSettings.dat` to version line `2` and
+  `Preferences.dat` to version 3, and changes `MIDISettings.dat`. [save-proven by diff]
+- Scene slots 001-500 plus 65535. A fresh show stores every slot: an empty StageBox `.dat` is the header plus
+  one byte (77,245 bytes on V1.30, 85,478 on V2.01), an empty Surface `.dat` 611 or 613 bytes. Only the live
+  state holds the input patch by default, but every stored scene carries its own `Channel Mapper`.
+  [save-proven]
+- StageBox header length 0x12DBC (77,244) on Bridge-4 and 0x14DE5 (85,477) on Bridge-5. The Surface chain
+  starts at 0x262 on Bridge-4. [seen in every file]
+- The header opens `01 01`, then the scene name and description NUL-terminated, then the recall filter (mostly
+  zero). The MixConfig copy at 330-342 follows `3B 02` (Bridge-4) or `3B 03` (Bridge-5). [seen in every file]
+- Labels are exact strings. Mono mix labels end in a trailing space (`... Mono Matrix Channel 02 `); stereo ones
+  end ` Left` or ` Right`. Some input labels have no comma (`Digital Attenuator Input Channel NN`,
+  `Lowpass Filter Input Channel NN`, `Stereo Image Input Channel NN`); the mix forms have one
+  (`Digital Attenuator, <strip>`). [save-proven]
+- Payload offsets in these notes count from the byte after the label's NUL; byte 0 is the block's version.
+- Scene safes files open `01 01 02` (Bridge-4) or `01 01 03` (Bridge-5) and a MixConfig copy; 76,912 bytes on
+  Bridge-4, 8,233 longer on Bridge-5. [seen in every file]
+- Name managers: an unnamed strip holds its own number as text. [seen in every file]
+- Nothing inside the archive carries the show's name; it is the file name alone. [save-proven]
+
+### FX racks
+
+- `FX Manager NN` (171 bytes V1.30, 173 V2.01): [0..2] `05 01 00` or `05 02 00`, [3] engine, [4..21] name
+  padded to 18, [22] NUL, [23..26] record words, [27..170] 72 parameter words, V2.01 [171..172] level `00 64`.
+  [seen in every file]
+- `Ultra FX Manager NN` (246): [0..2] `06 03 00`, [3] engine, [4] a Spaces reverb's space (3, 4, 5), [5..22]
+  name, [23] NUL, [24..27] record words, [28..171] 72 words, [172..173] level, then FF. [seen in every file]
+- The parameter words are the SQ's numbers in big-endian order (`../../sq/references/FORMAT.md` has the reverb
+  and delay words). Avantis and SQ+ engine codes: 00 Empty, 02 Reverb, 03 SMR Reverb, 04 EMT 250, 05 Room,
+  06 Flanger, 07 Chorus, 08 ADT, 09 Symphonic, 0A Sub Harmonics, 0B Gated Verb, 0C Phaser, 0D De-Esser,
+  11 Dynamic EQ, 12 Multi Band Comp 4, 13 Multi Band Comp 3, 14 Transient Controller, 15 Bucket Brigade,
+  16 Stereo Tap Delay, 17 Echo, 18 Dimension Chorus. Ultra FX: 1C Spaces Reverb, 1D Plate Reverb, 1E Vocal
+  Tuner, 22 Vocal Harmoniser 4, 23 Vocal Harmoniser 2, 24 Vocal Shifter, 25 MIDI Harmoniser, 28 Vocal Gridder,
+  2A Amp Cab, 2B Saturator, 2D Ultra Delay. [seen in every file, read from library preset names]
