@@ -69,6 +69,23 @@ program, descriptor, template, preset, font or screenshot is copied here, and no
 | BB-DM-MODEL | New sessions saved as DM7, DM7 Compact, DM5 and DM5 Compact | The header model is `DM7` in all four. `ProjectInfo` tells them apart (4.4) |
 | BB-DM-SHAPE | The schema of every generation-2 file at hand, read for each parameter this tool uses | The same type, size and count in every file (4.6) |
 
+### 1.4 RIVAGE PM tests (RIVAGE PM Editor 7.2.0)
+
+These tests ran on two real PM5 shows saved on a console at V7.20 (CS-R5 surface, DSP-RX-EX engine), and on files
+written from them. The write tests loaded each file in RIVAGE PM Editor 7.2.0 on macOS. No code for these tests is in
+`scripts/yamaha_tool.py` yet.
+
+| Id | Test | Result |
+| --- | --- | --- |
+| BB-RV-WALK | Both shows walked with the rules of 4.2, every `#FILE` entry inflated, every inner MBDF file walked, every `#MMS` body checked: raw `MMSXLIT`, or zlib inflated to `MMSXLIT`. For each section the schema MD5, the sizes and the 4.3 element size of every collection | Both shows (295 and 298 `#FILE` entries) and every inner file rebuild byte for byte. 5,167 and 5,168 sections: every MD5 matches, every header schema size plus data size equals the section length. About 119,600 collections per show: every computed element size equals the stored size |
+| BB-RV-COPIES | Every leaf of `CurrentParam_1` and `CurrentParam_2` compared by schema path, in both shows | One show: identical. The other: 2 of 628,323 leaves differ, `Mixing/Stereo[0]` and `[1]` `Fader.Level` (-3.30 dB and -3.75 dB) |
+| BB-RV-LOAD | Channel `Fader.On` = 0 and `Label.Name` blank written into `EN00/mix` of both `CurrentParam` copies, entries recompressed with zlib level 1; loaded in PM Editor, then saved there | The file loaded. The re-save held both values. It changed only the save stamps of each entry (header 0x38 to 0x47), the UI selection, the backup load count in `Setup` and `Status_2` |
+| BB-RV-SCENE | The same two values written into the `Mixing` section (`BAM`) of one stored scene; loaded in PM Editor, another scene recalled, then the written scene recalled | The written scene recalled with the channel off and no name. The current-state write of BB-RV-LOAD left stored scenes unchanged |
+| BB-RV-BUILD | One file with: scenes renumbered (`SceneNumber`) and renamed (`Info.Title`), one scene with focus and fade off and its FILTER sections zeroed, channel names, channel EQ and plug-in library recalls (4.9), channel ON in the current state and in a stored scene; loaded in PM Editor, checked on screen, saved | Every write showed in the editor. The re-save kept every current-state write and left every scene file byte for byte |
+| BB-RV-UDK | A User Defined Key LINE 1 label typed in PM Editor, saved, and found by schema path | The path of 4.8. A write of these labels is not load-tested |
+| BB-RV-MACRO | Both macro list copies and a macro library preset inflated and decoded as in 4.10, in both shows | Valid JSON in every case. The macro channel, mix and DCA numbers match the editor's CSV export of the same show |
+| BB-RV-SELLOAD | In PM Editor, scenes from one file loaded into another with the selective load (several source scenes, one destination start) | The scenes outside the load stayed in place |
+
 ## 2. Generation 1 container: CL and QL `.CLF`
 
 ### 2.1 Records
@@ -387,6 +404,81 @@ as damaged, so it never reads or writes a value as the wrong kind.
 | `HeadAmp.Gain` | signed, 2 bytes |
 | `SceneInfo/Info.Title` | text, 64 bytes |
 | `ProjectInfo/Info.ProductName`, `ProductSubName` | text, 32 bytes |
+
+### 4.7 What a RIVAGE PM show holds (BB-RV-WALK)
+
+The header is the one in 4.1: kind `ProjectFile`, model `Rivage`, version `56 07 14 00` for V7.20.
+
+| `#FILE` group | Entries |
+| --- | --- |
+| `Current` | `CurrentParam_1`, `CurrentParam_2` (kind `Backup`): the current state. `Status_2`: status and meters, rewritten on every save |
+| `Setup` | `SetupParam_1`, `SetupParam_2`; `MacroList_1`, `MacroList_2` (4.10). A console save can also hold `consoleLockImage` (a BMP, not MBDF), `FileInfoList` (XML, not MBDF) and `PlayList` |
+| `SceneList` | `SceneList_1`, `SceneList_2` |
+| `LibraryList` | `LibraryList_1`, `LibraryList_2` |
+| `Snapshot` | one `.dms` file per stored scene (kind `Scene`) |
+| `Lib/<type>` | one `.pst` file per library preset (kind `Preset`), for example `Lib/InEQ`, `Lib/U76`, `Lib/Macro` |
+
+A `#FILE` entry can have compressed size 0 and no zlib stream at all (`Setup/PlayList`). A reader must accept it.
+
+Sections of `CurrentParam`, by name (function): `EN00/mix` (`Mixing`), `EN00/proc`, `EN00/prem` (`PremiumRack`),
+`EN00/sinf` (`SceneInfo`), the same four for `EN01`, `RIO000` to `RIO011` and `RIO100` to `RIO111` (`proc`), and
+`CSIO00`, `CSIO01` (`proc`). These are `#MMS FACADE` records with a raw `MMSXLIT` body. `Mixing` holds InputChannel
+x288, Mix x72, Matrix x36 and Stereo x4 on a PM5. `EN00` holds the show; `EN01` held factory defaults in both shows
+(names `ch 1` and up, faders at -inf).
+
+Compressed sections. Scene and preset files hold `#MMS FIELD` and `#MMS FILTER` records whose body is a zlib stream.
+The stream inflates to a complete `MMSXLIT` section, with its own schema and schema MD5, read like any other. The
+record's extension is `06`, then u32 BE the inflated size, then, in preset files only, u16 BE a length and a schema
+path that names the part of the tree the preset covers (`PremiumRack2/PlugIn/LR`, `Course/CustomFader`). All 4,926
+compressed sections in each show follow this.
+
+Write rule (BB-RV-LOAD, BB-RV-COPIES): write a current-state change into `EN00/mix` of both `CurrentParam_1` and
+`CurrentParam_2`. The two can hold different values in a console save, and which one a console uses is not proven.
+
+### 4.8 RIVAGE PM values (paths in the file's own schema)
+
+Paths are in `EN00/mix` (`Mixing`) of both `CurrentParam` copies unless named. `[ch]` is 0 based.
+
+| Value | Path | Encoding | Test |
+| --- | --- | --- | --- |
+| Name | `InputChannel[ch]/Label.Name` | text | BB-RV-LOAD |
+| Channel on | `InputChannel[ch]/Fader.On` | bit, 1 = on, bit 0 of the byte after `Fader.Level` | BB-RV-LOAD |
+| Fader | `InputChannel[ch]/Fader.Level` | signed 16-bit, 0.01 dB, -32768 = -inf | read, BB-RV-LOAD |
+| Scene number | `SceneList_1/_2`, `EN00/slst`, `Bank/Info[n]`: `FileName` names the `.dms`, `SceneNumber` is text such as `2.00`; both copies agree | text | BB-RV-BUILD |
+| Scene title | the scene file's `BAN` section (`SceneInfo`): `Info.Title`; also `Info.Comment`, `Info.Protect`, `Focus.On`, `Fading.On` | text, bits | BB-RV-BUILD |
+| UDK label (read) | `SetupParam_1/_2`, `stup`: `Setup/UserDefine/Bank[0..3]/Keys[0..11]/Label.ShortName[0..3]` (TITLE, LINE 1, LINE 2, LINE 3), `Label.Color`; `Keys.Setting` is the key's assignment text | text | BB-RV-UDK |
+
+Insert patch text, as the editor's CSV export prints it and as the `PremiumRack2` read matches it: `PLUGIN <rack><slot>
+<side>`. Rack letters A to X are racks 1 to 24, XA to XH are racks 25 to 32. The slot is 1 to 16; a plug-in that takes
+several slots is named by its first. The side is L or R on a dual or stereo plug-in.
+
+### 4.9 RIVAGE PM scenes and library recall
+
+A scene `.dms` file is an inner MBDF of kind `Scene`. Its records are `#MMS FIELD` and `#MMS FILTER`, each compressed
+(4.7). FIELD `BAN` is `SceneInfo`, `BAM` is `Mixing`, `BAA` is `PremiumRack`. `BAP`, `CAP` to `CXP`, `HAP` and `HBP`
+are not mapped. A FILTER section has the schema of the FIELD of the same name; a byte of 0xFF marks the value as
+included. With focus and fade off, PM Editor saves every FILTER of the scene as zeros (BB-RV-BUILD). All 72 scene files
+of a show rebuild byte for byte (BB-RV-WALK).
+
+A library recall, as the console stores it (BB-RV-BUILD, and a byte match against slots recalled on the console):
+
+- Plug-in preset: the preset's whole `LR` element (275 bytes on V7.20: `LibraryName`, `Bypass`, `TempoAssign`,
+  `Parameter` x64) copied into `PremiumRack2[rack]/PlugIn[slot]/LR[side]`.
+- Channel EQ preset (`Lib/InEQ`): the preset's HPF, LPF and PEQ `Bank` elements copied into index `PEQ.Select` (0 = A,
+  1 = B) of the channel's `HPF[2]`, `LPF[2]` and `PEQ/Bank[2]`. The channel does not store which preset was recalled.
+
+### 4.10 Genius.lab macros (BB-RV-MACRO)
+
+`Setup/MacroList_1` and `_2` each inflate to an inner MBDF of kind `Backup` with one `#FILE` entry. That entry's name
+and its inflated content are XOR'd with one byte. The byte differs between the two copies and between files, so derive
+it from the content: key = first byte XOR `{`. The name decodes to `mlc_autosave.json`. The content is JSON followed by
+one zero byte (also XOR'd), so a strict JSON parser must stop at the zero byte. A macro library preset (`Lib/Macro`)
+uses the same scheme.
+
+The JSON is a tree: `Macro` items with `Title`, `Comment`, `Enabled`, `Auto` (AUTO SYNC) and `Children` (`Trigger`,
+`Condition`, `Action`, `ReverseAction`). Atoms carry `Logic`, `Comparison`, `Assignment`, `FadeTime` and `WaitTime`
+(ms), and `ParallelParameterNo` (the PARAL switch). Channel, mix, matrix, DCA and key numbers are 0 based. Levels are
+in 0.01 dB.
 
 ## 5. What this tool writes, and the proof
 
