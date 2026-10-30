@@ -54,6 +54,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Spice Rack slots hold a Chilli 6 or a Naga 6. A stereo link of a Chilli 6 and a Naga 6 loads with the link dropped, proven on Q225. Two Chilli 6 slots link. A link of two Naga 6 slots is unverified. A mono channel can use a Naga 6 slot.
 - A stereo channel takes the slot pair 1+2, 3+4 or 5+6. A pair written as 2+3 keeps the link, but the editor marks slot 4, not slot 3, so write the pair the editor would take.
 - Insert points: inserts A and B and the Mustard strip each hold one of the five points, and they never share one. Slot `e1` of module 08: 0 post-fader, 2 pre-fader, 3 mid-EQ/dyn, 4 pre-EQ/dyn, 5 pre-processing. Defaults: A 4, B 2, Mustard 3. Proven on Q225 V2242.
+- Names hold up to 31 characters ([`FORMAT.md`](../references/FORMAT.md), Names). Console-saved sessions from every Quantum model hold longer names, and names of 9 to 13 characters, written in place, loaded on a real Quantum 112 (V2242). The tools write 8 by choice.
 
 ## What we don't know
 
@@ -63,7 +64,7 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Mustard caps: Q225 Pulse, Q338 and Q338 Pulse come from DiGiCo's V1742 release notes. The 24 on Q112, Q5, Q7 and Q852 is unverified.
 - Every other model and build: same writers and `validate.py`, marked untested until someone loads one.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. Both list Q2, Q3, Q5, SD8, SD9 and SD12.
-- Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
+- Structural edits on a session with snapshots: refused.
 
 ## Session notes
 
