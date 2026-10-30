@@ -220,6 +220,7 @@ tail: u16 L, L bytes, 556 bytes
 - A pool module serves one strip. Two strips sharing one, or a snapshot object with its flag byte set, faults the editor with an access violation (editor load).
 - A snapshot stores each module less a fixed set of params per strip kind and module type, the safes among them.
 - Snapshot number: a u32 34 bytes before the font record (`ff ff ff 00 01 09 00`, "Arial"), in hundredths (1750 = 17.50). In SD12 files it sat 47 bytes from the end of its metadata at V1742 and 51 at V2242. In a Quantum 338 session it sat 71 bytes from the end at V1619 and 75 at V1926.
+- The snapshot options, the snapshot groups, the setlists (section `73`, 115), the tail and how to write a snapshot are in [`snapshots.md`](snapshots.md).
 
 ## Banks and surface sections (sections 243 and 212)
 
@@ -269,11 +270,13 @@ Readings that disagree with a one-change save in this repo. The repo's fact stan
 - Model markers: a contributor reading says the header code plus counts within the limits are enough to load, with no hidden marker. The repo found that header 0x25 bit 0x10 alone made a plain SD12 refuse an SD12-96 file inside the plain counts, and that SD8 and SD10 files differ by their bus layout ([`../sd/README.md`](../sd/README.md)). The repo's findings stand.
 - SD7 pool: a contributor reading of the Session Structure dialog gives one pool of 249. The repo reads paths + matrix outputs + bus slots at 255 or fewer ([`../sd/README.md`](../sd/README.md)). Needs a reading that settles it.
 - Bank faders: a contributor reading puts a type byte in each fader entry (04 input, 02 bus, 00 empty). `FORMAT.md` puts the strip view (0 SD, 2 Mustard) in 12 bytes at the end of the bank. These may be different bytes. Needs a save that changes one fader.
+- Snapshot groups: a contributor reading takes the records after the pool's `u32 0` as scope sets ("All" seen). [`snapshots.md`](snapshots.md) has them as the snapshot groups: adding a group in the snapshot list added one 338-byte record there, and the snapshot's group byte points into the list (one-change save). In 121 Quantum shows, 586 snapshots hold a group byte, and none points past the list.
+- Module tail in section 210: a contributor reading takes the first word as a base reference, -1 for a full module. In a pool state it is the index of the state it was copied from, and the state is whole either way: 450,354 of the 840,036 states in 46 Quantum shows hold one, each pointing at a state of the same module type, and none holds fewer params than a state without one ([`snapshots.md`](snapshots.md)).
 
 Not decoded yet:
 
 - Header 0x24 apart from bit 0x10 of 0x25, 0x58 to 0x5f, 0x65 (-18.0 on every file), 0x7b (25.0 on every file).
-- Sections `fc`, `73`, `e4`, `d9`, `e8` to `ed`, `dd`, `cf`, `e2`, `d0`, `e3`, `e5`, `f9` (32 entries "Set 1" to "Set 32"), `fa` (48 entries of 19 bytes: name, index, A/B/C), `eb` (a CRLF list of 120 short labels), `e1` (UI items "ExplicitTop", perhaps layout) and `ee` (32 "Rack n" entries with the UTF-16 text "com/remote/HighlightSnapshot", perhaps remote). The u32 at the head of section 201.
+- Sections `fc`, `e4`, `d9`, `e8` to `ed`, `dd`, `cf`, `e2`, `d0`, `e3`, `e5`, `f9` (32 entries "Set 1" to "Set 32"), `fa` (48 entries of 19 bytes: name, index, A/B/C), `eb` (a CRLF list of 120 short labels), `e1` (UI items "ExplicitTop", perhaps layout) and `ee` (32 "Rack n" entries with the UTF-16 text "com/remote/HighlightSnapshot", perhaps remote). The u32 at the head of section 201.
 - Strip colour: the trailer i32 is a candidate.
 - Aux send (02, 10), 0 or 60. Module `01` params 0a, 0b, 11, 1b, 1e. Module `0c` params 0c, 0f, 05, df, 1e. (0d, 07). Module `13`. Socket params 80, 81, 84, 8b, c8, c9, ff. (0b, 0e) as bus polarity.
 - Dynamics (05, 03) on bands 0 to 2: 1 on every band in every session read, perhaps a band's in.

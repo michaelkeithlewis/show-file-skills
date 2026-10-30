@@ -1,6 +1,6 @@
 # DiGiCo snapshots
 
-Section 210 (`d2 00`) holds the snapshots: a pool of stored module states, the snapshot groups, the snapshot records and a trailer. Section 115 (`73 00`) holds the setlists. This file gives their layout and the rules for adding, updating and deleting a snapshot by bytes. A snapshot's scope and what a recall changes are in [`scope-and-recall.md`](scope-and-recall.md).
+Section 210 (`d2 00`) holds the snapshots: a pool of stored module states, the snapshot groups, the snapshot records and a trailer. Section 115 (`73 00`) holds the setlists. This file gives their layout and the rules for adding, updating and deleting a snapshot by bytes. A snapshot's scope and what a recall changes are in [`scope-and-recall.md`](scope-and-recall.md). [`session-structure.md`](session-structure.md) has the frame of every section; this file adds what the snapshot fields mean and how to write them.
 
 Proven on a Quantum 112 at V2242. Each fact comes from a one-change save (one edit on the console, Save As, then a byte compare with the file before) or from a file written by bytes that loaded and worked on the console. File facts were checked on 121 shows saved by Quantum 112, 225, 326, 338 and 852 consoles and offline software, V1742 to V2242. 46 of them hold snapshots, 1476 in all. SD files are not tested.
 
