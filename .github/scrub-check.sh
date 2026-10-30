@@ -52,12 +52,14 @@ else
   echo "note: no private denylist given, client-name check skipped"
 fi
 
-# No binaries, audio, archives, show files, templates, vendor XML, fonts or images.
-if bad=$(git ls-files -co --exclude-standard | grep -iE '\.(ses|tar\.gz|tgz|bin|dll|exe|rack2|ptx|dsh|logicx|zip|wav|aiff?|mp3|flac|m4a|show|clf|clu|dm7f|dmxf|dm3f|tff|dm7u|dm7s|dm7p|bup|rivagepm|pm10all|scs|tfx|ttf|otf|xml|png|jpe?g|gif|webp)$'); then
+# A contributor may choose to add a show file as an example, but only inside an examples/ folder.
+EXAMPLE_SHOWS='(^|/)examples/.*\.(ses|tar\.gz|tgz|dsh|rack2|ptx|clf|clu|dm7f|dmxf|dm3f|tff|show)$'
+# No binaries, audio, archives, templates, vendor XML, fonts or images. No show files outside examples/.
+if bad=$(git ls-files -co --exclude-standard | grep -iE '\.(ses|tar\.gz|tgz|bin|dll|exe|rack2|ptx|dsh|logicx|zip|wav|aiff?|mp3|flac|m4a|show|clf|clu|dm7f|dmxf|dm3f|tff|dm7u|dm7s|dm7p|bup|rivagepm|pm10all|scs|tfx|ttf|otf|xml|png|jpe?g|gif|webp)$' | grep -viE "$EXAMPLE_SHOWS"); then
   echo "BLOCKED FILE TYPES:"; echo "$bad"; fail=1
 fi
 # The name checks above skip binary files (grep -I), so no binary file may land at all.
-if bin=$(files | xargs -0 -r grep -LI -- '' 2>/dev/null | while IFS= read -r f; do [[ -s "$f" ]] && echo "$f"; done; true) && [[ -n "$bin" ]]; then
+if bin=$(files | xargs -0 -r grep -LI -- '' 2>/dev/null | while IFS= read -r f; do [[ -s "$f" ]] && echo "$f"; done | grep -viE "$EXAMPLE_SHOWS"; true) && [[ -n "$bin" ]]; then
   echo "BINARY FILES:"; echo "$bin"; fail=1
 fi
 # Every script compiles (compile only, nothing runs). No em-dashes in prose.

@@ -166,7 +166,7 @@ Use the same name as the bounce: one convention, everywhere. For example
 `<Song>_<Initials>_V<n>_PtMst.wav` (Title Case song, mixer's initials, version, bus).
 Do not use a project's track-number names (`06 - SONG.wav`) or `SONG V2`. Send the
 client the `_PtMst` (post master bus) print, never the `_PrMst`. The full convention,
-and how a Pro Tools bounce gets here, is in `../protools/references/session-prep.md`
+and how a Pro Tools bounce gets here, is in `../avid/protools/references/session-prep.md`
 ("Bounce, name, version, deliver").
 
 ## Common patterns

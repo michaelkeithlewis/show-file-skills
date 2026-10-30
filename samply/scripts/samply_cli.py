@@ -174,8 +174,6 @@ def cmd_upload(a):
     else:
         parent, where = None, "(root)"
 
-    # Step 1: request a signed upload URL. With parentid = a stack id, the upload lands as
-    # that stack's newest version. The empty version box exists from this moment on.
     init = api("POST", f"/projects/{p['id']}/files",
                json={"name": name, "mimeType": mime, "size": size, **({"parentid": parent} if parent else {})})
     url = init.get("url")
@@ -184,7 +182,6 @@ def cmd_upload(a):
     if not url:
         die(f"no signed url in response: {init}")
 
-    # Step 2: PUT the bytes to the signed URL with the x-goog-meta headers it was signed over.
     put_headers = {
         "Content-Type": content_type,
         "x-goog-meta-destination": meta.get("destination", ""),

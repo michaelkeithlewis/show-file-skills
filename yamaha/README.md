@@ -8,6 +8,16 @@ DCA assigns and bus names.
 To use it in the browser instead, go to [idontownapc.com/yamaha](https://idontownapc.com/yamaha). The page runs on
 this code, with a console view.
 
+## Models
+
+- [CL](cl/): CL1, CL3, CL5
+- [QL](ql/): QL1, QL5
+- [DM7](dm7/): DM7, DM7 Compact
+- [DM5](dm5/): DM5, DM5 Compact
+- [DM3](dm3/): DM3, DM3 Standard
+- [TF](tf/): TF1, TF3, TF5, TF-RACK
+- [RIVAGE PM](rivage-pm/): PM3, PM5, PM7, PM10
+
 ## What it does
 
 - Reads a show and prints it the way the console shows it: every input with name, colour, icon, patch, head amp,
