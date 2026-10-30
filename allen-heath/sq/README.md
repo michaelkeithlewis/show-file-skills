@@ -78,3 +78,5 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 
 Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
 planning app for touring and production crews.
+
+Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

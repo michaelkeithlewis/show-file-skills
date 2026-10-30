@@ -94,3 +94,5 @@ Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](http
 planning app for touring and production crews.
 
 The Avantis notes are by [Stefan "Hedde" Hettenbach](https://www.instagram.com/stefan_hettenbach/) (Clap! Live Solutions, Mannheim), from his Avantis and dLive converter. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
+
+Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
