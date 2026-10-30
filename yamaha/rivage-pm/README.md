@@ -8,6 +8,7 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - Format notes: [`references/FORMAT.md`](../references/FORMAT.md), sections 4 and 6.
 - RIVAGE PM sections: FORMAT.md 4.7 to 4.10. The RIVAGE PM tests: FORMAT.md 1.4.
 - The facts below come from black-box tests on real PM5 shows at V7.20. No reader or writer for this model line is in the script yet.
+- Contributed field maps (not used by the script): [`references/rivage-fields.md`](../references/rivage-fields.md) and [`references/premium-rack.md`](../references/premium-rack.md).
 
 ## What we know
 
@@ -27,6 +28,11 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - Genius.lab macros are a single-byte XOR over JSON (BB-RV-MACRO). See FORMAT.md 4.10.
 - Levels are signed 16-bit in 0.01 dB, -32768 = -inf, as on DM7 (BB-RV-LOAD).
 - PM Editor's selective scene load leaves the scenes that are not in the load in place (BB-RV-SELLOAD).
+- RIVAGE PM Editor 7.2 controlled saves (markcarlberg, pull request #2) placed: the tap point codes (30 to 120, no 200 or 210); `HPF[2]` and `LPF[2]` as the A/B banks that follow `PEQ.Select`; `TheatreSelect` as Theatre mode's A to D choice; dynamics `TypeNo` 6 FET LIMITER and 7 DIODE BRIDGE with their settings in `Parameter[k]`; the insert send code; Premium Rack slot codes; MONITOR and CUE output codes; cue `Out.Mode`; `CueButton` assigns; custom fader `Course[0]` = bay R; cue and monitor master `ChID` kinds; `VirtualSC.Safe` and `MasterOn`; TWINLANe `Permission` and `On` set by PULL then APPLY (`references/rivage-fields.md`).
+- Two editor blanks that differ only in engine differ only in `Status_2` `EN00/pp` and the save id (controlled save).
+- A DSP-RX file can carry Premium Rack mounts in racks 25 to 32, left by a DSP-RX-EX session (save).
+- With PM7 remembered, RIVAGE PM Editor still uses the last DSP picked, so a PM7 file can carry another engine's counts; a new offline session restores the previous session's state (editor test).
+- REV-X REV TIME, INI. DLY and filter words; SP2016, Y7, SPX Reverb and SPX Stereo Delay words; MBC4, DynamicEQ4 and DynamicEQ6 words were pinned by controlled saves (`references/premium-rack.md`).
 
 ## What we don't know
 
@@ -41,6 +47,20 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - Sends, dynamics, output patch, and mix and matrix bus settings: not mapped.
 - A written file loaded on a console: not tested. Only PM Editor has loaded these files.
 - Firmware other than V7.20, and PM3, PM7 and PM10 files.
+- Scene sections `BAP`, `CAP` to `CXP`, `HAP`, `HBP`: a contributor reading (pull request #2) maps `BAP` to engine I/O, `CAP` to `CLP` to `RIO000` to `RIO011`, `CMP` to `CXP` to `RIO100` to `RIO111`, and `HAP` and `HBP` to the surface units, by schema. Not tested by a recall.
+- Genius.lab macro keys: a contributor reading names an `Automation` root and step keys `Category`, `FunctionCategory`, `FunctionElements`, `Parameters`, `Value`; FORMAT.md 4.10 names `Macro` items with `Trigger`, `Condition` and `Action` atoms carrying `Logic`, `Comparison`, `Assignment`. The two readings are not compared on one file.
+- `CurrentParam_1` in an editor-made DSP-R10 file: a contributor reading says it is a full-size factory state the editor never brings into step, and suggests reading `_2`. Which copy a console uses is still open, so a write still goes to both.
+- The I/O rack input patch code `402 nn` with index 32 + card slot x 16 + port: an unconfirmed reading (1,356 of 1,381 rack inputs land on mic-card slots; indexes below 32 never seen). The second TWINLANe network's sub-code.
+- I/O rack UnitIDs 0x201 and 0x202 for M1 and M2 in `Status_2`: unconfirmed.
+- Output port `Delay.Time` units (unconfirmed reading: µs). Which strip point the `03C 28` recording feed leaves from.
+- Where the +48V master lives: `Unit.48VMaster` is 0 in every file, condenser shows included.
+- Ducking's `TypeNo`; which `Type` texts LEGACY COMP and COMP260 are; whether DYN1 offers FET or Diode; the order of a Diode Bridge's recovery and gain words.
+- Where Theatre banks C and D keep their contents, and where UNIT MODE is stored.
+- What a mirrored engine looks like (no editor save can make one).
+- Where Dugan channels 3 to 32 are back-patched; monitor sources `058 00` and `050 00`; oscillator sine mode words (no file holds one).
+- Whether DSP-R10 and PM7 schemas run 24 or 32 racks; whether the editor recomputes the resource meter on load.
+- The PM7 counts: one console save says 144 / 60 / 36, one PM7 editor blank says 144 / 72 / 36 (that blank was made with a remembered DSP-R10 choice).
+- The `.PM10ALL` engine (144 inputs suggests DSP-R10); local I/O counts per surface model.
 
 ## Session notes
 
@@ -51,3 +71,5 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - 2026-10-29, V7.20, scene renumber and rename, focus and fade off, names, channel EQ and plug-in library recalls and channel ON in one file loaded in PM Editor; the re-save kept every write and left every scene file byte for byte.
 - 2026-10-30, V7.20, two real PM5 shows walk and rebuild byte for byte; every compressed section is a full MMSXLIT section with a matching schema MD5.
 - 2026-10-30, V7.20, `CurrentParam_1` and `_2` differ in one console save (Stereo fader levels).
+- 2026-10-29, V7.20, markcarlberg's controlled saves in RIVAGE PM Editor 7.2 mapped tap points, A/B and Theatre banks, dynamics type numbers, insert and rack codes (`references/rivage-fields.md`).
+- 2026-10-30, V7.20, markcarlberg's controlled saves pinned DynamicEQ6, SP2016, Y7, SPX and MBC4 words (`references/premium-rack.md`).

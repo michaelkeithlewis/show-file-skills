@@ -79,6 +79,17 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Tap bytes at the destination: `07` for insert A, `05` for insert B pre-fader, `0c` for insert B post-fader, then `<side> <idx> 01`.
 - Insert B pre-fader taps `04` instead of `05` on a channel with `(04, 81, 0)` = 1.0, the dynamics-before-EQ switch. The SD12 V2242 and V1619 editors rewrite a tap that does not match the switch on load. Update the tap when the switch changes.
 
+### Contributed notes
+
+Each is from a one-change save or a Session Structure reading. The format side is in [`session-structure.md`](../references/session-structure.md).
+
+- Engine mode (header 0x87): the SD5 offers all four (1, 4, 5, 8). SD12, SD9 and SD5 CS offer 1 and 4 only. On the SD5 the 96 kHz modes leave processing alone and cut spare buses, and 96 kHz with 128 buses gives up I/O port 4.
+- SD12: matrix 12 x 8 and 12 control groups are fixed. The SD12 editor refuses a file with 16 control groups. An SD8 refused a session until header 0x93 and 0x96 both said 16.
+- SD12 USB holds 48 channels at 48 kHz and 24 at 96 kHz.
+- SD12 offers no insert point (`e1`), and its editor shows the dynamics key only on the lower section.
+- Macro keys per bank: SD12 five, SD9 eight.
+- Snapshot number in SD12 files: 47 bytes from the end of its metadata at V1742, 51 at V2242.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -89,7 +100,10 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. SD5 CS, SD7, SD10 and SD11 are not in the tested list.
 - The docs do not list the 18 console and build pairs where FX units booted and re-saved.
 - Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
+- SD7 pool: a contributor reading of the dialog gives one pool of 249 with buses to 122. The table above reads 255 for paths + matrix outputs + bus slots. Needs a reading that settles it.
+- Thresholds above 0 dBFS: a contributor reading says SD production sessions hold compressor thresholds up to +14.3. The repo says thresholds stop at 0 ([`filters-and-thresholds.md`](../references/filters-and-thresholds.md)). Needs a save that settles it.
 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+- 2026-10-30, SD12 V2242, contributed one-change saves on the header, sections, ports, macros, banks and snapshots ported to `references/session-structure.md`.

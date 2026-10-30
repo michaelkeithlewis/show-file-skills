@@ -19,6 +19,7 @@ A Python port of the reader, the writer and the converter will follow in this fo
 | `references/patch-and-io.md` | Channel mapper, socket families, preamps, trim, strip types, surface banks |
 | `references/translate-dlive.md` | What maps between Avantis and dLive, what gets lost, FX type IDs |
 | `references/console-safety.md` | Console limits by firmware and dPack, file names, crash causes, test workflow |
+| `references/settings-and-surface.md` | Talkback, signal generator, PAFL, AMM, metering, gangs, layers, soft keys (markcarlberg) |
 
 ## How Avantis differs from dLive in one table
 
@@ -56,10 +57,36 @@ details.
 - The Gated Echo FX type id on Avantis (0x17 is unconfirmed).
 - The flag at bytes 617-618 of the compressor block (`references/processing.md`).
 - Avantis firmware other than 2.01, and shows from an Avantis (not Solo) surface.
+- Version.dat: markcarlberg's notes list `Bridge-3` for desk firmware V1.20-V1.25 and tie `Bridge-4` to Director V1.30 and `Bridge-5` to V2.01; `references/FORMAT.md` says Bridge-4 is firmware 1.x and Bridge-5 firmware 2.x and has no Bridge-3. A Bridge-3 show loaded in Director would settle it.
+- Frequency law: a contributor reading says `4 x 2^(raw / 4608)` exactly (save-proven on the SQ); `references/processing.md` uses the fitted `3.990373 x 2^(code / 4606.26)`. Both agree within display precision; a 20 kHz word on Avantis would tell them apart.
+- PEQ width: a contributor reading says the width is a code byte (0-24) plus a fraction byte the desk ignores; `references/processing.md` reads a u16 Q code with a fitted Q table. Needs a save that settles it.
+- Bridge-4 shelves: a contributor reading puts the first-order corner at `c x tan(pi f / fs)` with c = pi (LF) or 0.318 (HF); `references/processing.md` has the fitted factor 3.04. Needs a save that settles it.
+- Bridge-4 chain length: a contributor reading says the u32 just before the first block is the chain's length on every family; `references/FORMAT.md` says Bridge-4 has no such field. Needs a check on a Bridge-4 save.
+- Show name length: a contributor reading says Director lists a show by the first 16 characters of the file name and a longer name fails to recall with "Show not found"; `references/console-safety.md` says 14 characters. Needs a save that settles it.
+- FX racks: a contributor reading lists `FX Manager 01-16` with an 18-byte name at [4..21]; `references/FORMAT.md` says 12 racks and a 20-byte name. Needs a save that settles it.
+- FX type IDs: a contributor reading gives dLive the standard SQ numbering (Reverb 02, SMR Reverb 03, Room 05, Gated Verb 0E, Bucket Brigade 22, Echo 24) and Avantis Bucket Brigade 0x15; `references/translate-dlive.md` has SMR Room 3 on dLive, 14 as Gated Echo, and no BBD on Avantis. Needs a save that settles it.
+- GEQ bytes 617-618: a contributor reading names [617] the GEQ out switch and [618] the slot (0 GEQ, 4 NEQ12); slot codes 1, 2 and 3 also occur on shaped or switched-out GEQs and are not named.
+- Bridge-4 GEQ band Q away from flat (Q 4.33 flat, narrowing as gain rises); Bridge-3 GEQ preset recall on V2.01.
+- MixConfig [11] as the PAFL count (save-proven on dLive only), and which two buses the desk keeps back from the 56 (54 is not recall-tested).
+- Main section +7 (LCR switch candidate) and +9..10 (C level candidate); which `Mix Mixer` main record is which in a four-mono-main LCR+ show.
+- `Channel Mapper` records 320-352 (`01 01 01` on 320-351; 352 varies), 605 and 686, mono group insert returns (probably 803-858), the AES outputs' sockets, and which rear sockets Local 13-16 are.
+- Which physical I/O Port each `Port B` head-amp slot is; the Virtual SoundCheck port.
+- Peak Limiter 76 attack and release and Mighty release laws; the OptTronik emphasis filter; the low pass key filter's shelf state.
+- Dual Expander fields; a Ducker threshold moved off its preset.
+- Mix insert In switch; Main 03/04 insert records; a stereo mix on an FX rack.
+- Dyn8 unit contents on Avantis; DEEP preamp model blocks; Source Select Controllers; `Output Socket Polarity`.
+- Ultra FX send masters and return fader and mute.
+- The second PAFL's fields in `PAFLSettings.dat` ([21..41] look like a copy); fields [1], [7], [8], [45].
+- AMM per-input priority and chair, byte [539] (moves with Chair Sensitivity and Duck Level); the signal generator Sine code (0 by elimination); meter attack and release laws; `MeteringSourcesGlobal.dat`; RTA.
+- Whether `Talkback.dat` gives FX sends legs: a change of FX send count moved no talkback line.
+- Layer kinds 0D and 0E; soft key contents.
+- Input source types for FX returns and FX sends as key sources (no code seen).
 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+2026-10-30, Avantis Director V1.30 and V2.01: field map additions contributed by markcarlberg (pull request #2), merged into `references/` under "markcarlberg, pull request #2" headings.
 
 ## Built on tour
 

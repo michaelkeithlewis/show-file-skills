@@ -78,11 +78,31 @@ Not affiliated with Allen & Heath. dLive is a trademark of Allen & Heath. The fi
 and is not documented by the manufacturer. Check every show before it goes near a console. No warranty. Part of
 the dLive field map credits github.com/jaylenjinx/dlive-show-editor.
 
+## What we don't know
+
+markcarlberg's notes on show Versions 11-14, settings files, talkback groups and actions are in
+`references/format-versions.md`, and the Dyn8 word laws in `references/format-fx.md`. Where his readings disagree
+with a save-proven fact here, the repo fact stands until a save settles it:
+
+- Preamp gain: a contributor reading says the MixRack preamp block holds a u16 gain / 256 in a 5-byte block; `references/format-processing.md` says one whole-dB byte (`01 | gain | pad | 48V`, default 27 dB). `references/format-processing-surface.md` reads the same bytes as s16 dB x 256. A save with a fractional gain would settle it.
+- Compressor model 10: a contributor reading calls it CompStortion; `references/format-processing.md` calls it the Distressor, with byte 58 as the ratio switch. The Avantis notes list the same naming question (`../avantis/README.md`).
+- Mix Mixer group rows: a contributor reading says the last byte after the group-to-group bytes is the group's Grp To Grp send point (`03` Post Delay, `02` Post Comp); `references/format-mixconfig.md` says it is the main assign, default 3. Needs a save that settles it.
+- Version 11 gate (25 bytes) and the V11 and V13 compressor fields past byte 18.
+- `Channel Mapper`: the gap between the VSC banks and the Insert A table; output records 32-96 and those past DX 1/2; source types `07`-`0B` as input sources.
+- Whether the output patch ends at record 639: Dyn8 inputs at 584 + u would run past it for high unit numbers.
+- Preamp labels `StageBox TSnake Analogue Input, Number 01-64` (read as DX 1/2 1-32, DX 3/4 33-64) and `StageBox Port B TSnake Analogue Input, Slot 1-3` are unconfirmed; an I/O Port with a DX Link card is read as keeping its stage box's preamps in `StageBox Port B Analogue Input, Slot n, Number NN`, unconfirmed.
+- `PAFLSettings.dat` [87..90] Mains To PAFL, placed by value only.
+- An FX send's kind in talkback groups; the stereo aux, main and matrix insert send codes beyond what files show; mute groups' 4-byte record contents beyond the engaged flag.
+- Dyn8 dynamic EQ cut/boost step to ratio values.
+- Whether the MixRack model is in any file (`SouthConfig*` is the candidate).
+
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 2026-10-30, Director 2.12 and console saves, 42 real shows: 39 file names fit 16 characters, 13 sit at exactly 16, and some are cut mid-word at 16. The 3 over 16 are 2 tars from a Mac user and 1 console tar, and none of the 42 stores the name inside, so `dlive_lint.py` warns and does not fail.
+
+2026-10-30, Director V1.9x to V2.11: version 11-14 field notes contributed by markcarlberg (pull request #2), in `references/format-versions.md`.
 
 ## Built on tour
 

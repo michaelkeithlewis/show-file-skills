@@ -387,6 +387,7 @@ Not cleared by the tools:
   copying and editing plug-ins wait for a console test.
 - The AAX SDK's VENUE guide limits a plug-in's chunks to 64 KB. VENUE 7.x wrote a 96,036-byte record, so the limit
   is not enforced in the file. PROVEN (survey).
+- More routing-word detail is in section 10.9, and plug-in state notes are in [`plugins.md`](plugins.md).
 
 ## 5. Snapshots
 
@@ -479,3 +480,313 @@ Not written, with the reason:
 | Do mutes, HPF, EQ, dynamics and sends load as written? | A Filing > Load run per field |
 | Does a VENUE 7.2 Standalone load the same writes natively? | The same runs in VENUE 7.2 Standalone |
 | Does a console keep the chunk of a plug-in it lacks when it re-saves? | Load and re-save such a show on a console |
+
+## 10. Contributor findings on VENUE 8.0, 8.1 and 8.2 (markcarlberg)
+
+These findings come from a second set of shows and a second test method. The tools do not use them yet. The labels
+keep the meaning of the section at the top, and the tests are:
+
+| Test | What it is |
+|---|---|
+| One-change save | Change one control in VENUE S6L Standalone 8.2.0.187, save, and compare the bytes with the save before the change. |
+| Patched load | Patch a few blob bytes in a file, load it in VENUE Standalone, and read the value on VENUE's screen. |
+| Production set | Eleven production shows: ten saved by VENUE 8.0.3.1 and one by 8.1.0.216, all from an S6L-24D on an E6L-144. Consistency only. None are in this repo. |
+
+Where a finding disagrees with sections 1 to 9, the earlier section stands and the difference is listed in
+section 10.12.
+
+### 10.1 Blob sizes by version
+
+| Blob | 8.0 | 8.1 | 8.2 |
+|---|---|---|---|
+| `Strip` | 41 + name | | 41 + name |
+| `AudioStrip` (strip in no VCA) | 86 | 102 | 102, plus 4 per VCA |
+| `InputStrip` | 225 | 233 | 233 |
+| `MicLineInputStrip` | 105 | 113 | 133 |
+| `AudioMasterStrip` | 297 | 301 | 309 |
+| `BusMasterStrip` | 1 | 6 | 6 |
+| `MatrixMasterStrip v2.5` | 1376 | 1632 | 1632 |
+
+A newer blob is the older blob with bytes added at the end, so an offset holds on 8.0, 8.1 and 8.2 up to each
+blob's length. PROVEN (one-change saves on 8.0 and 8.2 shows). An aux strip and a group strip differ only in their
+default colour. PROVEN (one-change save). A cleared default show stores every input strip of the engine; a
+production show stores only the strips in use. STRONG (production set).
+
+### 10.2 `Strip` record fields
+
+Offsets use `n` from section 3.1 (the byte after the name's NUL).
+
+| Offset | Meaning | Label |
+|---|---|---|
+| n | strip selected on the surface (not a mix setting) | PROVEN (one-change save) |
+| n+1 | mute | PROVEN (one-change save) |
+| n+3 | Channel Safe S (solo safe, inputs only) | PROVEN (one-change save) |
+| n+4 | Channel Safe A (automation safe) | PROVEN (one-change save) |
+| n+14 | Channel Safe B (bank safe) | PROVEN (one-change save) |
+| n+21 | the bank safe's fader, -1 = none | PROVEN (one-change save) |
+
+There is no mute safe. The colour numbers of section 3.1 carry these names in VENUE's Set Channel Color menu:
+0 No Color, 1 Green, 2 Blue, 3 Yellow, 4 Amber, 5 Aqua, 6 Violet, 7 Red, 8 White. The stock colour per kind:
+inputs Green, auxes Violet, groups Amber, mains Red, matrixes White, VCAs Blue. PROVEN (one-change saves).
+
+### 10.3 `AudioStrip` (inputs; buses share the early fields)
+
+| Offset | Meaning | Label |
+|---|---|---|
+| 0 | pan, i32 -100 to +100 (also a mono aux's or group's pan) | PROVEN (one-change save) |
+| 4 | stereo BAL/WIDTH width in percent, default 100 | STRONG |
+| 8, 9, 10 | L-R assign, C/Mono assign, polarity | PROVEN (one-change save) |
+| 11, 12 | delay in; delay as u16 samples at 48 kHz (0 to 250 ms) | PROVEN (one-change save) |
+| 16, 21 | direct out in; direct out level, i32 in 0.1 dB, up to +12 dB | PROVEN (one-change save) |
+| 25 | mute groups 1 to 8, one bit each | PROVEN (one-change save) |
+| 26 | VCAs 1 to 8, one bit each, on 8.0 | STRONG on 8.0. VENUE 8.2 ignores it on load and writes 0 there |
+| 45 | u32 count, then that many VCA numbers, 0-based | PROVEN (one-change save; VENUE 8.2 loads membership from this list) |
+| after the list | u32 2, mute groups 1 to 64 as 64 bits, then the delay as u16 samples at 96 kHz | PROVEN (one-change save) |
+
+- With no VCA the 96 kHz delay is at byte 61. Each VCA adds 4 bytes and moves what follows. One delay edit changes
+  both delay fields. PROVEN (one-change save).
+- Direct out pickoff, 33 bytes after the VCA list: 0 Top Of Channel, 8 True Gain, 1 Insert Return, 2 Pre-Fader
+  Post-Mute, 6 Post-Fader. VENUE also writes 1 and 2 at bytes 17 and 41. PROVEN on the 8.1 and 8.2 layout.
+- Byte 27: 5 on one strip, 1 elsewhere. Meaning UNVERIFIED.
+
+### 10.4 `InputStrip` and `MicLineInputStrip` fields
+
+`InputStrip`:
+
+| Offset | Meaning | Label |
+|---|---|---|
+| 0 | INPUT DIRECT (bypasses EQ, dynamics, inserts) | PROVEN (one-change save) |
+| 1 | changes with a group assign | PROVEN that it moves; meaning UNVERIFIED |
+| 21, 22 | EQ in (out by default); EQ mode, 0 digital, 1 ANALOG | PROVEN (one-change save) |
+| 84 | u16 strip id, counting up from 0x02a0 | STRONG |
+| 92 to 215 | 10-byte records (on, pre, i16 level in 0.1 dB) for the L and R legs of sends to stereo auxes | STRONG |
+| 216, 217, 221 | HEAT in; DRIVE i32 (default 0); TONE i32 (default 3) | PROVEN (one-change save) |
+| 229, 231 | 8.2 copies of bytes 88 and 90 | PROVEN (one-change save) |
+
+The records at 92 are a cache. VENUE rebuilds them from `BusAssigns` on load and save and plays the sends from
+`BusAssigns`. PROVEN (one-change save). This fits section 3.2, which saw bytes 96 to 140 track `BusAssigns`.
+
+EQ band type (section 3.2 left it UNVERIFIED): on the HI and LO bands, 1 is shelf (the default) and 0 is peak. HM
+and LM have no shape switch. PROVEN (one-change save: the shape switch to peak moved 1 to 0; the name "shelf" is
+VENUE's screen in that save). Avid's guide calls bell the HI and LO default, which the bytes do not match. Range
++/-18 dB, 20 Hz to 20 kHz, Q 0.10 to 10.00. In ANALOG mode HI and LO become fixed shelves with type 0 and Q field
+20, LO snaps to an analog step (311 Hz became 200 Hz), and a mid's Q field holds its B/W as 1/Q. PROVEN (one-change
+save).
+
+`MicLineInputStrip` (fills in the UNVERIFIED rows of section 3.3):
+
+| Offset | Meaning | Label |
+|---|---|---|
+| 0 | HPF in (polarity is `AudioStrip` byte 10) | PROVEN (one-change save) |
+| 5 | order: 1 dynamics before EQ (default), 0 EQ PRE DYN | PROVEN (one-change save) |
+| 6, 47 | Comp/Lim in, Exp/Gate in | PROVEN (one-change save) |
+| 31, 32 / 72, 73 | key HPF in, i32 Hz (default 10), for Comp/Lim / Exp/Gate | PROVEN (one-change save) |
+| 36, 37 / 77, 78 | key LPF in, Hz (default 20000) | PROVEN (one-change save) |
+| 41 / 82 | Sidechain switch | PROVEN (one-change save) |
+| 43 / 84 | key source, 4 bytes | PROVEN (one-change save) |
+| 88, 89 | LPF in, u32 Hz (default 20000) | PROVEN (one-change save) |
+| 102 to 104 | the plug-in rack that feeds the input: `30 0A 20` is "Pl 3-4", 0x10 more for each later pair; the input's patch is then None. This is how an S6L marks an FX return | STRONG |
+| 105, 109 | 8.2 copies of the two key sources | PROVEN (one-change save) |
+
+Ranges from VENUE's clamps: Comp/Lim threshold -40 to +20 dB, Exp/Gate threshold -60 to +20 dB, ratio 1.25:1 to
+100:1 (100:1 is the gate; lower is an expander; VENUE resaves 1:1 as 1.25:1), Comp attack 100 us to 100 ms, gate
+attack 20 us to 100 ms, release and hold 10 ms to 4 s, makeup -40 to +20 dB, gate range 0 to -80 dB. Thresholds are
+dBFS on screen; 0 dBVU = +4 dBu = -20 dBFS (Avid's guide). There is no de-esser on the strip. PROVEN (one-change
+saves and Avid's guide).
+
+Key source: `[pickoff] [u16 code] [byte]`, the code as a matrix source names it (section 10.7). `03 21 70 00` is the
+mono main at Pre-Fader, `03 11 40 00` is Group 2, and none is `00 00 00 10`. PROVEN (one-change save). A raw rack
+input carries 0x10 in the last byte and a port code, not placed.
+
+Cleared-show defaults on 8.2: gain +10 dB; HPF 80 Hz out; LPF 20 kHz out; EQ out; gate threshold 0 dB, range
+-20 dB, attack 1 ms, hold 100 ms, release 250 ms, ratio 100:1; comp threshold 0, ratio 2:1, attack 10 ms, release
+100 ms, knee 0; HEAT drive 0, tone 3; fader -inf; pan centre; L-R on. PROVEN (a cleared-show save).
+
+Numbering: a stereo strip takes two engine channels, and VENUE numbers channels by strip, not fader place.
+`Input Strip Layout` holds a strip number per fader place, -1 empty. PROVEN (one-change save).
+
+### 10.5 Output patch (`Output Routing`)
+
+One i32 per physical output. Places hold across 8.0 and 8.2 and across rigs: Stage 1 from 0, Stage 2 from 48, the
+console's own outputs from 96 (Analog 1 to 8 at 104 to 111, AES 1 to 8 from 120, USB L and R at 200 and 201),
+Local 16 from 112, Stage 3 from 286. PROVEN (one-change saves).
+
+| Source | Code |
+|---|---|
+| nothing | 0x01008000 |
+| input strip n's direct out (n from 1) | 0x01008802 + 8(n-1) |
+| aux k (from 1) | 0x01009801 + 8(k-1), unbroken (aux 34 is 0x01009909) |
+| matrix 1 to 8 / 9 to 16 | 0x0100A801 + 8(k-1) / 0x0100B001 + 8(k-9) |
+| L, R, Mono | 0x0100B801, 0x0100B809, 0x0100B811 |
+| Monitor A L / R | 0x01008005 / 0x01000005 |
+| Monitor B L / R | 0x02008005 / 0x02000005 |
+
+A stereo strip's right half drops 0x8000 (aux 1 L 0x01009801, R 0x01001801). VENUE ignores a right-half code on a
+mono strip. A default show holds L and R on Stage 1 outputs 1 and 2. PROVEN (one-change saves). `Output Routing`
+grows from 1912 slots in 8.0 to 2616 in 8.2 with places fixed. PROVEN. Not placed: places 96 to 103, AES 3 to 8,
+Stage 4 to 6, and Stage 16 output numbering.
+
+### 10.6 Head amps and the rig
+
+Gains are u32 in 0.1 dB everywhere, default 100 (+10.0 dB). Analog +10 to +60 dB, or -10 to +40 dB with the 20 dB
+pad; digital inputs -20 to +18 dB; stereo right offset -20 to +20 dB. No separate trim on an analog input. PROVEN
+(Avid's guide and VENUE's clamps).
+
+- `Input Gains`: 160 gain slots of 4 bytes from byte 0, Stage 1 inputs 1 to 48 (slots 0 to 47), then Stage 2 inputs
+  1 to 48 (48 to 95). From byte 640, 2 bytes per input in the same order: pad, then 48V. PROVEN (one-change saves).
+- `Input Gains` from byte 1178: Local inputs, 6-byte records (u32 gain, pad, 48V). Local 1 is proven; the 6-byte
+  stride comes from one record and is UNVERIFIED.
+- `Input Gains Stage64`: 6-byte records (u32 gain, pad, 48V), 64 per block. Records 0 to 15 are Stage 1 inputs 49
+  to 64, 64 to 79 Stage 2 inputs 49 to 64, 128 to 191 Stage 3 inputs 1 to 64. Default record `64 00 00 00 00 00`.
+  PROVEN (one-change saves).
+- The rig sits in the header (`Stage Config`, `Stage Config v2`, `Expansion Cards`) and in the body's card blocks
+  (`Soundwaves Stage Cards` and siblings). The Standalone default (3 Stage 64 + Local 16) holds `Stage Config`
+  `00 00 02 00...`, `Stage Config v2` `00...02` and no expansion card. A 2 Stage 64 + 4 Stage 16 + Local 16 rig
+  holds `04 00 02 00...`, `80 00...02` and a card at byte 9 of `Expansion Cards`. A header with no card blocks
+  loads inputs in italics as "Stage 5 Analog -01" with no 48V. PROVEN (patched load).
+- The port gain tables hold gains on ports no strip patches. STRONG.
+- `S6L Mic Pre Gains Upon Entering VSC Mode`: 512 i32 gains kept for Virtual Soundcheck. STRONG.
+
+### 10.7 Buses, groups and matrixes
+
+- `BusAssigns` entry: byte 0 pan (i16 -100 to 100, nonzero only into stereo auxes), byte 2 on, byte 3 pre, bytes 4
+  and 5 level as in section 3.5. An aux with no send is `00000000 60fa`; a group not assigned is all zero. An off
+  send into a stereo aux keeps its pan. PROVEN (one-change save).
+- On an all-mono default the `BusAssigns` count is the mix-bus total. With stereo auxes it is the aux strip count, so
+  changing an aux's width changes every `BusAssigns` length. STRONG.
+- Aux pre points: `Console Options/Aux Busses Options` byte 24, 4 bytes per aux: 0 Pre-EQ, 1 Pre-Mute, 2 Pre-Fader.
+  Copy in `Aux Busses Options 2` byte 300. Pre-EQ Post-Mute was not saved. PROVEN (one-change save).
+- `AudioMasterStrip`: byte 11 bus EQ in; HPF in at 158 and Hz at 159; LPF in at 163 and Hz at 164; band order HI
+  14, HM1 28, LM1 42, LO1 56, HM2 111, LM2 125, LO2 139. Bus Comp/Lim from byte 70, laid out as the input's from 6.
+  Byte 2 is the aux's talkback ROUTE. PROVEN (one-change saves). The bus HI and LO1 type byte, and makeup at 91, are
+  UNVERIFIED.
+- Mix Bus Configuration (Options > System > Edit: Total Mix Busses, Group Busses in steps of 8) belongs to the show.
+  A change touches the header's `Group count` and `Bus count`, `Aux Strips` and `Group Strips`, every input's
+  `BusAssigns`, `RecallSafe v03` (10-byte records from byte 4: number, kind, 8 bytes; auxes kind 3, groups kind 4),
+  `User Strip Layout`, `Other settings` byte 0 (12 less the groups in eights: 0x0c none, 0x0b 8, 0x0a 16, 0x09 24)
+  and `Current State`. PROVEN (one-change saves).
+- `MatrixMasterStrip v2.5` has room for 64 slots. Levels: 13-byte records from byte 198 (on, i32 level in 0.1 dB,
+  i32 pan, a copy of the source). Sources: 4 bytes per slot from byte 1120 (pickoff, u16 code, a byte); 8.2 keeps a
+  copy at 1376. A 9-byte table at byte 4 stops at slot 12. PROVEN (one-change saves).
+
+Matrix source codes, strips from 0, PROVEN (one-change saves):
+
+| Source | Code | Last byte |
+|---|---|---|
+| input / aux | 0x1001 / 0x3001 + 16 x strip | 00 |
+| group / matrix | 0x4001 / 0x5001 + 16 x strip | 00 |
+| L / R / Mono | 0x7001 / 0x7011 / 0x7021 | 00 |
+| Monitor A L / R, Monitor B L | 0005 / 0004 / 0009 | 20 |
+| rack input | port code (Stage 1 Analog 02 is 1010, Local Analog 03 is 30A0) | 10 |
+| None | 0000 | 10 |
+
+Pickoffs: an input's 00 Top Of Channel, 08 True Gain, 07 Pre-EQ, 01 Insert Return, 02 Pre-Fader Post-Mute, 06
+Post-Fader; an aux's, group's or main's 03 Pre-Fader Pre-Mute, 04 Post-Fader, 05 Bottom Of. A stereo aux's right
+leg is one less than its left: PROVEN for auxes, UNVERIFIED for groups.
+
+### 10.8 VCAs, mute groups, layouts, monitor
+
+- 48 VCAs and 48 mute groups on every engine. Mute group names: `Console Options/Mute Group Options`, 16 bytes each,
+  groups 1 to 32 from byte 146, 33 to 48 from 726. PROVEN (one-change save).
+- Flex Channels: `Console Options/Interaction Options`, Flex 1's strip (from 0) at 17 and kind at 18, Flex 2's at
+  155 and 156, modes at 157 and 161 (5 latched, 4 and 0 unlatched). Kinds: 1 input, 3 aux, 7 main, 8 VCA. PROVEN.
+- `User Strip Layout`: 48 layouts, each a u32 count (48), 48 two-byte slots (strip from 0, then kind: 0 empty, 1
+  input, 3 aux, 4 group, 5 matrix, 7 main, 8 VCA), then the name as a C string. PROVEN (one-change save). Whether 48
+  is the S6L-48D's fader count or a fixed capacity is UNVERIFIED.
+- Talkback: `TalkbackOsc Options` byte 0 Level and byte 4 Dim Level, i32 in 0.1 dB. PROVEN.
+- Monitor A (`Console Options/Monitor Options`): 0 Level Trim (i32 0.1 dB), 4 Type (0 PFL, 1 Stereo AFL), 8 Auto
+  Cancel, 11 delay (u16 samples at 48 kHz), 17 delay in, 19 delay (samples at 96 kHz), 29 Mix to Monitors source
+  number and 30 its kind (3 aux, 5 matrix, 7 mains). Monitor B (`Monitor B Options`): 0 Level Trim, 13 delay in, 14
+  delay (96 kHz), 32 source number, 33 kind. PROVEN (one-change saves). Type 2 as Solo In Place is UNVERIFIED.
+
+### 10.9 Plug-in routing word, in more detail
+
+A Standalone save that routed four empty rack slots from the input menus splits the top bits of section 4.5:
+
+- Bits 31 to 30: 0 insert, 1 fed by a bus out (section 4.5's +0x10), 2 fed by a direct out.
+- Bits 29 to 26: 1 input, 3 aux, 7 main (L, R, C/Mono). Type 7 is the mains (section 4.5 had it UNVERIFIED).
+- On an insert, the low bits: insert number from 0, plus 4 for post-fader (pre 1 to 4 stored 0 to 3, post 1 to 4
+  stored 4 to 7).
+- Saved words: `0x04000002` Ch 1 Pre-Fader Insert 3; `0x04040005` Ch 2 Post-Fader Insert 2; `0x0C7C0000` Aux 32
+  Pre-Fader Insert 1; `0x1C080000` the mono main Pre-Fader Insert 1.
+
+PROVEN (one-change save). The tools still treat positions past 5 as not decoded and do not write inserts.
+
+Plug-in state notes (Waves SoundGrid racks, Avid Channel Strip names) are in [`plugins.md`](plugins.md).
+
+### 10.10 Engines and surfaces
+
+Each engine's default show from VENUE 8.2 Standalone. PROVEN (one save per simulated engine); this settles the
+UNVERIFIED and STRONG rows of section 2 for reading:
+
+| Engine | `Main Rack Type` | Inputs | Mix buses (default split) | Matrixes |
+|---|---|---|---|---|
+| E6L-112 | 7 | 112 | 48 (32 aux + 16 group) | 16 |
+| E6L-144 | 4 | 144 | 64 (48 + 16) | 16 |
+| E6LX-128 | 8 | 128 | 64 (48 + 16) | 24 |
+| E6L-192 | 5 | 192 | 96 (80 + 16) | 24 |
+| E6LX-176 | 9 | 176 | 96 (80 + 16) | 32 |
+| E6LX-256 | 6 | 256 | 96 (80 + 16) | 64 (two mixer pages) |
+
+Avid's datasheet gives the E6LX-256 192 + LCR buses; VENUE 8.2's default show for it has 96.
+
+Surfaces, `Devices Configuration/Console Type`: 5 S6L-24, 6 S6L-24D, 7 S6L-32D, 8 S6L-16C, 9 S6L-24C, 10 S6L-48D.
+PROVEN (one save per simulated surface). The 16C also clears `MTS Screen Present`, and VENUE adds a Local 16 for
+it. An engine change restarts VENUE Standalone; a surface change does not. Options > System > Clear Console resets
+the show and the engine to the E6L-192 default.
+
+### 10.11 Snapshot stream
+
+- A snapshot stream and `Current State` are a chain of records, `[u8 id][u32 LE absolute offset of the next
+  record][payload]`, from offset 0 to exactly the stream's end. IDs ascend with gaps, a few out of order. 8.0 holds
+  175 records, 8.2 holds 186. PROVEN (a walker reaches the end of every stream). This fits section 5: the first
+  record is id 0 with the name.
+- Each snapshot is a full state stream like `Current State`. One fader move changes the stream length by 4 bytes,
+  so a fixed byte map cannot convert it. PROVEN (one-change save).
+- Two snapshots that differ only in scope differ in 20 bytes: offset 40 (the number), 43870 to 43987, 345584 and
+  396124 to 396131. PROVEN (one-change save). What each snapshot recalls field by field is not decoded.
+- In `Current State`, names are in clear from about byte 1397 in input order (STRONG), and the VCA list is a u32
+  naming the list's end, the strip count, then per strip a u32 count and VCA numbers, in two identical copies.
+  PROVEN (one-change save).
+- VENUE converts snapshots when it opens an 8.0 file. An 8.0 stream inside a file whose `Full Support SW Version`
+  says 8.2 loads and recalls, but values may be wrong. PROVEN (patched load).
+
+8.0 to 8.2 conversion rules. A converter on these rules reproduces VENUE 8.2's own resave byte for byte in ten of
+thirteen 8.0/8.2 snapshot pairs and differs only at record 12's byte 5 in the other three. PROVEN (thirteen pairs:
+nine 8.0 shows re-saved by VENUE 8.2):
+
+- Records 79 and 208: a counted list `[u32 count][count x 4 bytes]`; 8.0 holds 234 entries and 8.2 938. Set the count
+  to 938 and append 704 entries of `00 80 00 01`.
+- Records 11 and 140: 163 two-byte entries, one per strip. The second byte 0 becomes 100, except entries 17 to 20.
+- Appended in 8.2: 225, 227, 230 and 232 are constants. 226 is `10 01 00 00 02 00 00 00`, then 8.0's record 15 (each
+  input's left and right patch codes), zero-padded to 1096 bytes. 228 and 229 are each 8.0's record 22; 231 is 8.0's
+  record 221.
+- Appended 233 is 8.0's record 21 entry by entry (32 bytes per input) with byte 1 set to `A7`, byte 25 to `2B` and
+  eight `FF` after each entry. 234 is record 23 the same way, with byte 6 set to `01`, byte 25 to `27` and twelve
+  `FF`. Records 21 and 23 look like per-input dynamics blocks; the field names are UNVERIFIED.
+- Appended 235 is record 46 (48 entries of 32 bytes) the same way, bytes 6, 7 and 25 set to `FF` and eight `FF` after
+  each entry. PROVEN (14 of 14 pairs, including an 8.1 show with a different record 46).
+- Records 81 and 210 (163 six-byte entries): byte 5 is 0 in 8.2. Record 141 equals record 12.
+- Every other 8.0 record is unchanged but for the next-offsets.
+
+Record 12 byte 5 is 0 in 8.2's own current state for every show, and set in three re-saved snapshots that carry
+runs matching other shows' 8.0 current states. That they are stale memory from re-saving shows back to back is
+UNVERIFIED.
+
+8.1 to 8.2, one show: an 8.1 stream is 8.2's first 183 records in the same order. Records 11, 140, 12 and 141 change
+by the rules above, and 233, 234 and 235 are appended from 21, 23 and 46. That reproduces VENUE 8.2's resave but for
+record 12's byte. PROVEN (one 8.1 show). VENUE 8.2's resave of one 144-channel, 16-matrix, LR+M show holds 162
+strips where the same engine's default holds 163 (reason not found); that 162-strip snapshot, written into a
+163-strip show, loads and recalls inputs, matrixes and mains as VENUE's own conversion does. PROVEN (patched load).
+
+### 10.12 Where these findings and sections 1 to 9 differ
+
+- Patch code. A contributor reading says `InputStrip` byte 88 is a u16 block-coded input patch code (Stage 1
+  inputs 49 to 64 at 0x0080 + (n-49), 1 to 48 at 0x0100 + (n-1); Stage 2 at 0x0180 and 0x0200; Stage 3 at 0x0280;
+  Local 16 at 0x0308; None 0x0000), with the right leg of a stereo input at byte 90. Section 3.2 says bytes 88 and
+  89 are only a copy, and VENUE put its own patch back after they were changed (engine load). It needs a Filing >
+  Load of a show with only byte 88 changed, read on the Patchbay page, to settle it. Whether VENUE restores the
+  patch from snapshot record 15 or `Current State` is UNVERIFIED.
+- FX returns. The contributor's 8.x shows hold no FX return strips: effects return on input channels fed by a rack
+  (10.4, bytes 102 to 104). Section 3 lists a `FX Return Strips` array as STRONG. A show with an FX return strip, or
+  an 8.2 save after adding one, would settle whether that array is used on S6L.

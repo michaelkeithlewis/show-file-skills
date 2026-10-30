@@ -232,3 +232,7 @@ behind them are not published.
   this layout. `fx.library()` reads one strip and no notes per entry, so presets with several strips or with notes
   read wrong there.
 
+## Session structure (contributed notes, 2026-10-30)
+Header fields, versions, the section list, object framing, strip kinds, labels, restructure rules, ports, macros,
+banks and the snapshot frame, each with how it was proven: [`session-structure.md`](session-structure.md). Where it
+disagrees with this file, the open list there says so.

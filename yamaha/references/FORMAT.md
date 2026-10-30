@@ -517,3 +517,17 @@ there, and load that save.
 | RIVAGE PM | refused | a reader for its sections |
 | User keys (`.CLU`, `.dm7u`), scene-only and library files | refused by design | none: they hold passwords or are not a show |
 | A console load of a written file | not tested | one written CL or QL file and one DM7 file loaded on a console at prep |
+
+## 7. Contributed field maps
+
+These pages map many more fields than this tool uses. They were contributed by markcarlberg (pull request #2), from
+controlled saves in the Yamaha editors and from reading many saved shows. Each line on them says how it was found, and
+a line found only by reading files is not proven by the standard of section 1. This tool reads and writes none of these
+fields until a test from section 1 proves it.
+
+| Page | Covers |
+| --- | --- |
+| [`dm7-fields.md`](dm7-fields.md) | DM7 and DM5: patch codes, inputs, filters, EQ, dynamics, tap points, inserts, sends, buses, DCAs, monitor, cue, talkback, output ports, scenes, firmware differences |
+| [`dm3-fields.md`](dm3-fields.md) | DM3 and DM3 Standard: identity, container differences, strip tables, patch, EQ, dynamics, sends, inserts, output patch |
+| [`rivage-fields.md`](rivage-fields.md) | RIVAGE PM: engines, schemas, patch, I/O racks, tap points, A/B and Theatre banks, dynamics, inserts, racks, scenes |
+| [`premium-rack.md`](premium-rack.md) | Premium Rack mounting and the parameter words of U76, Opt-2A, Portico, Buss Comp 369, Rupert EQs, REV-X, SP2016, Y7, SPX, MBC4, DynamicEQ4 and DynamicEQ6 |
