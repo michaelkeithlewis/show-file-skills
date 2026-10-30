@@ -33,13 +33,13 @@ import struct
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-from ses import Record  # noqa: E402
+from ses import Record
 
-from . import layout  # noqa: E402
-from . import sends as S  # noqa: E402
+from . import layout
+from . import sends as S
 
 T_INPUT, T_CG, T_TB, T_MTX_IN = 0x01, 0x0a, 0x0c, 0x0f
 FX_TYPE = 0x0e
@@ -53,7 +53,6 @@ CG_MODE_NAMES = {v: k for k, v in CG_MODES.items()}
 SRC_TYPES = {'group': 0x06, 'aux': 0x05, 'input': 0x01}
 SRC_KINDS = {v: k for k, v in SRC_TYPES.items()}
 STRIP_KIND = {0x01: 'in', 0x05: 'aux', 0x06: 'grp', 0x10: 'mtx', 0x0a: 'cg', 0x0c: 'tb'}
-# file family -> [(bay label, section 212 table)] where the real editor's Fader Banks screen confirmed the map
 BAY_MAP = {'Q2': [('Left', 3), ('Right', 2)], 'SDC': [('Left', 3), ('Right', 2)]}
 LAYERS, BANKS_PER_LAYER, LAYER_STRIDE = 3, 4, 6
 OFF_DB, MAX_DB = S.OFF_DB, S.MAX_DB
@@ -61,7 +60,6 @@ NAME_MAX = S.NAME_MAX
 MAX_DELAY_MS = 1000.0
 
 
-# ---------------------------------------------------------------------------------------------------- small helpers
 def _f(ses, off):
     return struct.unpack_from('<f', ses.d, off)[0]
 
@@ -122,7 +120,6 @@ def counts(ses):
     return {'cg': d[CG_COUNT_AT], 'mtx_in': d[MTX_IN_AT], 'mtx_out': d[MTX_OUT_AT]}
 
 
-# ---------------------------------------------------------------------------------------------------- objects
 def cg_objects(ses):
     return _by_type(S.objects(ses), T_CG)
 
@@ -158,7 +155,6 @@ def member_oids(ses, kind, n):
     return [o.id for o in S._sides(b)]
 
 
-# ---------------------------------------------------------------------------------------------------- group graph
 def _routes(ses):
     """{group n: [groups it routes to]} (sends.bus_routes, read once)."""
     out = {}
@@ -216,7 +212,6 @@ def _cycle(routes):
     return None
 
 
-# ---------------------------------------------------------------------------------------------------- readers
 def _out_map(ses):
     """{raw source route: [socket names]} of every output socket, read once."""
     out = {}
@@ -316,7 +311,6 @@ def read_bus_side(ses, model=None, members=None, chan_ext=None):
             feeds_m[a['n']] = a.get('feeds_fx') or []
     if chan_ext is None:
         chan_ext = read_channel_ext(ses, by_obj, master)
-    # active sends per aux position, for the role rule
     nax = len(ses.auxes)
     act, pre = [0] * nax, [0] * nax
     for row in chan_ext.values():
@@ -444,7 +438,6 @@ def read_bus_side(ses, model=None, members=None, chan_ext=None):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- the surface
 def _strip(ses, typ, idx, maps):
     aux_n, grp_n, mtx_n, rmap = maps
     if typ == T_INPUT:
@@ -529,7 +522,6 @@ def read_surface(ses, family):
     return {'v': 1, 'skin': skin, 'source': 'session', 'banks': banks, 'bays': bays}
 
 
-# ---------------------------------------------------------------------------------------------------- checks
 def routing_errors(ses):
     """Hard routing errors, as sentences: a loop in group routing, an assign or route that names a band with no
     group, a matrix input source that names a missing object. [] on every real session and editor default."""
@@ -606,7 +598,6 @@ def routing_notes(ses, ns=None, groups=None):
     return notes
 
 
-# ---------------------------------------------------------------------------------------------------- writers
 def set_cg_member(ses, oid, k, on):
     """Set or clear CG k's bit on object `oid` (one side; member_oids gives both sides of a stereo bus)."""
     k = int(k)

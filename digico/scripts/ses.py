@@ -34,14 +34,13 @@ KEYS_PATH = os.path.join(HERE, '..', 'keys_from_offsets.json')
 
 REC_MAGIC = b'\xda\x00\x3a\x00'
 TRAILER_TAG = b'\x27\x00'
-CHREC_MAGIC = b'\xcb\x00\x79\x00'            # V2242 only; kept for older callers, use CHREC_RE
-CHREC_HL = (0x50, 0x58, 0x78, 0x79)           # channel record header length: V1455 / V1619-V2126 / Q112+Q852 V1926-V2126 / V2232+
+CHREC_MAGIC = b'\xcb\x00\x79\x00'
+CHREC_HL = (0x50, 0x58, 0x78, 0x79)
 CHREC_RE = re.compile(rb'\xcb\x00[\x50\x58\x78\x79]\x00')
-GROUP_RE = re.compile(rb'\xca\x00\x6c\x00')   # section 201 group header (type, name, count @+0x70)
+GROUP_RE = re.compile(rb'\xca\x00\x6c\x00')
 
-# section 201 group / channel record types (id >> 8)
 T_INPUT, T_AUX, T_GROUP = 0x01, 0x05, 0x06
-MUSTARD_COMP = 0x1d                           # first Mustard module a writer usually needs
+MUSTARD_COMP = 0x1d
 
 
 class Record:
@@ -58,7 +57,7 @@ class Record:
         self.slots = {}
         for k in range(self.count):
             s = self.slot0 + 8 * k
-            self.slots[(d[s], d[s + 2])] = s + 4      # (param, band) -> float offset
+            self.slots[(d[s], d[s + 2])] = s + 4
 
     @staticmethod
     def valid(d, off):
@@ -74,9 +73,9 @@ class Record:
 
 class Channel:
     def __init__(self, index, records, trailer):
-        self.index = index            # 1-based
+        self.index = index
         self.records = {r.type: r for r in records}
-        self.trailer = trailer        # offset of the 27 00 tag
+        self.trailer = trailer
 
     def __repr__(self):
         return 'Channel(%d, %r)' % (self.index, self.name)
@@ -103,7 +102,6 @@ class Session:
         self.keys = json.load(open(KEYS_PATH)) if os.path.exists(KEYS_PATH) else {}
         self._parse()
 
-    # ---- structure -------------------------------------------------------
     @property
     def model(self):
         """File-family code at 0x0b ('Q2', 'SD9', 'SDC', ...). SD10 saves as SD8, SD11 as SD9, SD5CS as SD5."""
@@ -142,7 +140,6 @@ class Session:
         d = self.d
         self.records = [Record(d, m.start()) for m in re.finditer(re.escape(REC_MAGIC), d)
                         if Record.valid(d, m.start())]
-        # input channels: records followed (after the ff*8 00*4 tail) by a 27 00 <0x01xx> trailer
         self.inputs = []
         run = []
         for r in self.records:
@@ -159,7 +156,6 @@ class Session:
             if firsts:
                 self.inputs.append(Channel(d[t + 2] + 1, run[firsts[-1]:], t))
             run = []
-        # section 211 holds the live channels; section 219 holds snapshot copies of them
         live = [(o, n) for (_, sid, o), (_, _, n) in zip(self.sections(), self.sections()[1:] + [(0, 0, len(d))])
                 if sid == 211]
         in_live = lambda c: any(o <= c.trailer < n for o, n in live)
@@ -173,10 +169,10 @@ class Session:
         (01 mono, 02 stereo). The display number is the channel number on the surface; after a channel-order
         restructure it differs from the internal index. Walked group by group; a plain scan is the fallback."""
         d = self.d
-        self.display = {}     # display number -> internal index
-        self.width = {}       # display number -> 1 mono / 2 stereo
-        self.chrec_off = {}   # internal index -> offset of its section 201 record
-        self.groups201 = {}   # record type -> [{'off', 'id', 'number', 'name', 'width'}] in surface order
+        self.display = {}
+        self.width = {}
+        self.chrec_off = {}
+        self.groups201 = {}
         span = self.section_span(201)
         lo, hi = span if span else (0, len(d))
         for m in GROUP_RE.finditer(d, lo, hi):
@@ -196,7 +192,7 @@ class Session:
             if recs is not None and recs and all(r['id'] >> 8 == typ for r in recs):
                 self.groups201.setdefault(typ, []).extend(recs)
         inputs = self.groups201.get(T_INPUT)
-        if not inputs:   # fallback: scan every channel record in the file
+        if not inputs:
             inputs = []
             for m in CHREC_RE.finditer(d):
                 p = m.start()
@@ -212,7 +208,6 @@ class Session:
             self.display[r['number']] = idx
             self.width[r['number']] = r['width']
             self.chrec_off[idx] = r['off']
-        # bus maps: surface number -> band byte used by the input's send (module 02) / group (module 03) slots
         self.auxes = [{'number': r['number'], 'band': r['id'] & 0xff, 'name': r['name'], 'width': r['width']}
                       for r in sorted(self.groups201.get(T_AUX, []), key=lambda r: r['number'])]
         self.groups = [{'number': r['number'], 'band': r['id'] & 0xff, 'name': r['name'], 'width': r['width']}
@@ -242,11 +237,6 @@ class Session:
         return [r for r in self.records if r.type == 0x1f and r.count == 67
                 and (span is None or span[0] <= r.off < span[1])]
 
-    # ---- surface banks ---------------------------------------------------------
-    # Section 243: u16 | u32 bank count | banks. A bank is u16 size (0x169) | u16 index | name ShortString[15]
-    # | ... | 12 strips of (index u8, type u8) at +0x23 | ... | 12 view bytes at the end of the bank.
-    # Strip type 01 = input channel (index = internal index - 1), 05 aux, 06 group, 0a CG, 10 matrix.
-    # View byte: 0 = strip shows SD processing, 2 = strip shows Mustard processing (the SD/M buttons).
     STRIP_INPUT, VIEW_SD, VIEW_MUSTARD = 0x01, 0, 2
 
     def banks(self):
@@ -274,7 +264,6 @@ class Session:
                     n += 1
         return n
 
-    # ---- slot access -----------------------------------------------------
     def slot(self, ch, module, param, band=0):
         rec = self.by_index[ch].records.get(module)
         if rec is None:
@@ -304,7 +293,6 @@ class Session:
     def fset(self, ch, field, value):
         self.set(ch, *self.key(field), value)
 
-    # ---- names -------------------------------------------------------------
     @staticmethod
     def _sstr31(name):
         b = name.encode('latin1')
@@ -326,7 +314,6 @@ class Session:
             n += 1
         self.d[c.trailer + 4:c.trailer + 36] = field
         n += 1
-        # every channel record for this id, any build (section 201 and any snapshot copies)
         chid = struct.pack('<H', 0x0100 | (ch - 1))
         for m in re.finditer(rb'\xcb\x00[\x50\x58\x78\x79]\x00' + re.escape(chid), self.d):
             p = m.start()

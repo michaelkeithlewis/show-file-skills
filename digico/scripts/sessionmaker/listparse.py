@@ -36,14 +36,10 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 SCHEMA_VERSION = 1
-MAX_NAME = 8          # console names cut to 8 by choice; the format holds 31 (references/FORMAT.md "Names")
+MAX_NAME = 8
 
-# --------------------------------------------------------------------------------------------
-# vocabulary
-# --------------------------------------------------------------------------------------------
 
 HEADER_FIELDS = [
-    # (field, regex on the normalised header cell). First match wins, order matters.
     ('short', r'^(name ?\(8\)|short ?name|console ?name|scribble|8 ?char.*|desk ?name|ses ?name)$'),
     ('ch', r'^(ch|ch\.|chan|channel|ch ?#|ch ?no\.?|#|no\.?|in ?#|input ?#|inp ?#|foh ?ch|mon ?ch|line|split|number|num|n)$'),
     ('p48', r'^(\+?48 ?v?|phantom( power)?|p48|ph|pp|48v ?\?|\+48v)$'),
@@ -97,24 +93,20 @@ STAND_RX = re.compile(r'(?i)(?<![\w])(?:(?:tall|short|small|medium|med|heavy|min
 SIDE_TOKENS = {'l': 'L', 'left': 'L', 'lft': 'L', 'lt': 'L', '(l)': 'L', 'r': 'R', 'right': 'R', 'rt': 'R', 'rgt': 'R', '(r)': 'R'}
 STAGE_SIDE = {'sl': 'L', 'sr': 'R', 'stage left': 'L', 'stage right': 'R'}
 PAIR_WORDS = re.compile(r'(?i)\s*(?:\(?\b(?:l ?[/&+] ?r|left ?[/&+] ?right|stereo|st\.?|pair)\b\)?)\s*')
-# Stereo said outside the name: a Stereo column ("Y"), the notes ("stereo pair"), or a pair of mics in the mic cell
-# ("KM184 x2", "pair of 414s"). The mic hint only counts for sources that are a pair by nature (STEREO_NATURE).
 STEREO_CELL = re.compile(r'(?i)^\s*(?:y|yes|x|✓|✔|st|st\.|stereo|2|l ?/ ?r|lr|true|1|pair|paired)\s*$')
 STEREO_NOTE = re.compile(r'(?i)\bstereo\b|\bst pair\b|\bl ?/ ?r\b')
 MIC_PAIR = re.compile(r'(?i)(?:\bx ?2\b|\b2 ?x\b|\bpair of\b|\bmatched pair\b|\bpair\b)')
 STEREO_NATURE = ('overhead', 'audience', 'drum_room', 'keys', 'playback', 'music_playback', 'choir', 'drum_pad')
 
-# ---- categories: closed set, used for processing templates and for the classifier check ------------
 CATEGORIES = [
     'kick', 'snare', 'tom', 'hihat', 'overhead', 'drum_room', 'drum_trigger', 'drum_pad', 'percussion',
     'bass', 'electric_guitar', 'acoustic_guitar', 'keys', 'strings', 'brass_wind',
     'lead_vocal', 'backing_vocal', 'choir', 'speech', 'talkback',
     'playback', 'click_timecode', 'music_playback', 'audience', 'fx_return', 'utility', 'spare', 'other',
 ]
-W = r'(?<![a-z0-9])'      # word start that treats '.' and '/' as boundaries
-E = r'(?![a-z])'          # word end that lets a digit follow ("snr1", "tom2")
+W = r'(?<![a-z0-9])'
+E = r'(?![a-z])'
 CAT_RULES = [
-    # (category, regex on the lower-case name, confidence). First match wins.
     ('spare', rf'^\s*(?:\(?spare\)?|spr|-+|—|hole|n/?a|empty|unused|tbd|ch ?\d+|input ?\d+)\s*$|{W}spares{E}', 0.95),
     ('talkback', rf'{W}(?:tb|talk ?back|talkback|t2me|t2\w*|comms?|shout|cam talk|foh ?> ?band|prod tb)(?![a-z])', 0.95),
     ('utility', rf'{W}(?:pink(?: noise)?|noise|ref(?:erence)? ?mic|ref|smaart|rta|measurement|meas|sig ?gen|osc(?:illator)?|'
@@ -132,7 +124,7 @@ CAT_RULES = [
                rf'lav|presenter|announce\w*|annc|vog|sermon|teaching|welcome)(?![a-z])', 0.8),
     ('lead_vocal', rf'{W}(?:lv|lead ?vo(?:x|cal)|main ?vo(?:x|cal)|ld ?vox|artist ?vo(?:x|cal))(?![a-z])', 0.9),
     ('backing_vocal', rf'{W}(?:bgv|bgvs|bv|bvs|harmony|harm|backing ?vo\w*|background ?vo\w*|bkg ?vo\w*)(?![a-z])', 0.9),
-    ('vocal', rf'{W}(?:vox|vocals?|voc|vx|singer|sing|headset|vocal mic)(?![a-z])', 0.65),     # lead or backing, decided below
+    ('vocal', rf'{W}(?:vox|vocals?|voc|vx|singer|sing|headset|vocal mic)(?![a-z])', 0.65),
     ('kick', rf'{W}(?:kick|kik|kck|bd|bass ?drum|sub ?kick|k ?in|k ?out){E}', 0.95),
     ('snare', rf'{W}(?:snare|snr|sn|sd|rim){E}', 0.9),
     ('hihat', rf'{W}(?:hi-?hats?|hh|hats?|hihats?){E}', 0.95),
@@ -155,14 +147,14 @@ CAT_RULES = [
     ('audience', rf'{W}(?:aud|audience|crowd|crowds|amb|ambient|ambience|house ?mic|shotgun){E}', 0.9),
 ]
 CAT_RULES = [(c, re.compile(rx), p) for c, rx, p in CAT_RULES]
-SECTION_PRIOR = [  # section header words -> category for rows the name alone cannot place
+SECTION_PRIOR = [
     (re.compile(r'(?i)drum|kit|riser'), 'drum_room'), (re.compile(r'(?i)track|trax|playback|pb'), 'playback'),
     (re.compile(r'(?i)spd|pad'), 'drum_pad'), (re.compile(r'(?i)vocal|vox|bgv'), 'backing_vocal'),
     (re.compile(r'(?i)keys|keyboard'), 'keys'), (re.compile(r'(?i)perc'), 'percussion'),
     (re.compile(r'(?i)choir'), 'choir'), (re.compile(r'(?i)horn|brass'), 'brass_wind'), (re.compile(r'(?i)string'), 'strings'),
     (re.compile(r'(?i)fx|effect|return'), 'fx_return'), (re.compile(r'(?i)aud|crowd|amb'), 'audience'),
 ]
-MIC_PRIOR = [  # mic model -> category, only when the name is no help
+MIC_PRIOR = [
     (re.compile(r'(?i)\bbeta ?91|\bbeta ?52|\bd ?112\b|\bd6\b|\be ?90[12]\b|kelly ?shu|\btg ?d71|\bd71\b|\bre ?20\b|\b4055\b'), 'kick'),
     (re.compile(r'(?i)\be ?60[49]\b|\be ?904\b|\bbeta ?98|\bd4\b|\bd2\b|\bmd ?421\b'), 'tom'),
     (re.compile(r'(?i)\be ?906\b|\be ?609\b|\br-?121\b|\bmd ?409\b'), 'electric_guitar'),
@@ -171,8 +163,7 @@ MIC_PRIOR = [  # mic model -> category, only when the name is no help
     (re.compile(r'(?i)4018|4099|beta ?58|sm ?58|ksm ?[89]|v ?7\b|ksm ?11|om ?\d|2028|ksm9|e ?935|e ?945'), 'vocal'),
 ]
 
-# ---- 8-character naming -----------------------------------------------------------------------
-PHRASES = [  # multi-word first; applied only when the plain name does not fit
+PHRASES = [
     (r'(?:acoustic|acous|ac) (?:guitar|gtr)', 'AG'), (r'(?:electric|elec) (?:guitar|gtr)', 'EG'), (r'bass guitar', 'Bass'), (r'lead vocals?', 'LV'),
     (r'(?:background|backing|bkg) vocals?', 'BGV'), (r'talk ?back', 'TB'), (r'hi-? ?hats?', 'Hat'),
     (r'floor tom', 'Floor'), (r'rack tom', 'Rack'), (r'kick drum', 'Kick'), (r'bass drum', 'Kick'), (r'drum pad', 'Pad'),
@@ -201,7 +192,6 @@ WORDS = {
     'resonator': 'Reso', 'measurement': 'Meas', 'reference': 'Ref', 'option': '', 'optional': '', 'opt': '',
 }
 DROP_WORDS = re.compile(r'(?i)\b(?:option(?:al)?|tbc|tbd|maybe|potentially|possibly|if needed)\b[:.]?|\?')
-# words that are never a person's name (for the "G.Nord" initial rule)
 NOT_PERSON = set(w.lower() for w in (
     'Kick Snare Snr Tom Toms Rack Floor Hat Hats Ride Crash OH Overhead Room Vibe Bass Sub Synth Keys Key Nord Piano Organ Pno '
     'Acoustic Electric Ele Gtr Guitar Amp Vox Vocal Lead Main Spare Spr Guest Gst Click Guide Cues Track Tracks Trax PB Playback '
@@ -218,14 +208,11 @@ NOT_PERSON = set(w.lower() for w in (
     .split()))
 
 
-# --------------------------------------------------------------------------------------------
-# readers -> list of sheets, each a list of rows (list of str)
-# --------------------------------------------------------------------------------------------
 
 def _cell_str(v):
     if v is None:
         return ''
-    if hasattr(v, 'month') and hasattr(v, 'day'):           # Excel turned "9/10" into a date
+    if hasattr(v, 'month') and hasattr(v, 'day'):
         return '%d/%d' % (v.month, v.day)
     if isinstance(v, float) and v.is_integer():
         return str(int(v))
@@ -284,7 +271,7 @@ def _xlsx_merges(src):
         z = zipfile.ZipFile(src)
         return {name: [(int(m[1]), _col_num(m[0]), int(m[3]), _col_num(m[2])) for m in MERGE_RX.findall(z.read(p))]
                 for name, p in _xlsx_sheets(z)}
-    except Exception:  # noqa: BLE001 - merges are a nicety; the values were already read
+    except Exception:
         return {}
 
 
@@ -374,12 +361,9 @@ def decode_text(data):
         return data.decode('cp1252', 'replace')
 
 
-# ---- .xls (Excel 97-2003, BIFF8 inside an OLE2 compound file) -----------------------------------
-# Only what an input list needs: sheet names and cell text/numbers. Record ids from [MS-XLS];
-# compound-file layout from [MS-CFB]. xlrd is used instead when it imports.
 
 OLE_MAGIC = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
-_END = 0xFFFFFFFA        # sector ids at or above this end a chain (ENDOFCHAIN, FREESECT, FATSECT ...)
+_END = 0xFFFFFFFA
 
 
 def _cfb_stream(data, want=('Workbook', 'Book')):
@@ -392,7 +376,7 @@ def _cfb_stream(data, want=('Workbook', 'Book')):
     cutoff, mfat_start, nmfat, difat_start, ndifat = struct.unpack_from('<IIIII', data, 0x38)
     per = ssz // 4
 
-    def sec(i):                                       # the header is sector -1
+    def sec(i):
         return data[(i + 1) * ssz:(i + 2) * ssz]
 
     difat = list(struct.unpack_from('<109I', data, 0x4C))
@@ -531,13 +515,13 @@ def read_xls(data):
     for k, (pos, rt, d) in enumerate(recs):
         if rt == 0x0809 and k == 0:
             biff8 = struct.unpack_from('<H', d, 0)[0] == 0x0600
-        elif rt == 0x0085:                                      # BOUNDSHEET8
+        elif rt == 0x0085:
             off, vis, typ = struct.unpack_from('<IBB', d, 0)
             r = _Segs([d[6:]])
             name = r.xl_string(1, False) if biff8 else d[7:7 + d[6]].decode('cp1252', 'replace')
             if typ == 0:
                 sheets.append((name, off))
-        elif rt == 0x00FC:                                      # SST + CONTINUE records
+        elif rt == 0x00FC:
             segs, j = [d[8:]], k + 1
             while j < len(recs) and recs[j][1] == 0x003C:
                 segs.append(recs[j][2])
@@ -549,7 +533,7 @@ def read_xls(data):
                 except (EOFError, struct.error):
                     break
         elif rt == 0x000A and sheets:
-            break                                               # end of the workbook globals
+            break
     index = {p: k for k, (p, _, _) in enumerate(recs)}
     out = []
     for name, off in sheets:
@@ -558,39 +542,39 @@ def read_xls(data):
             continue
         pending = None
         for pos, rt, d in recs[k + 1:]:
-            if rt == 0x000A:                                    # EOF of this sheet
+            if rt == 0x000A:
                 break
             try:
-                if rt == 0x00FD:                                # LABELSST
+                if rt == 0x00FD:
                     r, c, _, i = struct.unpack_from('<HHHI', d, 0)
                     cells[(r, c)] = sst[i] if i < len(sst) else ''
-                elif rt == 0x0204:                              # LABEL
+                elif rt == 0x0204:
                     r, c = struct.unpack_from('<HH', d, 0)
                     cells[(r, c)] = _Segs([d[6:]]).xl_string(2, False) if biff8 else \
                         d[8:8 + struct.unpack_from('<H', d, 6)[0]].decode('cp1252', 'replace')
-                elif rt == 0x0203:                              # NUMBER
+                elif rt == 0x0203:
                     r, c, _, x = struct.unpack_from('<HHHd', d, 0)
                     cells[(r, c)] = _num(x)
-                elif rt == 0x027E:                              # RK
+                elif rt == 0x027E:
                     r, c, _, v = struct.unpack_from('<HHHI', d, 0)
                     cells[(r, c)] = _num(_rk(v))
-                elif rt == 0x00BD:                              # MULRK
+                elif rt == 0x00BD:
                     r, c0 = struct.unpack_from('<HH', d, 0)
                     for j in range((len(d) - 6) // 6):
                         cells[(r, c0 + j)] = _num(_rk(struct.unpack_from('<I', d, 4 + j * 6 + 2)[0]))
-                elif rt == 0x0006:                              # FORMULA: cached result
+                elif rt == 0x0006:
                     r, c = struct.unpack_from('<HH', d, 0)
                     if d[12:14] == b'\xff\xff':
                         if d[6] == 0:
-                            pending = (r, c)                    # the text follows in a STRING record
+                            pending = (r, c)
                         elif d[6] == 1:
                             cells[(r, c)] = 'TRUE' if d[8] else 'FALSE'
                     else:
                         cells[(r, c)] = _num(struct.unpack_from('<d', d, 6)[0])
-                elif rt == 0x0207 and pending:                  # STRING (formula result)
+                elif rt == 0x0207 and pending:
                     cells[pending] = _Segs([d]).xl_string(2, False)
                     pending = None
-                elif rt == 0x0205:                              # BOOLERR
+                elif rt == 0x0205:
                     r, c, _, v, err = struct.unpack_from('<HHHBB', d, 0)
                     if not err:
                         cells[(r, c)] = 'TRUE' if v else 'FALSE'
@@ -603,7 +587,6 @@ def read_xls(data):
     return out
 
 
-# ---- .docx ---------------------------------------------------------------------------------------
 
 W_NS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 
@@ -643,7 +626,6 @@ def read_docx(data):
     return tables, lines
 
 
-# ---- .html (and .xls files that are really an HTML table) --------------------------------------
 
 class _TableHTML(HTMLParser):
     def __init__(self):
@@ -680,13 +662,10 @@ def read_html_tables(text):
     return [('Table %d' % (k + 1), t) for k, t in enumerate(p.tables) if t]
 
 
-# --------------------------------------------------------------------------------------------
-# grid -> rows
-# --------------------------------------------------------------------------------------------
 
 def norm_header(s):
     s = re.sub(r'\s+', ' ', s.strip().lower().rstrip(':'))
-    if re.fullmatch(r'(?:\w ){2,}\w', s):         # letter-spaced PDF headings: "s ta n d"
+    if re.fullmatch(r'(?:\w ){2,}\w', s):
         s = s.replace(' ', '')
     return s
 
@@ -707,7 +686,6 @@ def header_map(row):
                 break
     if 'name' not in cols and 'short' in cols:
         cols['name'], cols['_name_is_short'] = cols['short'], True
-    # a channel column only counts when it sits left of the name (a "Ch." right of it numbers outputs)
     if 'ch' in cols and 'name' in cols and cols['ch'] > cols['name']:
         del cols['ch']
     return cols, cut
@@ -750,7 +728,7 @@ def numbered_name(cols, hdr, data):
     if 'ch' in cols or 'name' not in cols or cols.get('_name_is_short'):
         return cols
     nc = cols['name']
-    cells = lambda j: [r[j].strip() for r in data if j < len(r) and r[j] and r[j].strip()]  # noqa: E731
+    cells = lambda j: [r[j].strip() for r in data if j < len(r) and r[j] and r[j].strip()]
     vals = cells(nc)
     if len(vals) < 2 or sum(is_int(v) for v in vals) < 0.8 * len(vals):
         return cols
@@ -785,7 +763,6 @@ def find_tables(rows):
             fields = [f for f in cols if not f.startswith('_')]
             if 'name' not in cols or len(fields) < 2:
                 continue
-            # score: mapped fields + data rows that look like inputs
             n = 0
             for r in rows[i + 1:i + 80]:
                 r = r[a:b]
@@ -819,12 +796,10 @@ def grid_rows(rows, hdr, cols, cut, skipped=None):
         blank = 0
         if name and STOP_NAME.match(name):
             break
-        # section rows: one cell of text, no channel number
         if len(nonempty) == 1 and not is_int(nonempty[0]) and not ch:
             section = nonempty[0]
             continue
         if not name:
-            # an unnamed row (numbered or not) is an unused line on that list, not a channel
             m = re.fullmatch(r'(?i)\s*(?:ch(?:annel)?\.?\s*|#\s*)?(\d{1,3})\s*', ch)
             if m and skipped is not None:
                 skipped.append({'line': k, 'ch': int(m.group(1)), 'why': 'blank'})
@@ -837,7 +812,6 @@ def grid_rows(rows, hdr, cols, cut, skipped=None):
             row['_range'] = int(chm.group(2))
         prev = out[-1] if out else None
         if ch and prev is not None and prev.get('_ch_text') == ch:
-            # the same channel cell on two rows: a "3-4" (or "3") merged down over an L/R pair
             row['ch'] = prev.pop('_range', None)
             row.pop('_range', None)
         row['_ch_text'] = ch
@@ -846,7 +820,7 @@ def grid_rows(rows, hdr, cols, cut, skipped=None):
         elif MIC_PAIR.search(row['mic']):
             row['_mic_pair'] = True
         if re.match(r'(?i)^(opt|option|alt|spare\?)', ch):
-            row['option'] = True                     # "opt" rows: patched just in case, not a channel
+            row['option'] = True
         if cols.get('_name_is_short'):
             row['short'] = name
         elif 'short' in cols:
@@ -867,7 +841,7 @@ def p48_cell(v):
         return False
     t = p48_text(v)
     if t is None and v.split()[0] in ('x', '*', 'y', 'yes', '✓', '✔', '48v', '+48'):
-        return True                       # a neighbouring column's text landed in the cell ("X 10")
+        return True
     return t
 
 
@@ -877,16 +851,12 @@ def p48_text(s):
     return True if P48_RX.search(s) else None
 
 
-# --------------------------------------------------------------------------------------------
-# plain text / PDF text -> rows
-# --------------------------------------------------------------------------------------------
 
 SECTION_WORD = re.compile(r'(?i)\b(drums?|kit|band|vocals|vox|keys|keyboards|guitars|strings|horns|brass|winds|perc\w*|'
                           r'tracks|playback|fx|effects|returns|misc\w*|utility|comms|stage|sl|sr|usc|dsc|sub|riser|choir|'
                           r'rhythm|inputs?|wireless|rf|mics|lines|audience|ambient|monitors?|foh|other|extras?|section|'
                           r'rig|world|front|back|side|left|right|center|centre)\b')
 LEAD_NUM = re.compile(r'^\s*(?:ch(?:annel)?\.?\s*|#\s*|in\s*)?(\d{1,3})(?:\s*[-–/&+]\s*(\d{1,3}))?(?:\s*[.):\-–]\s*|\s+|$)', re.I)
-# In a numbered list, an unnumbered line that starts like this is a note to the engineer, not an input.
 NOTE_LINE = re.compile(r"(?i)^\s*(?:notes?\b|nb\b|n\.b\.|ps\b|p\.s\.|please\b|pls\b|thanks?\b|thank you|cheers\b|"
                        r"contact\b|questions?\b|totals?\b|all (?:mics|inputs|channels)\b|\*)")
 BULLET = re.compile(r'^\s*(?:[-*•·▪◦>]+|\(\w\)|\w\))\s+')
@@ -923,13 +893,12 @@ def parse_text_line(body):
     p = p48_text(body)
     row['p48'] = p
     full_body = body
-    body = re.sub(r'\s*\([^)]*\)\s*', ' ', body).strip()      # parentheticals are notes or the mic, never fields
+    body = re.sub(r'\s*\([^)]*\)\s*', ' ', body).strip()
     if '(' in body:
-        body = body[:body.index('(')].strip()                  # an unclosed "(" runs to the end of the line
+        body = body[:body.index('(')].strip()
         notes.append(full_body[full_body.index('(') + 1:])
     cells = split_cells(body)
     if len(cells) == 1:
-        # " - " or ", " separate fields only when the right side is gear
         for sep in (' - ', ' – ', ', ', ' / '):
             if sep in body:
                 left, right = body.split(sep, 1)
@@ -954,7 +923,6 @@ def parse_text_line(body):
                 rest.append(c)
         row['notes'] = '; '.join(rest)
     else:
-        # token scan: name runs until the first gear token
         txt = re.sub(r'\([^)]*\)', ' ', body)
         txt = P48_RX.sub(' ', txt)
         stand = STAND_RX.search(txt)
@@ -965,7 +933,6 @@ def parse_text_line(body):
         for mm in MIC_RX.finditer(txt):
             if mm.start() == 0:
                 continue
-            # a generic word ("DI", "Line", "RF") that ends the text is part of the name: "Bass DI"
             if re.fullmatch(r'(?i)d\.?i\.?|line|rf|wireless|xlr|direct', mm.group(0)) and not txt[mm.end():].strip():
                 row['mic'] = mm.group(0)
                 break
@@ -978,7 +945,6 @@ def parse_text_line(body):
             row['name'] = txt.strip(' -–,:/')
     row['name'] = re.sub(r'\s+', ' ', P48_RX.sub('', row['name'])).strip(' -–,:/')
     row['name'] = re.sub(r'(?i)\s+\(?mono\)?$', '', row['name'])
-    # "DI line: Drum pad for kicks" -> the description is the name
     m = re.match(r'(?i)^(?:di|di line|line|mic|xlr|input|line in)\s*:\s*(.+)$', body.strip())
     if m:
         row['name'], row['mic'] = m.group(1).strip(' .'), body.split(':')[0].strip()
@@ -1038,16 +1004,15 @@ def text_rows(text, pdf=False, skipped=None, dropped=None):
             t = BULLET.sub('', s).strip()
             later = next((l for l in lines[k:] if l.strip()), '')
             if GREETING.match(t) and categorize(t)[0] == 'other':
-                continue                                    # "Thanks!", "Cheers, Sam"
+                continue
             if NOTE_LINE.match(t):
                 if dropped is not None:
                     dropped.append({'line': k, 'text': t[:80]})
                 continue
             if _numbered(later) and len(t.split()) <= 4 and not re.search(r'\d', t) and not MIC_RX.search(t) and \
                     (t.upper() == t or t.endswith(':')):
-                section = t.rstrip(':').strip().title()     # "BASS", "GUITAR", "Drums:" over numbered lines
+                section = t.rstrip(':').strip().title()
                 continue
-        # "Drums: kick, snare, hat" -> section + items
         inline = re.match(r'^\s*([A-Za-z][\w &/+-]{1,24}):\s+(.+)$', s)
         s2 = BULLET.sub('', s)
         num = LEAD_NUM.match(s2)
@@ -1066,7 +1031,6 @@ def text_rows(text, pdf=False, skipped=None, dropped=None):
             out.append(r)
             continue
         if pdf:
-            # PDF text without a leading channel number: a heading or wrapped text
             t = s.strip()
             if len(t) <= 40 and t.upper() == t and re.search(r'[A-Z]{3}', t) and not MIC_RX.search(t):
                 section = t.title()
@@ -1083,10 +1047,9 @@ def text_rows(text, pdf=False, skipped=None, dropped=None):
         t = s2.strip()
         if not t or (GREETING.match(t) and categorize(t)[0] == 'other'):
             continue
-        # an unnumbered line: a bullet item, a pasted name, or prose
         if t.upper() == t and len(t) <= 30 and not MIC_RX.search(t) and len(t.split()) <= 4 and not BULLET.match(s) \
                 and SECTION_WORD.search(t):
-            section = t.title()          # "DRUMS", "STAGE LEFT"; a bare "JORDAN" or "KICK" is an input
+            section = t.title()
             continue
         r = parse_text_line(t)
         r.update(line=k, ch=None, section=section, raw=s.strip(), who='', patch='', _text=True)
@@ -1169,7 +1132,6 @@ def _pdf_columns(lines):
     pages.append(cur)
     out = []
     for pg in pages:
-        # split only when a header row repeats on one line ("CH INPUT MIC ... CH INPUT MIC ...")
         split = None
         for l in pg:
             cells = _cells_pos(l)
@@ -1194,9 +1156,6 @@ def _pdf_columns(lines):
     return out
 
 
-# --------------------------------------------------------------------------------------------
-# rows -> channels
-# --------------------------------------------------------------------------------------------
 
 def expand_pairs(rows):
     """"OH L/R", "Keys (stereo)", "8-9 OH", "2x OH", "Keys - stereo DI" -> two rows. So do a Stereo column, "stereo"
@@ -1220,7 +1179,7 @@ def expand_pairs(rows):
             continue
         if r.get('_range') and nxt is not None and nxt.get('ch') is None and not side_of(nxt['name'])[0] and \
                 _base_key(nxt['name']) == _base_key(name):
-            i += 1                                 # "3-4 OH" + "OH": the second row is the R half
+            i += 1
         qty = re.match(r'(?i)^\s*([2-8])\s*x\s+(.+)$', name)
         if qty:
             name = qty.group(2).strip()
@@ -1233,7 +1192,7 @@ def expand_pairs(rows):
             base = re.sub(r'\s+', ' ', PAIR_WORDS.sub(' ', name)).strip()
             mic = PAIR_WORDS.sub(' ', r.get('mic') or '').strip() if stereo_mic else r.get('mic')
             if hinted and r.get('_mic_pair'):
-                mic = re.sub(r'\s+', ' ', MIC_PAIR.sub(' ', mic or '')).strip(' ,')     # "KM184 x2" -> "KM184"
+                mic = re.sub(r'\s+', ' ', MIC_PAIR.sub(' ', mic or '')).strip(' ,')
             if base:
                 a = dict(r, name=base + ' L', mic=mic); b = dict(r, name=base + ' R', mic=mic)
                 if r['ch'] is not None:
@@ -1242,7 +1201,7 @@ def expand_pairs(rows):
                 a['_expanded'] = b['_expanded'] = True
                 out += [a, b]
                 continue
-        if qty:                                    # "4x Choir" -> Choir 1..4
+        if qty:
             for k in range(int(qty.group(1))):
                 out.append(dict(r, name='%s %d' % (name, k + 1), _expanded=True,
                                 ch=None if r['ch'] is None else r['ch'] + k))
@@ -1273,7 +1232,7 @@ def side_of(name):
 
 def _base_key(base):
     b = base.lower()
-    b = re.sub(r'\b\d+\b', '#', b)                  # "Trax 1 - Perc/FX" == "Trax 2 - Perc/FX"
+    b = re.sub(r'\b\d+\b', '#', b)
     return re.sub(r'[^a-z#]+', ' ', b).strip()
 
 
@@ -1295,13 +1254,10 @@ def pair_rows(rows, stereo=True):
                 s2, b2, st2 = side_of(n['mic'])[0], n['name'], False
             ok = s1 and s2 and s1 != s2 and _base_key(b1) == _base_key(b2) and _base_key(b1)
             if not ok and r.get('short') and n.get('short'):
-                # long names that drift ("Walk-in / walk-out music L: Dante 65" / "Walk-in music R: Dante 66")
-                # while the list's own short-name column agrees ("WalkIn L" / "WalkIn R")
                 t1, t2 = side_of(r['short']), side_of(n['short'])
                 if t1[0] and t2[0] and t1[0] != t2[0] and _base_key(t1[1]) == _base_key(t2[1]) and _base_key(t1[1]):
                     (s1, b1, st1), (s2, b2, st2), ok = t1, t2, True
             if ok and (st1 or st2):
-                # SL/SR only pairs for sources that are a stereo pair by nature
                 cat = categorize(b1, r.get('mic', ''), r.get('section'))[0]
                 ok = cat in ('overhead', 'audience', 'drum_room', 'choir', 'playback', 'music_playback', 'keys')
             if ok and r.get('ch') is not None and n.get('ch') is not None:
@@ -1323,7 +1279,7 @@ def _vocal_kind(n, mic, artist, p):
     if re.search(r'\bmain\b', n) and not spare:
         return 'lead_vocal', 0.7
     if re.search(r'\b(rf|wireless|axient|ad ?[12]|ulx|qlx)\b', (mic or '').lower() + ' ' + n) and not spare:
-        return 'lead_vocal', 0.6                 # the RF vocal that is not a spare is usually the artist
+        return 'lead_vocal', 0.6
     return 'backing_vocal', p
 
 
@@ -1332,7 +1288,7 @@ def categorize(name, mic='', section=None, artist=None):
     n = ' ' + re.sub(r'[_]+', ' ', (name or '').lower().strip()) + ' '
     if re.match(r'^\s*(?:t\.|t\s|(?:trax|trx|tracks?|pb\s?\d+|playback)(?![a-z]))', n) and \
             not re.search(r'click|clk|guide|cue|smpte|ltc|time ?code|midi|tb|talk', n):
-        return 'playback', 0.9                     # "T. BGV", "Trax 3 - Keys", "PB 4 - Pad R"
+        return 'playback', 0.9
     for cat, rx, p in CAT_RULES:
         if rx.search(n.strip()) if cat == 'spare' else rx.search(n):
             if cat == 'vocal':
@@ -1372,7 +1328,6 @@ def abbreviate(full, stereo=False, max_len=MAX_NAME, initials=False):
         if side:
             s = base
         s = re.sub(r'(?i)\s*\b(?:l ?/ ?r|stereo|st)\b', '', s).strip()
-        # "SPD Master L - Trax L": drop the remaining side tokens too
         s = re.sub(r'(?i)(?<=\w) (?:l|r)\b(?= -|$)', '', s).strip()
     s = re.sub(r'\s+', ' ', s).strip(' -–:/,')
     if not s:
@@ -1383,7 +1338,6 @@ def abbreviate(full, stereo=False, max_len=MAX_NAME, initials=False):
             return t[0][0] + '.' + abbreviate(' '.join(t[1:]), False, max_len - 2)
     if len(s) <= max_len:
         return s
-    # "Trax 3 - Keys L" / "PB 4 - Pad R" / "SPD Master L - Trax L"
     m = re.match(r'(?i)^(trax\.?|trx\.?|tracks?|pb|playback|t\.?)\s*\d*\s*[-–—:]\s*(.+)$', s)
     if m:
         return 'T.' + abbreviate(m.group(2), False, max_len - 2)
@@ -1391,7 +1345,6 @@ def abbreviate(full, stereo=False, max_len=MAX_NAME, initials=False):
     if m:
         return 'SPD.' + abbreviate(m.group(2), False, max_len - 4)
     if ' / ' in s and len(s) > max_len:
-        # "Kick 2 / Big Floor", "Walk-in / walk-out music": keep one alternative, the last one that fits cleanly
         alts = [a.strip() for a in s.split(' / ') if a.strip()]
         fits = [a for a in alts if len(abbreviate(a, False, 99)) <= max_len or
                 len(re.sub(r' ', '', abbreviate(a, False, 99))) <= max_len]
@@ -1407,24 +1360,21 @@ def abbreviate(full, stereo=False, max_len=MAX_NAME, initials=False):
     toks = s.split()
     first = toks[0]
     if len(toks) >= 2 and toks[-1].lower() in ('rf', 'di', 'wireless', 'wired', 'mic', 'xlr'):
-        return abbreviate(' '.join(toks[:-1]), False, max_len)    # "Sam Vox RF" -> "Sam Vox"
+        return abbreviate(' '.join(toks[:-1]), False, max_len)
     toks = [WORDS.get(t.lower(), t) for t in toks]
     toks = [t for t in toks if t]
     s = ' '.join(toks)
     if len(s) <= max_len:
         return s
-    # person prefix: "Riley Nord" -> "R.Nord"
     if len(toks) >= 2 and toks[0] == first and is_person(first):
         return first[0] + '.' + abbreviate(' '.join(toks[1:]), False, max_len - 2)
-    # glue numbers to the word before ("Snr 1 Top" -> "Snr1 Top")
     s = re.sub(r'(?<=[A-Za-z.]) (?=\d)', '', s)
     if len(s) <= max_len:
         return s
     toks = s.split()
     joined = ''.join(t[:1].upper() + t[1:] if i and t[:1].isalpha() else t for i, t in enumerate(toks))
-    if len(joined) <= max_len:                       # "BigFloor", "M.VoxPno", "G.AmpDyn"
+    if len(joined) <= max_len:
         return joined
-    # squeeze vowels out of the longest word (never the "G." prefix) until it fits
     while len(''.join(toks)) > max_len:
         k = max(range(len(toks)), key=lambda j: len(toks[j]) - (2 if '.' in toks[j][:3] else 0))
         w = toks[k]
@@ -1511,7 +1461,7 @@ def build_channels(rows, stereo=True, artist=None, initials=True):
             flags.append('paired_on_SL_SR')
         short = a.get('short') if a.get('short') and len(a.get('short', '')) <= MAX_NAME else None
         if short and st and side_of(short)[0] and side_of(short)[1]:
-            short = side_of(short)[1]              # the L row's "WalkIn L" names the stereo channel "WalkIn"
+            short = side_of(short)[1]
         name = short or tidy_case(abbreviate(a['name'], st, initials=initials and cat != 'lead_vocal'))
         if not short and len(abbreviate(full, False, 99)) > MAX_NAME:
             flags.append('name_shortened')
@@ -1543,9 +1493,6 @@ def build_channels(rows, stereo=True, artist=None, initials=True):
     return channels, unparsed
 
 
-# --------------------------------------------------------------------------------------------
-# entry points
-# --------------------------------------------------------------------------------------------
 
 def make_request(rows, meta, stereo=True, artist=None, model=None, firmware=None, rate=None, intent=None, naming='initials'):
     channels, unparsed = build_channels(rows, stereo, artist, initials=(naming == 'initials'))
@@ -1609,7 +1556,7 @@ class _Block:
         return '%s%s%s' % (self.sheet, cols, ' (ch %d-%d)' % (min(nums), max(nums)) if nums else '')
 
 
-CONTINUE_GAP = 8      # a continuation block may start up to this many channel numbers after the last one taken
+CONTINUE_GAP = 8
 
 
 def parse_grid_sheets(sheets, want=None):
@@ -1629,18 +1576,17 @@ def parse_grid_sheets(sheets, want=None):
             continue
         bonus = 15 if re.search(r'(?i)\bio\b|input', name or '') else 0
         if year_max and str(year_max) in (name or ''):
-            bonus += 12                                   # the newest year's tab ("2026 IO" over "2024 FLY IO")
+            bonus += 12
         bonus -= 25 if re.search(r'(?i)output|loom|plot|network|count', name or '') else 0
         hdr = cands[0][1]
         alts.append({'sheet': name, 'score': cands[0][0] + bonus, 'header_row': hdr + 1})
-        for score, h, cols, cut, win in cands:            # every window of the best header row
+        for score, h, cols, cut, win in cands:
             if h == hdr:
                 blocks.append(_Block(score + bonus, name, si, rows, h, cols, cut, win))
     if not blocks:
         return None, {'error': 'no input table found', 'sheets': [s for s, _ in sheets]}
     best = max(blocks, key=lambda b: (b.score, -b.si, -b.win[0]))
     keys = {f for f in best.cols if not f.startswith('_')}
-    # headerless tables (a Word table continued on the next page) read with the best block's columns
     for si, name, rows in bare:
         width = max((len(r) for r in rows), default=0)
         if width > max(v for k, v in best.cols.items() if not k.startswith('_')):
@@ -1750,7 +1696,6 @@ def load_rows_from(filename=None, data=None, text=None, sheet=None):
             raise ValueError('The file looks like a zip archive but cannot be opened.')
         ext = '.docx' if 'word/document.xml' in names else ('.xlsx' if 'xl/workbook.xml' in names else ext)
     elif ext in ('.xls', '.htm', '.html', '.pdf', '.xlsx', '.xlsm', '.docx') or re.match(rb'\s*<', data[:200]):
-        # the extension names a binary format but the bytes are text: an HTML export, or a CSV saved as .xls/.pdf
         txt = decode_text(data)
         if re.search(r'(?i)<table', txt):
             return _best_grid_or_text(read_html_tables(txt), [], 'html', sheet)

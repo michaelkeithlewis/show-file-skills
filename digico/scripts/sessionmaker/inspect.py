@@ -63,26 +63,25 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 for _p in (TOOLS, ROOT):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-import ses as _ses  # noqa: E402
+import ses as _ses
 
 MAX_BYTES = 32 * 1024 * 1024
 TIME_LIMIT = 10.0
-NAME_SHOWN = 8                      # characters a channel strip is known to show (FORMAT.md, ses.rename default)
+NAME_SHOWN = 8
 MAGIC = b'DiGiCo     '
 SEC_TABLE, SEC_IDS, NSEC = 0x100, 0x1a0, 40
 REC = b'\xda\x00\x3a\x00'
 CHREC_HL = (0x50, 0x58, 0x78, 0x79)
-MAX_OBJECTS = 60000                 # real sessions: 425-4,000 live objects
+MAX_OBJECTS = 60000
 MAX_RECS_PER_OBJECT = 512
 MAX_GROUPS_201 = 256
 MAX_CB = 20000
 
-# file-family code at 0x0b -> console keys that write it (consoles.py) and the plain label
 FAMILY = {
     'Q1': (['q112'], 'Quantum 112'), 'Q2': (['q225', 'q225p'], 'Quantum 225'), 'Q3': (['q338', 'q338p'], 'Quantum 326 or 338'),
     'Q5': (['q5'], 'Quantum 5'), 'SDQ': (['q7'], 'Quantum 7'), 'Q8': (['q852'], 'Quantum 852'),
@@ -90,21 +89,11 @@ FAMILY = {
     'SD9': (['sd9', 'sd11'], 'SD9 or SD11'), 'SDC': (['sd12'], 'SD12 or SD12-96'),
 }
 QUANTUM = {'Q1', 'Q2', 'Q3', 'Q5', 'SDQ', 'Q8'}
-# Models that share a family code are told apart by header fields that are fixed per model (tConsoleRec
-# nMatrixOutputs 0x93, nControlGroups 0x94, nMatrixInputs 0x96, nGraphicEQs 0x97; the same values in every default
-# V1455-V2242 and in every real session whose file name names the model). This matters, because the bigger model's
-# file does not load on the smaller one: the SD8 editor silently starts its own empty session instead of an SD10
-# file, and the SD11 editor does the same with an SD9 file. The other way works: the SD10 editor keeps an SD8 file
-# and the SD9 editor an SD11 file (editor proofs 2026-10-13, the decode notes (not published). SD5 and SD5CS files are
-# identical, and the SD5 editor keeps an SD5CS file, so both stay candidates.
 MODEL_SIG = {
     'SD8': [('sd8', {0x93: 16, 0x96: 16}), ('sd10', {0x93: 24, 0x96: 24})],
     'SD9': [('sd9', {0x94: 12, 0x96: 12, 0x97: 16}), ('sd11', {0x94: 8, 0x96: 8, 0x97: 12})],
 }
 ALSO_LOADS_ON = {'sd8': ['sd10'], 'sd11': ['sd9']}
-# Public software releases per console the decode notes (not published), firmware_matrix.json). Some trains shipped
-# for one model only (V1229 Q338, V1246 Q5, V1454 Q225, V1861/V1879/V1889 Q852), so the oldest release that opens a
-# file depends on the console.
 _SD_TRAIN = [987, 1069, 1090, 1143, 1280, 1455, 1528, 1619, 1742, 1926, 2025, 2126, 2232, 2242]
 _MAIN_TRAIN = [1455, 1528, 1619, 1742, 1926, 2025, 2126, 2232, 2242]
 RELEASES_BY_KEY = dict({k: _SD_TRAIN for k in ('sd5', 'sd5cs', 'sd7', 'sd8', 'sd9', 'sd10', 'sd11', 'sd12')},
@@ -112,11 +101,8 @@ RELEASES_BY_KEY = dict({k: _SD_TRAIN for k in ('sd5', 'sd5cs', 'sd7', 'sd8', 'sd
                        q5=[1246, 1280] + _MAIN_TRAIN, q225=[1454] + _MAIN_TRAIN, q225p=_MAIN_TRAIN[3:], q338p=_MAIN_TRAIN[3:],
                        q852=[1861, 1879, 1889] + _MAIN_TRAIN[4:], q112=[2126, 2232, 2242])
 RELEASES = sorted(set().union(*RELEASES_BY_KEY.values()))
-# console software builds seen in real files that DiGiCo never published as an offline editor (two real Q5
-# sessions were saved by V1623 on the console itself)
 SEEN_BY_KEY = {'q5': {1623}}
 SEEN_BUILDS = set().union(*SEEN_BY_KEY.values())
-# header revision letter at 0x15 per build, from every editor-saved file (V18 Q852 builds unseen)
 REV = {1455: 'G', 1528: 'H', 1619: 'I', 1623: 'I', 1742: 'J', 1926: 'K', 2025: 'M', 2126: 'N', 2232: 'O', 2242: 'O'}
 
 T_INPUT, T_AUX, T_GROUP, T_BUSR, T_CG, T_TB, T_FX, T_MTX_IN, T_MTX_OUT, T_GEQ, T_SPICE = (
@@ -124,18 +110,12 @@ T_INPUT, T_AUX, T_GROUP, T_BUSR, T_CG, T_TB, T_FX, T_MTX_IN, T_MTX_OUT, T_GEQ, T
 SOCKET_REC = 0x11
 FX_REC = 0x15
 MUSTARD_MODS = {0x1a: 'tube', 0x1c: 'EQ', 0x1d: 'comp', 0x1e: 'gate'}
-# FX algorithm from the unit's own parameter keys (the factory presets' key sets, the same in every default
-# V1455-V2242; the decode notes (not published). Checked in this order: every delay has (56,0), the pitch shifter (02,1), the
-# Audio Enhancer (63,0), every reverb (0f,0) predelay; the choruses carry (12,0) too but no (0f,0).
 FX_KIND_KEYS = [('delay', (0x56, 0)), ('pitch', (0x02, 1)), ('special', (0x63, 0)), ('reverb', (0x0f, 0)),
                 ('chorus', (0x11, 0))]
 FX_KIND_LABEL = {'reverb': 'Reverb', 'delay': 'Delay', 'chorus': 'Chorus', 'pitch': 'Pitch shifter',
                  'special': 'Enhancer', 'other': 'Effect'}
-# A name that ends in a side: "Keys L", "OH_R", "Pad-left" (a separator before it), or "KeysL" / "Gtr2R" (a capital
-# L or R straight after a lower-case letter or a digit). A lower-case l or r straight after a letter is part of the
-# word ("Hall", "Choir", "Guitar", "Wurl"), never a side.
 PAIR_RE = re.compile(r'^(.*?)[\s_.-]*(?:\b|(?<=_)|(?<=[a-z0-9])(?=[LR]))(L|R|Left|Right|LEFT|RIGHT|left|right|l|r)$')
-BOTH_SIDES_RE = re.compile(r'(?i)(?:^|[^a-z])L\s*[/&+-]?\s*R$')      # "Trx L/R", "Keys LR": a stereo name
+BOTH_SIDES_RE = re.compile(r'(?i)(?:^|[^a-z])L\s*[/&+-]?\s*R$')
 
 
 class Stop(Exception):
@@ -159,7 +139,6 @@ class _Clock:
         return round((time.monotonic() - self.t0) * 1000)
 
 
-# ------------------------------------------------------------------------------------------------ small readers
 def _u8(d, p):
     if not 0 <= p < len(d):
         raise Stop('broken', 'The file ends early. It may be damaged or cut short.')
@@ -196,7 +175,6 @@ def _clean_name(s):
     return ''.join(ch if 32 <= ord(ch) < 127 or ord(ch) >= 160 else '?' for ch in (s or ''))
 
 
-# ------------------------------------------------------------------------------------------------ structure
 def _header(d):
     if len(d) == 0:
         raise Stop('empty', 'The file is empty.')
@@ -312,7 +290,6 @@ def _notes(d, sections):
     return _clean_name(bytes(d[s[0] + 4:min(s[0] + 4 + n, s[1])]).decode('latin1'))[:255]
 
 
-# ------------------------------------------------------------------------------------------------ a lean ses.Session
 def _lean_session(d, objs):
     """A ses.Session built from the linear walk: only the live input channels get Records (enough for
     process.readback_channel and ses.get), so memory stays near the file size."""
@@ -349,7 +326,6 @@ def _raw(d, slots, key):
     return bytes(d[q:q + 4]) if q is not None else None
 
 
-# ------------------------------------------------------------------------------------------------ the readout
 def _ref(raw):
     """Raw 4-byte route 00 <side> <index> <type> -> (type, index, side) or None (unpatched / not a route). Side 01 is
     the right leg of a stereo source, e.g. an input patched to an FX unit's right output."""
@@ -358,8 +334,6 @@ def _ref(raw):
     return raw[3], raw[2], raw[1]
 
 
-# Pulse (V1742+, Quantum 225 and 338 only) sets bit 0x10 of the header's ExtensionsUsed byte (0x25); a Pulse session
-# only opens on a console or editor with the Pulse extension enabled, a standard one opens on both.
 PULSE_KEYS = {'Q2': ('q225', 'q225p'), 'Q3': ('q338', 'q338p')}
 
 
@@ -402,7 +376,7 @@ def inspect(src, name=None, time_limit=TIME_LIMIT):
             with open(src, 'rb') as f:
                 d = f.read(MAX_BYTES + 1)
             name = name or os.path.basename(src)
-        if d[:2] == b'\x1f\x8b':                # gzip: a dLive show (.tar.gz), read by dlive/check.py
+        if d[:2] == b'\x1f\x8b':
             from dlive import check as dlive_check
             out = dlive_check.readout(d, _clean_name(name or ''))
             out['ms'] = clock.ms()
@@ -416,7 +390,7 @@ def inspect(src, name=None, time_limit=TIME_LIMIT):
         return {'ok': False, 'code': 'too_complex', 'error': 'This file is too large to read here.', 'ms': clock.ms()}
     except RecursionError:
         return {'ok': False, 'code': 'broken', 'error': 'This DiGiCo session is damaged.', 'ms': clock.ms()}
-    except Exception as e:  # noqa: BLE001 - hostile input must never take the caller down
+    except Exception as e:
         return {'ok': False, 'code': 'broken', 'error': 'This DiGiCo session is damaged or in a layout we can not read '
                 'yet.', 'detail': type(e).__name__, 'ms': clock.ms()}
 
@@ -444,14 +418,13 @@ def _inspect(d, clock):
     model_keys, load_keys = _models(code, d, fam_keys)
     quantum = code in QUANTUM
     facts = _console_facts(fam_keys)
-    name_of = lambda k: facts[k]['name'] if k in facts else k.upper()  # noqa: E731
+    name_of = lambda k: facts[k]['name'] if k in facts else k.upper()
     loads_label = fam_label
     if len(model_keys) < len(fam_keys):
         fam_label = name_of(model_keys[0])
         parts = [x.strip() for k in load_keys for x in name_of(k).split('/')]
         loads_label = ', '.join(parts[:-1]) + ' or ' + parts[-1] if len(parts) > 1 else parts[0]
 
-    # ---- buses from section 201 (surface order) ----
     def busses(t):
         return [{'n': r['number'], 'band': r['id'] & 0xff, 'name': _clean_name(r['name']), 'stereo': r['width'] == 2,
                  'id': r['id'], 'partner': r.get('partner') if r['width'] == 2 else 0}
@@ -461,7 +434,6 @@ def _inspect(d, clock):
     grp_by_band = {g['band']: g for g in groups}
     io_names = {t: _clean_name(g['name']) for t, g in g201.items()}
 
-    # ---- inputs ----
     ses = _lean_session(d, objs)
     in201 = (g201.get(T_INPUT) or {}).get('recs', [])
     if not in201:
@@ -521,8 +493,6 @@ def _inspect(d, clock):
             rec = recs.get(mod)
             return rec.slots if rec else {}
         m01, m08, m02, m03 = slots(0x01), slots(0x08), slots(0x02), slots(0x03)
-        # patch, gain, 48V: (01,0e,0) = 1.0 when the channel runs on its alt input, and then gain, 48V and pad
-        # come from the alt socket (the main socket's values are not in use)
         patch = {}
         use = 'alt' if _fget(d, m01, (0x0e, 0)) == 1.0 else 'main'
         for side, band in (('main', 0), ('alt', 1)):
@@ -544,7 +514,6 @@ def _inspect(d, clock):
         ch['patch'] = patch or None
         trim = _fget(d, m01, (0x01, 0))
         ch['trim_db'] = _f(trim) if trim else None
-        # inserts
         ins = []
         for letter, band in (('A', 0), ('B', 1)):
             ref = _ref(_raw(d, m08, (0xfe, band))) or _ref(_raw(d, m08, (0x00, band)))
@@ -554,12 +523,10 @@ def _inspect(d, clock):
                 if ref[0] == T_SPICE:
                     spice_users.setdefault(ref[1], []).append(r['number'])
         ch['inserts'] = ins or None
-        # processing (sessionmaker.process readback; keys from data/templates.json)
         try:
             ch.update(process.readback_channel(ses, idx))
         except (KeyError, struct.error, IndexError, TypeError, ValueError):
             ch['processing'] = 'unreadable'
-        # Mustard
         if 0x1d in recs:
             on = [nm_ for mod, nm_ in MUSTARD_MODS.items() if mod in recs and _fget(d, slots(mod), (0x02, 0)) == 1.0]
             tidal = r.get('tidal')
@@ -567,7 +534,6 @@ def _inspect(d, clock):
                 ch['mustard_modules'] = on or ['allocated']
                 mustard_inst += r['width']
                 mustard_ch.append(r['number'])
-        # sends and groups
         sends = []
         for (p, b), q in m02.items():
             if p == 0x01 and b in aux_by_band:
@@ -591,10 +557,6 @@ def _inspect(d, clock):
         channels.append(ch)
         names_seen.setdefault(nm.strip().lower(), []).append(r['number'])
 
-    # ---- FX units, Spice Rack ----
-    # An FX input (00, band) is fed by an aux (05), the right side of a stereo bus (07, the partner of band 0's
-    # source), an input channel's direct out (01) or a group (06). Real sessions carry a non-zero first byte on
-    # direct-out and group feeds (05, 07, 08, 09), so only the index and type bytes are read here.
     in_by_idx = {(x['id'] & 0xff): x for x in in201}
     fx, fx_feeds = [], {}
     for o in objs:
@@ -620,15 +582,15 @@ def _inspect(d, clock):
             elif t == T_FX:
                 lab = 'FX %d' % (i + 1)
             else:
-                continue                       # 07: the right leg of the bus already named by band 0
+                continue
             if lab not in feeds:
                 feeds.append(lab)
         keys = set(sl)
         kind = next((k for k, key in FX_KIND_KEYS if key in keys), 'other')
         unit = {'n': o['index'] + 1, 'name': _clean_name(o['name']), 'stereo': o['width'] == 2, 'kind': kind,
                 'kind_label': FX_KIND_LABEL[kind], 'fed_by': feeds or None, 'returns_on': fx_returns.get(o['index'])}
-        g = lambda k, b=0: _fget(d, sl, (k, b))  # noqa: E731
-        ms = lambda v: _f(v * 1000 if v is not None else None)  # noqa: E731
+        g = lambda k, b=0: _fget(d, sl, (k, b))
+        ms = lambda v: _f(v * 1000 if v is not None else None)
         mix = _f(g(0x01))
         if kind == 'reverb':
             unit['reverb'] = {'decay_s': _f(g(0x12), 2), 'predelay_ms': ms(g(0x0f)), 'mix_pct': mix,
@@ -664,8 +626,6 @@ def _inspect(d, clock):
         'spice_rack_used': sum(1 for s in spice if s['used_by']),
     }
     counts['inputs_mono'] = counts['inputs'] - counts['inputs_stereo']
-    # patch and monitor mixes at a glance: inputs on a socket, 48V on, and auxes that carry a pre-fader mix (two or
-    # more inputs sent pre-fader, and not an FX feed)
     def _on_socket(c):
         pt = c.get('patch') or {}
         lab = str(pt.get('alt' if pt.get('active') == 'alt' else 'main') or '')
@@ -682,11 +642,9 @@ def _inspect(d, clock):
     clock.tick()
     damaged = _nonfinite(d, objs, {r['id']: r['number'] for r in in201}, clock)
 
-    # ---- structure check (sessionmaker.validate), guarded ----
     structure = _structure(d, sections, g201)
     clock.tick()
 
-    # ---- console, version, compatibility ----
     cands = [{'key': k, 'name': name_of(k)} for k in load_keys]
     console = {'code': code or '?', 'label': fam_label or 'an unknown console (%s)' % (code or 'blank'),
                'loads_on': loads_label or fam_label, 'candidates': cands, 'quantum': quantum, 'known': bool(fam_keys),
@@ -704,7 +662,6 @@ def _inspect(d, clock):
     else:
         compat['ok'] = console['known']
 
-    # ---- Mustard vs cap ----
     caps = sorted({facts[k]['mustard_cap'] for k in model_keys if k in facts and facts[k].get('mustard_cap')})
     mustard = None
     if quantum:
@@ -712,8 +669,7 @@ def _inspect(d, clock):
         mustard = {'instances': mustard_inst, 'cap': cap, 'channels': mustard_ch,
                    'cap_verified': any(facts[k].get('mustard_cap_verified') for k in model_keys if k in facts)}
 
-    # ---- warnings ----
-    W = lambda level, text: warn.append({'level': level, 'text': text})  # noqa: E731
+    W = lambda level, text: warn.append({'level': level, 'text': text})
     for e in structure['errors']:
         W('error', e)
     if damaged:
@@ -945,7 +901,7 @@ def _console_facts(keys):
     try:
         from . import consoles
         return {k: consoles.CONSOLES[k] for k in keys if k in consoles.CONSOLES}
-    except Exception:  # noqa: BLE001 - facts are optional extras
+    except Exception:
         return {}
 
 
@@ -997,7 +953,7 @@ def _structure(d, sections, g201):
     try:
         from . import validate
         errs, info = validate.check(d)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return {'ok': False, 'ran': False, 'info': {}, 'errors': ['The structure check could not finish (%s).'
                                                                   % type(e).__name__]}
     idmap = {r['id']: r['number'] for r in (g201.get(T_INPUT) or {}).get('recs', [])}
@@ -1054,7 +1010,6 @@ def _plain(e, idmap=None):
     return e[:1].upper() + e[1:] + ('' if e.endswith('.') else '.')
 
 
-# ------------------------------------------------------------------------------------------------ CLI
 def _text(r):
     if not r.get('ok'):
         return 'NOT OK: %s' % r['error']
@@ -1106,7 +1061,7 @@ def main(argv=None):
     for p in a.files:
         try:
             r = inspect(p, name=a.name, time_limit=a.limit)
-        except Stop as e:                       # SIGALRM outside inspect's own handler
+        except Stop as e:
             r = {'ok': False, 'code': e.code, 'error': e.msg}
         bad += not r.get('ok')
         if a.json:

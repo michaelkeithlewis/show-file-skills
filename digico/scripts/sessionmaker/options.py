@@ -43,8 +43,6 @@ from . import sends as S
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FACTS_CACHE = os.path.join((os.environ.get('SM_BASELINES') or os.path.join(ROOT, 'baselines')), 'options_facts.json')
 
-# ---------------------------------------------------------------------------------------------------- FX
-# UI choice -> factory preset, unit (and aux) name, return channel name (8 chars), send role, label.
 FX_CHOICES = {
     'vocal plate': ('Vocal Plate', 'Vocal Plate', 'VoxPlate', 'vocal', 'Vocal plate'),
     'plate': ('Medium Plate', 'Plate', 'Plate', 'vocal', 'Plate'),
@@ -58,16 +56,11 @@ FX_CHOICES = {
     'thicken': ('Vocal Thicken', 'Thicken', 'Thicken', 'mod-vocal', 'Vocal thicken'),
 }
 FX_ORDER = list(FX_CHOICES)
-# Return-channel category per FX kind (data/templates.json fx_returns group).
 RETURN_CAT = {'reverb': 'fx_reverb', 'delay': 'fx_delay', 'chorus': 'fx_modulation', 'pitch': 'fx_modulation',
               'special': 'fx_other'}
 FX_CATS = ('fx_reverb', 'fx_delay', 'fx_modulation', 'fx_other')
-MAX_FX = 8                      # per request; the editors take 16 reverbs + 16 others (14 on a Quantum 112)
+MAX_FX = 8
 
-# Post-fader FX sends by unit role and channel category (dB). From the 39 real sessions: channels that send to an
-# aux-fed unit of that role in at least about a quarter of the cases, at the median level, rounded (sends sit near
-# 0 dB and the aux master and return fader set the amount). keys/piano/strings/choir in the hall and the delay's
-# lead-vocal-only rule are engineering choices where the data is thin.
 FX_SENDS = {
     'vocal': {'lead_vocal': 0.0, 'vocal_generic': 0.0, 'choir': -5.0},
     'drum': {'snare_top': -1.0, 'rack_tom': -1.0, 'floor_tom': 0.0, 'roto_tom': -1.0},
@@ -77,14 +70,8 @@ FX_SENDS = {
     'mod-vocal': {'lead_vocal': 0.0, 'vocal_generic': 0.0},
     'mod-guitar': {'electric_guitar': 0.0},
 }
-ROLE_ORDER = ('vocal', 'drum', 'delay', 'mod-vocal', 'mod-guitar', 'hall')   # hall takes what the others left
+ROLE_ORDER = ('vocal', 'drum', 'delay', 'mod-vocal', 'mod-guitar', 'hall')
 
-# ---------------------------------------------------------------------------------------------------- gain and 48V
-# Starting analog gain (dB) on a mic socket by category: medians over the patched mic sockets of the 39 real
-# sessions, categories with 20 or more channels (media_playback and measurement_ref: 19), rounded to the 0.5 dB
-# step. lead_vocal and vocal_fx_mic take the
-# vocal_generic value (real lists name most lead vocals "Vox 1"), floor_tom the rack_tom value (13 channels), and
-# every tracks category the tracks_music value. Categories not listed keep the editor default.
 GAIN_BASE = {
     'kick_in': 11.5, 'kick_out': 19.0, 'snare_top': 14.0, 'snare_bottom': 11.0, 'hihat': 14.0, 'rack_tom': 15.0,
     'floor_tom': 15.0, 'roto_tom': 22.5, 'overheads': 15.0, 'drum_trigger': 10.0, 'sample_pad': 22.5,
@@ -94,10 +81,7 @@ GAIN_BASE = {
     'tracks_vocals': 0.0, 'click': 1.5, 'cues_guide': 1.0, 'media_playback': 10.0, 'audience': 18.0,
     'measurement_ref': 10.0,
 }
-# 48V on where at least 40 % of the real channels of that category have it (19 or more channels); the other
-# categories in GAIN_BASE get 48V off. 48V does no harm to a balanced dynamic mic; off on a condenser is silence.
 PHANTOM_ON = {'kick_in', 'hihat', 'overheads', 'hand_perc', 'audience', 'measurement_ref'}
-# Mic models named in an input list, read before the category: condensers and active DIs on, dynamics off.
 SOURCE_PHANTOM = [
     (re.compile(r'(?i)\b(km ?1\d\d|km ?184|c ?414|c ?451|c ?214|c ?535|sm ?81|sm ?137|sm ?86|sm ?87|beta ?(87|91|98)|'
                 r'b ?91|b ?98|ksm ?(9|32|44|137|141)|e ?614|e ?914|e ?965|at ?40\d\d|at ?20\d\d|nt ?[45]\b|u ?87|'
@@ -108,9 +92,6 @@ SOURCE_PHANTOM = [
                 r'wireless|rf|line)\b'), False),
 ]
 
-# ---------------------------------------------------------------------------------------------------- mixes
-# Seats a monitor mix is named after, in the order they get a mix when there are fewer mixes than seats, with the
-# categories that are "their own" (6 dB up in their mix). per_channel: one seat per player number in the names.
 SEATS = [
     ('lead', 'Lead Vox', {'lead_vocal'}, True),
     ('drums', 'Drums', {'kick_in', 'kick_out', 'kick_sub', 'snare_top', 'snare_bottom', 'hihat', 'rack_tom',
@@ -162,7 +143,7 @@ def _mix_plan(mx, plan):
     pool = seats(plan)
     chosen = pool[:st + mo]
     iem, wedge = chosen[:st], chosen[st:st + mo]
-    order = lambda lst: sorted(lst, key=lambda s: (SEAT_STAGE_ORDER.index(s[0]), pool.index(s)))  # noqa: E731
+    order = lambda lst: sorted(lst, key=lambda s: (SEAT_STAGE_ORDER.index(s[0]), pool.index(s)))
     names = list(mx.get('names') or [])
     has_click = any(p.get('category') in S.ONLY_ON_REQUEST for p in plan)
     out = []
@@ -188,8 +169,6 @@ def _mix_plan(mx, plan):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- normalise
-# Letters NFKD does not split into a base letter + accent (the table of intake.console_name).
 _TRANSLIT = str.maketrans({'\u0141': 'L', '\u0142': 'l', '\u00d8': 'O', '\u00f8': 'o', '\u00df': 'ss', '\u00c6': 'AE',
                            '\u00e6': 'ae', '\u0152': 'OE', '\u0153': 'oe', '\u0110': 'D', '\u0111': 'd', '\u00de': 'Th',
                            '\u00fe': 'th', '\u0131': 'i', '\u00d0': 'D', '\u00f0': 'd'})
@@ -326,7 +305,6 @@ def normalize(req):
     return o
 
 
-# ---------------------------------------------------------------------------------------------------- prepare
 def _fx_kind(choice):
     """'reverb', 'delay', 'chorus', 'pitch' or 'special' (the DSP pool and the return category follow it)."""
     return FX.KIND_OF_GROUP.get(_group_of(choice), 'special')
@@ -344,7 +322,7 @@ def _group_of(choice):
         except OSError:
             names = []
         if not names:
-            return None       # the factory preset groups come from a V2242 Quantum default (see references/baselines.md)
+            return None
         lib = FX.library(open(os.path.join(d, names[0]), 'rb').read())
         for e in lib[:34]:
             _PRESET_GROUP[e['name'].lower()] = e['category']
@@ -378,10 +356,7 @@ def prepare(req, console, data, plan, warnings):
     key, cname = console['key'], console['name']
     o['data'] = None
     nuser = len(plan)
-    # ---- FX returns: plan rows first, then new channels
     taken = {p['name'].lower() for p in plan}
-    # a channel number given as a return is reserved before any 'auto' return picks a row, and only one unit may
-    # return on a channel (a second one would overwrite the first unit's return patch)
     explicit = {}
     for i, u in enumerate(o.get('fx', [])):
         if isinstance(u['return'], int):
@@ -437,7 +412,6 @@ def prepare(req, console, data, plan, warnings):
         raise ValueError('The %s holds %d inputs. %d channels plus %d FX return%s make %d. Remove channels or FX.' % (
             cname, cap, nuser, len(plan) - nuser, '' if len(plan) - nuser == 1 else 's', len(plan)))
 
-    # ---- bus layout
     cur = B.describe(data)
     am, ast, gm, gs = cur['aux_mono'], cur['aux_stereo'], cur['grp_mono'], cur['grp_stereo']
     limit = B.bus_limit(data, key)
@@ -456,7 +430,7 @@ def prepare(req, console, data, plan, warnings):
             lay = None
     elif need_m > am or need_s > ast:
         a2, s2, g2, gs2 = max(am, need_m), max(ast, need_s), gm, gs
-        width = lambda: a2 + 2 * s2 + g2 + 2 * gs2      # noqa: E731
+        width = lambda: a2 + 2 * s2 + g2 + 2 * gs2
         while limit is not None and width() > limit:
             if a2 > need_m:
                 a2 -= 1
@@ -492,7 +466,6 @@ def prepare(req, console, data, plan, warnings):
                                  'buses.' % cname)
             raise ValueError('That bus layout does not work on the %s: %s.' % (cname, msg.rstrip('.')))
 
-    # ---- aux numbers (surface order: mono auxes first)
     a_m = list(range(1, final[0] + 1))
     a_s = list(range(final[0] + 1, final[0] + final[1] + 1))
     fixed = {u['feed_aux'] for u in o.get('fx', []) if u['feed_aux'] is not None}
@@ -515,7 +488,6 @@ def prepare(req, console, data, plan, warnings):
         it_m, it_s = iter(free_m), iter(free_s)
         for m in o['mixes_plan']:
             m['aux'] = next(it_s) if m['stereo'] else next(it_m)
-    # ---- explicit sends
     for e in o.get('sends', []):
         if e['ch'] > len(plan):
             raise ValueError('A send names channel %d, but the plan has %d channels.' % (e['ch'], len(plan)))
@@ -523,7 +495,6 @@ def prepare(req, console, data, plan, warnings):
             raise ValueError('A send names aux %d, but the session has %d auxes.' % (e['aux'], final[0] + final[1]))
         if e['pan'] is not None and e['aux'] <= final[0]:
             raise ValueError('Aux %d is mono, so a send to it has no pan.' % e['aux'])
-    # ---- FX sends (post-fader) by role
     covered = {}
     sends_fx = []
     by_role = {}
@@ -546,7 +517,6 @@ def prepare(req, console, data, plan, warnings):
             if role in ('vocal', 'drum'):
                 covered[p['n']] = role
     o['fx_sends'] = sends_fx
-    # ---- patch: per-channel gain and 48V
     pt = o.get('patch')
     if pt:
         for p in plan:
@@ -614,7 +584,6 @@ def _phantom_for(p):
     return None
 
 
-# ---------------------------------------------------------------------------------------------------- apply
 def _fresh(ses):
     """Forget the sends.objects cache (its key is the file length; fx edits rebuild the file)."""
     if hasattr(ses, '_sends_objs'):
@@ -728,7 +697,7 @@ def apply_rest(ses, opts, plan, warnings):
         dev = 'Local I/O' if pt['mode'] == 'local' else None
         pp = P.default_plan(ses, chans, device=dev, start=pt['start'])
         notes, seen = [], set()
-        for n in P.patch_inputs(ses, pp):           # one note per input (a stereo input has two sockets)
+        for n in P.patch_inputs(ses, pp):
             m = re.match(r'input (\d+):', n)
             if m and m.group(1) in seen:
                 continue
@@ -771,7 +740,6 @@ def _ranges(ns):
     return ', '.join(out)
 
 
-# ---------------------------------------------------------------------------------------------------- checks
 def _chk(name, ok, detail):
     return {'name': name, 'ok': bool(ok), 'detail': detail}
 
@@ -848,7 +816,6 @@ def checks(rs, opts, out_bytes):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- report
 def report_lines(opts, plan):
     if not opts:
         return []
@@ -869,7 +836,7 @@ def report_lines(opts, plan):
         per = {}
         for e in fxs:
             per.setdefault(e['unit'], []).append((e['ch'], by_n[e['ch']]['name'], e['level_db']))
-        db = lambda v: '%g dB' % (v + 0.0)  # noqa: E731
+        db = lambda v: '%g dB' % (v + 0.0)
         for unit, chs in per.items():
             if len({lv for _, _, lv in chs}) == 1:
                 L.append('- Post-fader sends to %s at %s: %s.' % (unit, db(chs[0][2]), ', '.join(
@@ -887,8 +854,8 @@ def report_lines(opts, plan):
     pt = done.get('patch') or []
     if opts.get('patch'):
         if pt:
-            runs = []                       # consecutive channels on one device, in patch order (a patch that
-            for e in pt:                    # starts past mic 1 wraps back to the first device's lower mics)
+            runs = []
+            for e in pt:
                 if runs and runs[-1][0] == e['device']:
                     runs[-1][1].append(e)
                 else:
@@ -902,14 +869,12 @@ def report_lines(opts, plan):
     return L
 
 
-# ---------------------------------------------------------------------------------------------------- read a show
 NUMW = {'a': 1, 'an': 1, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8,
         'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'couple': 2, 'pair': 2}
 _N = r'(\d{1,2}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)'
 _IEM = r'(?:iems?|in[- ]?ears?|ears|iem mix(?:es)?|in[- ]?ear mix(?:es)?)'
 
 
-# FX words of a description -> FX_CHOICES key, checked in this order on the text with outboard clauses left out
 FX_WORDS = ((r'\bvocal plate\b|\bvox plate\b', 'vocal plate'), (r'\bdrum plate\b', 'drum plate'),
             (r'(?<!vocal )(?<!vox )(?<!drum )\bplate\b', 'plate'),
             (r'\bhall (?:reverb|verb)\b|\b(?:reverb|verb) hall\b', 'hall'),
@@ -918,11 +883,9 @@ FX_WORDS = ((r'\bvocal plate\b|\bvox plate\b', 'vocal plate'), (r'\bdrum plate\b
             (r'\bdelays?\b(?! ?(?:speakers?|towers?|stacks?|lines?|fills?|rings?))', 'delay'),
             (r'\bchorus (?:fx|effect|pedal|on)\b|\bguitar chorus\b', 'chorus'),
             (r'\bthicken(?:er)?\b|\bdoubler\b', 'thicken'))
-# A clause that names the player's own gear or a playback rig: its "effects", "reverb" or "delay" is not a console FX.
 _OUTBOARD = re.compile(r'pedal|stomp|helicon|voice ?live|\bsound (?:effects|fx)\b|\bsfx\b|\bqlab\b|\b(?:his|her|their|'
                        r'own) (?:own )?(?:fx|effects|rig|board)|\baxe-?fx\b|\bhelix\b|\bkemper\b|quad cortex|'
                        r'modell?er\b')
-# "the singer wears in-ears", "drummer and bassist on IEMs", "everyone else is on wedges"
 _WHO = (r'(?:lead\s+)?(?:singers?|vocalists?|lead vocal(?:ist)?s?|drummers?|bassists?|bass players?|guitarists?|'
         r'guitar players?|keys players?|keyboardists?|keyboard players?|pianists?|md|percussionists?|horn players?|'
         r'sax players?|saxophonists?|backing vocalists?|bgvs?|band ?leaders?|fiddle players?|fiddlers?)')
@@ -949,7 +912,6 @@ def suggest(description, channels):
     options: {'fx': [{'kind'}], 'mixes': {'stereo', 'mono'}, 'role': 'mon'} (keys only when found)."""
     t = ' %s ' % re.sub(r'\s+', ' ', str(description or '').lower())
     out, said = {}, []
-    # ---- monitor mixes
     st = mo = None
     m = re.search(_IEM + r'\s+(?:mixes\s+)?for\s+(?:the\s+|all\s+|our\s+)?' + _N + r'\b', t)
     if m:
@@ -967,12 +929,9 @@ def suggest(description, channels):
             mo = _n(gen.group(1))
         else:
             st = _n(gen.group(1))
-    # "IEMs for everyone": one mix per instrument player plus a lead singer; backing vocals are taken to be
-    # sung by the players (a count in the text wins)
     st_ = seats([dict(c, n=k + 1, name=c.get('name') or '') for k, c in enumerate(channels or [])])
     players = sum(1 for k, _, _ in st_ if k not in ('lead', 'bgv', 'choir')) + (1 if any(
         k in ('lead', 'bgv') for k, _, _ in st_) else 0)
-    # "the singer wears in-ears, everyone else is on wedges": the players named get that kind, the rest the other
     no_iem = re.search(r'\bno (?:iem|in[- ]?ear)', t)
     who_iem = re.search(_WHO_LIST + _WEARS + _IEM + r'\b', t)
     who_wdg = re.search(_WHO_LIST + _WEARS + r'(?:monitor\s+)?wedges?\b', t)
@@ -994,9 +953,6 @@ def suggest(description, channels):
             said.append('%d IEM mix%s' % (out['mixes']['stereo'], '' if st == 1 else 'es'))
         if mo:
             said.append('%d wedge mix%s' % (out['mixes']['mono'], '' if mo == 1 else 'es'))
-    # ---- FX. Clauses about outboard gear ("his own effects pedalboard", "vocal effects from a TC Helicon",
-    # "sound effects playback from QLab") ask for no console FX, so they are left out first. "No reverb" drops the
-    # reverbs only, "no delays" the delays only, "no FX" everything. "Slap delay" is one unit.
     kinds = []
     td = ' . '.join(c for c in re.split(r'[.;!?,()]|\b(?:and|but|while|whereas|plus)\b', t)
                     if not _OUTBOARD.search(c))
@@ -1011,7 +967,7 @@ def suggest(description, channels):
             if re.search(rx, td) and k not in kinds:
                 kinds.append(k)
         nd = re.search(r'\b' + _N + r'\s+delays\b', td)
-        if nd and 'delay' in kinds:              # "2 delays" counts a slap that was named too
+        if nd and 'delay' in kinds:
             kinds += ['delay'] * max(0, min(_n(nd.group(1)), 4) - 1 - kinds.count('slap'))
         nr = re.search(r'\b' + _N + r'\s+(?:reverbs|verbs|reverb units)\b', td)
         want = 0 if no_rev else _n(nr.group(1)) if nr else (2 if re.search(r'\b(?:reverbs|verbs)\b', td) else
@@ -1052,7 +1008,6 @@ def suggest(description, channels):
     return out, note
 
 
-# ---------------------------------------------------------------------------------------------------- console facts
 def _io_facts(ses):
     racks, local = [], None
     for d in P.list_io(ses):
@@ -1073,7 +1028,7 @@ def console_facts(refresh=False):
     'io': {build: {'racks': [{name, device, mics, line_outs}], 'local': {...}}}}} for the page, cached in
     baselines/options_facts.json (rebuilt for a default whose size or mtime changed)."""
     import sys
-    tools = ROOT        # ses.py sits next to this package
+    tools = ROOT
     if tools not in sys.path:
         sys.path.insert(0, tools)
     from ses import Session

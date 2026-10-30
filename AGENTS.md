@@ -38,8 +38,6 @@ Move a line to `## What we know` when a test proves it. Add a line to `## What w
 
 Put no `#` comments in Python. The reason for the code goes in the README. A docstring holds usage only. `.github/strip-comments.py` removes comments and prints each one, so read that output and move any fact to the README. It refuses a change that alters the AST.
 
-`digico/` keeps its comments until the open DiGiCo pull requests close, because a strip now would conflict with them.
-
 ## Guards
 
 A tool must refuse a file the console cannot use. Refuse with one sentence and write nothing. Add the same rule to the checker, because the checker also reads files that other tools made. Test a new checker rule on real editor-saved shows before it becomes an error. If a real show breaks the rule, make it a warning.

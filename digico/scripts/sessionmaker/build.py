@@ -37,17 +37,15 @@ import time
 import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-from ses import Session  # noqa: E402
+from ses import Session
 
-from . import consoles, layout, options, process, validate  # noqa: E402
+from . import consoles, layout, options, process, validate
 
-NAME_MAX = 8      # a naming choice: the format holds 31 (FORMAT.md "Names"); the report keeps the long name
+NAME_MAX = 8
 
-# Abbreviations, matched on whole words, case-insensitive. LONG words go first; SHORT ones only when squeezing
-# out the spaces was not enough.
 ABBREV_LONG = [('acoustic', 'Ac'), ('electric', 'El'), ('guitar', 'Gtr'), ('vocals', 'Vox'), ('vocal', 'Vox'),
                ('voice', 'Vox'), ('keyboards', 'Keys'), ('keyboard', 'Keys'), ('overheads', 'OH'), ('overhead', 'OH'),
                ('bottom', 'Bot'), ('left', 'L'), ('right', 'R'), ('tracks', 'Trx'), ('track', 'Trk'),
@@ -156,9 +154,6 @@ def _plan(req):
                      'source': clean_text(ch.get('source'), 64) or None,
                      'notes': clean_text(ch.get('notes'), 200) or None})
     opts = options.prepare(req, console, open(base, 'rb').read(), plan, warnings) if options.present(req) else {}
-    # Engine channels: a stereo channel takes 2, and the inputs must fit the room the default session leaves them
-    # (layout.engine_room: below the aux/matrix buses on SD models, below TB In on Quantum). A new bus layout moves
-    # that room on SD models, so it is read from the restructured default then.
     room = console.get('engine_room')
     if opts.get('data') is not None:
         r = layout.engine_room(opts['data'])
@@ -170,7 +165,7 @@ def _plan(req):
     if room is not None and need > room:
         if req.get('overflow') != 'truncate' or opts:
             nst, extra = sum(p['stereo'] for p in plan), need - room
-            chs = lambda k, w='channel': '%d %s%s' % (k, w, '' if k == 1 else 's')   # noqa: E731
+            chs = lambda k, w='channel': '%d %s%s' % (k, w, '' if k == 1 else 's')
             if nst >= extra:
                 fix = 'Make %s mono, or remove %s.' % (chs(extra, 'stereo channel'), chs((extra + 1) // 2, 'stereo channel'))
             elif nst:
@@ -206,17 +201,14 @@ def build_session(req, out_path):
     processing = req.get('processing') if req.get('processing') in ('templates', 'none') else 'templates'
     role = 'mon' if req.get('role') == 'mon' else 'foh'
 
-    # 1-2. layout: names, widths, order, count, notes
     data = opts['data'] if opts.get('data') is not None else open(base, 'rb').read()
     spec = [{'name': p['name'], 'width': 2 if p['stereo'] else 1} for p in plan]
     ses = Session(layout.relayout(data, spec, session_notes=title))
     options.apply_fx(ses, opts)
-    # 3. processing (internal index = surface number: relayout keeps 1..N in order)
     rows, mustard_used = process.apply(ses, plan, console, processing, role)
     options.apply_rest(ses, opts, plan, warnings)
     out = bytes(ses.d)
 
-    # 4. structure, write, read back
     errs, info = validate.check(out)
     if errs:
         raise RuntimeError('generated session failed its structure check: ' + '; '.join(errs[:3]))
@@ -227,7 +219,6 @@ def build_session(req, out_path):
     os.replace(tmp, out_path)
     rs = Session(open(out_path, 'rb').read())
 
-    # check names and details are shown to engineers as-is (web page Checks tab, report): plain words, 1-based
     checks = [_check('File structure', not errs, 'The channel list, channel data and bank layout agree (%d inputs, '
                      '%d banks).' % (info['inputs'], info['banks']))]
     em = layout.engine_map(layout.Container(out).sec(201)[1])

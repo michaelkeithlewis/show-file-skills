@@ -39,9 +39,6 @@ def _templates():
     return _T
 
 
-# --------------------------------------------------------------------------------------------
-# the category set
-# --------------------------------------------------------------------------------------------
 
 def category_ids():
     """The 50 template ids in group order (drums, bass, guitars_strings, keys, vocals, playback,
@@ -72,9 +69,6 @@ def groups():
     return out
 
 
-# Option texts for the classifier. Each says what the source is and lists the short names engineers use,
-# because the classifier sees 8-character console names. Order matters only for display; intake asks in
-# both orders and averages.
 JEV_OPTIONS = {
     'kick_in': 'Kick drum mic inside the drum or the only kick mic (Kick, Kick In, KIK, BD, K In, Beta91)',
     'kick_out': 'Kick drum mic outside the front head (Kick Out, K Out, Kick 52)',
@@ -130,14 +124,10 @@ JEV_OPTIONS = {
 }
 
 
-# --------------------------------------------------------------------------------------------
-# coarse (parser, 28 ids) <-> fine (templates, 50 ids)
-# --------------------------------------------------------------------------------------------
 
-# Default fine id for each coarse id when nothing in the name refines it (see refine()).
 COARSE_TO_FINE = {
     'kick': 'kick_in', 'snare': 'snare_top', 'tom': 'rack_tom', 'hihat': 'hihat', 'overhead': 'overheads',
-    'drum_room': 'overheads',            # no room-mic template; overheads is the closest processing
+    'drum_room': 'overheads',
     'drum_trigger': 'drum_trigger', 'drum_pad': 'sample_pad', 'percussion': 'hand_perc', 'bass': 'bass_di',
     'electric_guitar': 'electric_guitar', 'acoustic_guitar': 'acoustic_guitar', 'keys': 'keys', 'strings': 'strings',
     'brass_wind': 'horns', 'lead_vocal': 'lead_vocal', 'backing_vocal': 'vocal_generic', 'vocal': 'vocal_generic',
@@ -146,7 +136,6 @@ COARSE_TO_FINE = {
     'utility': 'test_signal', 'spare': 'other', 'other': 'other',
 }
 
-# For scoring against the hand-labelled ground truth (which uses the 28 coarse ids).
 FINE_TO_COARSE = {
     'kick_in': 'kick', 'kick_out': 'kick', 'kick_sub': 'kick', 'snare_top': 'snare', 'snare_bottom': 'snare',
     'hihat': 'hihat', 'rack_tom': 'tom', 'floor_tom': 'tom', 'roto_tom': 'tom', 'overheads': 'overhead',
@@ -245,7 +234,7 @@ def refine(coarse, n, mic=''):
             return 'measurement_ref'
         if _has(r'\b(pink|noise|tone|osc\w*|sig ?gen)\b', n):
             return 'test_signal'
-        return 'other'                   # tuner feeds and the like: no template
+        return 'other'
     if coarse == 'talkback':
         if _has(r'\b(comms?|radio|vog|intercom|clear ?com|cc)\b', n):
             return 'comms_radio'
@@ -253,22 +242,17 @@ def refine(coarse, n, mic=''):
     return COARSE_TO_FINE.get(coarse, 'other')
 
 
-# --------------------------------------------------------------------------------------------
-# rules
-# --------------------------------------------------------------------------------------------
 
 def normalise(name):
     """templates.json meta.taxonomy.normalise: lower case, every run outside [a-z0-9] -> one space."""
     return re.sub(r'[^a-z0-9]+', ' ', (name or '').lower()).strip()
 
 
-# A row is not a channel when its name is only one of these ("Spare", "-", "N/A", "Ch 17").
 BARE_SPARE = re.compile(r'^\s*(?:\(?spare\)?|spr|spares|-+|—|–|\.+|x|hole|n/?a|none|empty|unused|tbd|tbc|open|free|'
                         r'not used|nc|n/c|ch\.? ?\d+|channel ?\d+|input ?\d+|in ?\d+|\d+|'
-                        r'(?:spare|spr)\.? ?#?\d{1,3})\s*$', re.I)          # "Spare 1" is a spare line too
+                        r'(?:spare|spr)\.? ?#?\d{1,3})\s*$', re.I)
 
 
-# "Kit spares", "Generic spares": a line of spare gear on the list, not an input.
 SPARE_GEAR = re.compile(r'^\s*(?:[\w.-]+ )?spares\s*$', re.I)
 
 
@@ -276,12 +260,8 @@ def is_bare_spare(name):
     return not (name or '').strip() or BARE_SPARE.match(name) is not None or SPARE_GEAR.match(name) is not None
 
 
-# Layer 1: input-list context. (category, regex on the normalised name, confidence)
 LIST_RULES = [
-    # an effect return: "Acu 1 Return", "Plate Rtn" (refined to reverb/delay/modulation below);
-    # a video or stream return is media, handled by MEDIA_WORDS in _rule_category
     ('fx_any', r'\b(return|rtn|ret|fx rt)\b', 0.85),
-    # a mic'd room on a stage input list ("Room", "Drum Room", "Room L"), not a reverb return
     ('overheads', r'^(drum |kit |d )?(room|rm|rooms|amb room|vibe|trash|crush|front of kit|fok|kit mic)( (l|r|sl|sr|mic|mics|\d))?$', 0.75),
     ('overheads', r'^vp ?88\b', 0.7),
     ('overheads', r'^(cymbals?|cymb\w*|cym|crash|china|splash)( (l|r|sl|sr|\d))?$', 0.8),
@@ -292,7 +272,6 @@ LIST_RULES = [
     ('horns', r'\b(tpt|trpt|trp|tbn|tbone|bari sax|alto sax|tenor sax|sax\w*|flugel\w*|clarinet|oboe|bassoon|tuba)\b', 0.85),
     ('hand_perc', r'\b(steel ?(pan|drums?)|agogo|guiro|cabasa|claves?|triangle|cowbell|wood ?block|udu|bodhran|tabla|'
                   r'stomp ?(box|board)?|tap (shoes|dance|board)|body perc\w*|bongos?|congas?|timbales?)\b', 0.85),
-    # guitar and amp models: "Jazzmaster", "AC30", "Vox AC30" (before the vocal rules see "vox")
     ('electric_guitar', r'\b(strat|tele|telecaster|jazzmaster|jaguar|les ?paul|gretsch|rickenbacker|ac ?(15|30)|twin|'
                         r'deluxe|princeton|jcm\w*|plexi|marshall|mesa|orange amp|fender|vox ac ?\d+|kemper|helix|'
                         r'axe ?fx|quad ?cortex)\b', 0.85),
@@ -306,7 +285,6 @@ LIST_RULES = [
                    r'teaching|panel(ist)?|moderator|speech|spch|keynote|officiant|lav|lapel|narrator|narration|q ?a|q a mic)\b', 0.85),
     ('tracks_music', r'\b(ableton|backing tracks?|stems?|loops|multitrack|playback|pb rig|mainstage tracks|dj|turntables?|'
                      r'decks?|cdjs?)\b', 0.85),
-    # "PB", "PB L", "PB 2": the band's playback rig (taxonomy example "PB 1"); walk-in music says so (media rule)
     ('tracks_music', r'^(pb|pbk|p b)( \d+| [lr]| st)?$', 0.85),
     ('media_playback', r'\b(walk ?in|walk ?out|walkin|pre ?show|preshow|break music|house music|spotify|ipod|iphone|'
                        r'laptop|computer|video|vid|media|propresenter|pro presenter|resolume|qlab|playout|announcements?|'
@@ -318,10 +296,8 @@ LIST_RULES = [
 LIST_RULES = [(c, re.compile(rx), p) for c, rx, p in LIST_RULES]
 MEDIA_WORDS = re.compile(r'\b(video|vid|stream|zoom|teams|webex|media|laptop|computer|ipad|iphone|ipod|propresenter)\b')
 STEM_WORDS = re.compile(r'\b(tracks?|trax|trx|stems?|loops?|backing|multitrack|ableton)\b')
-# Words that make a channel a control or comms signal whatever else its name says.
 CONTROL_WORDS = re.compile(r'\b(tb|talkback|talk|click|clk|cues?|guide|smpte|ltc|timecode|trig|trigger|tg|comms?|iem)\b')
 
-# "JORDAN", "Robin 1", "Casey (C)", "Drew (SL)": a capitalised word, maybe a number or a position
 PERSON_ONLY = re.compile(r"^[A-Z][A-Za-z'’]{1,14}(?:\s+\d)?(?:\s*\((?:[A-Z]{1,3}|[A-Za-z]+)\))?$")
 NOT_A_NAME = {'mic', 'mics', 'line', 'input', 'spare', 'aux', 'fx', 'misc', 'other', 'extra', 'new', 'test', 'di', 'xlr',
               'rf', 'wireless', 'stereo', 'mono', 'opt', 'option', 'tbd', 'tba', 'channel', 'sub', 'main', 'mix'}
@@ -346,14 +322,12 @@ def template_category(n, stereo=False):
             continue
         if rx.search(n):
             if cat == 'fx_reverb' and only == 'stereo':
-                return None        # list context: a stereo "Room" is a room mic pair (LIST_RULES)
+                return None
             return 'other' if cat == 'utility' else cat
     return None
 
 
-# Template rules that are too loose on input-list names, checked before trusting a template hit.
 WEAK_TEMPLATE = {
-    # "^\d+ [a-z]+$" in vocal_generic ("2 mics"); "\bsing\b"; bare "amp" without a guitar word
     'vocal_generic': re.compile(r'^\d+ [a-z]+$'),
 }
 
@@ -394,19 +368,19 @@ def _post(cat, p, why, n, mic):
     if cat == 'snare_top' and re.search(r'\b(bot|btm|bottom|under)\b', n):
         return 'snare_bottom', p, why + ' + bottom'
     if cat == 'kick_in' and re.search(r'\bsub\b', n):
-        return 'kick_sub', p, why + ' + sub'              # "Kik Sub"
+        return 'kick_sub', p, why + ' + sub'
     if cat == 'kick_in' and re.search(r'\b(out|outside|front|reso)\b', n):
         return 'kick_out', p, why + ' + out'
     if cat in ('bass_di', 'bass_amp') and re.search(r'\b(piano|pno|grand)\b', n):
-        return 'piano', p, why + ' + piano'               # "Upright Pno"
+        return 'piano', p, why + ' + piano'
     if cat == 'bass_di' and re.search(r'\b(amp|cab|mic|dirty|drive|dist|fuzz)\b', n):
-        return 'bass_amp', p, why + ' + amp'              # "Bass Cab"
+        return 'bass_amp', p, why + ' + amp'
     return cat, p, why
 
 
 GROUP_OF = None
-PERSON_DASH = re.compile(r"^\s*([A-Z][A-Za-z'’]{1,14})\s*[-–:]\s+(.+?)\s*$")       # "Tom - Vox", "Kim: BGV"
-DASH_PERSON = re.compile(r"^\s*(.+?)\s+[-–]\s+([A-Z][A-Za-z'’]{1,14})\s*$")        # "Vox - Tom"
+PERSON_DASH = re.compile(r"^\s*([A-Z][A-Za-z'’]{1,14})\s*[-–:]\s+(.+?)\s*$")
+DASH_PERSON = re.compile(r"^\s*(.+?)\s+[-–]\s+([A-Z][A-Za-z'’]{1,14})\s*$")
 
 
 def _group(cat):
@@ -456,12 +430,11 @@ def _rule_category(name, mic='', section=None, stereo=False, artist=None):
     n = normalise(raw)
     if not n:
         return 'other', 0.0, 'empty'
-    # "Spare Vox", "Spare DI": a patched spare. Classify what it is a spare of.
     m = re.match(r'^(spare|spr|backup|bkup|back up)\s+(.+)$', n)
     if m and not is_bare_spare(m.group(2)):
         cat, p, why = rule_category(m.group(2), mic, section, stereo, artist)
         if cat == 'lead_vocal':
-            cat = 'vocal_generic'      # a spare vocal is not the lead channel
+            cat = 'vocal_generic'
         return cat, p * 0.95, 'spare of: ' + why
     toks = artist_tokens(artist)
     vocalish = re.search(r'\b(vox|vocals?|voc|vx|mic|rf|lv|sing\w*|main)\b', n) is not None
@@ -475,12 +448,12 @@ def _rule_category(name, mic='', section=None, stereo=False, artist=None):
             if control or not rx.search(n):
                 continue
             if media:
-                return 'media_playback', 0.8, 'list rule (media return)'   # "Video Rtn", "Stream Rtn"
+                return 'media_playback', 0.8, 'list rule (media return)'
             return refine('fx_return', n), p, 'list rule (return)'
         if control and cat in ('media_playback', 'speech_mic', 'tracks_music'):
-            continue                   # "Video TB", "Host Click": the control word decides (template rules)
+            continue
         if cat == 'media_playback' and STEM_WORDS.search(n):
-            continue                   # "Laptop tracks" is backing tracks, not walk-in music
+            continue
         if rx.search(n):
             return cat, p, 'list rule'
     cat = template_category(n, stereo)
@@ -496,8 +469,6 @@ def _rule_category(name, mic='', section=None, stereo=False, artist=None):
     if coarse == 'spare':
         return 'other', p, 'spare'
     if coarse == 'other':
-        # a channel named only for a person ("JORDAN", "Robin 1", "Casey (C)") is that person's vocal mic
-        # on almost every list; below 0.6 so the classifier still gets a say
         if PERSON_ONLY.match(raw.strip()) and n.split()[0] not in NOT_A_NAME:
             return 'vocal_generic', 0.5, 'person name = vocal'
         return 'other', p, 'no rule'

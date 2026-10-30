@@ -30,10 +30,10 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-import sesproc  # noqa: E402  (processing keys + put_comp / put_mustard writers)
+import sesproc
 
 TEMPLATES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'templates.json')
 _T = None
@@ -95,7 +95,6 @@ KNEE_NAMES = {0: 'hard', 1: 'medium', 2: 'soft'}
 COMP_MODES = {0: 'comp', 1: 'multiband', 2: 'deesser'}
 DYN2_MODES = {0: 'gate', 1: 'ducker', 2: 'comp'}
 MUSTARD_MODELS = {v: k for k, v in sesproc.MC_MODEL.items()}
-# Mustard goes to the channels that gain most from it first; a lower number wins, then surface order.
 MUSTARD_PRIORITY = {'lead_vocal': 0, 'vocal_generic': 1, 'snare_top': 2, 'kick_in': 3, 'bass_di': 3,
                     'acoustic_guitar': 4, 'folk_strings': 5, 'strings': 5, 'drum_crotch': 6}
 
@@ -198,7 +197,7 @@ def write_template(ses, ch, tpl, stereo, mustard):
             kw.update(ratio=mc.get('ratio'), atk_ms=mc.get('attack_ms'), rel_ms=mc.get('release_ms'),
                       knee=mc.get('knee'))
         elif model == 'optical':
-            kw.update(ratio=min(_num(mc.get('ratio'), 3.0), 3.0))       # the Optical ratio stops at 3:1
+            kw.update(ratio=min(_num(mc.get('ratio'), 3.0), 3.0))
         elif model == 'vca':
             kw.update(ratio=mc.get('ratio'))
         elif model == 'levamp':
@@ -255,20 +254,18 @@ def apply(ses, plan, console, processing='templates', role='foh'):
         rows[p['n']] = {'notes': [], 'written': {}, 'source': src, 'mustard': None}
     mplan, used = mustard_plan(chans, console.get('mustard_cap') if has_mustard else 0)
     if not has_mustard:
-        mplan = {n: None for n in mplan}       # SD consoles: no Mustard and no fallback, the SD template stands
+        mplan = {n: None for n in mplan}
     for (n, cat, st, tpl), p in zip(chans, plan):
         if tpl is None:
             continue
         w = write_template(ses, p['idx'], tpl, st, mplan.get(n))
         rows[n].update(notes=w.notes, written=w.written, mustard=mplan.get(n))
     if has_mustard:
-        # The SD/M strip buttons only switch the view, saved per bank. Mustard channels open on the M view.
         for p in plan:
             ses.set_strip_view(p['idx'], ses.VIEW_MUSTARD if rows[p['n']]['mustard'] == 'on' else ses.VIEW_SD)
     return rows, used
 
 
-# ---------------------------------------------------------------- read back (display units)
 def _r(x, nd=1):
     return round(float(x), nd)
 

@@ -17,7 +17,6 @@ def fs(db):
     return clamp(db, -60.0, 0.0)
 
 
-# DiGiCo keys (module, param, band). EQ UI band n lives at band byte 4 - n.
 TRIM, POLARITY = (0x01, 0x01, 0), (0x01, 0x02, 0)
 DELAY, DELAY_ON = (0x09, 0x08, 0), (0x09, 0x07, 0)
 LPF_IN, LPF_F, HPF_IN, HPF_F = (0x07, 0x03, 0), (0x07, 0x05, 0), (0x07, 0x03, 1), (0x07, 0x05, 1)
@@ -29,8 +28,6 @@ C_MODE, C_IN, C_THR, C_KNEE, C_ATK, C_REL, C_RATIO, C_MK, C_AUTO = (
 G_MODE, G_IN, G_THR, G_ATK, G_REL, G_HOLD, G_RANGE = 0x0b, 0x02, 0x0e, 0x11, 0x12, 0x13, 0x0a
 PAN = (0x0d, 0x23, 0)
 KNEE = {'hard': 0.0, 'medium': 1.0, 'soft': 2.0}
-# The strip shows each filter's -3 dB cutoff; the file stores the 24 dB/oct design frequency.
-# Measured in the V2242 editor: shown HPF = stored x 1.25, shown LPF = stored x 0.8.
 HPF_SHOWN_PER_STORED, LPF_SHOWN_PER_STORED = 1.25, 0.8
 
 
@@ -60,7 +57,7 @@ def put_comp(w, thr, ratio, atk_ms, rel_ms, knee, makeup, to_fs=None):
     to_fs = to_fs or fs
     w.put((0x05, C_MODE, 0), 0.0)
     w.put((0x05, C_IN, 0), 1.0)
-    for band in (0, 1, 2):          # the editor mirrors the comp threshold into all three records
+    for band in (0, 1, 2):
         w.put((0x05, C_THR, band), to_fs(thr))
     w.put((0x05, C_RATIO, 0), clamp(ratio, 1.0, 50.0))
     w.put((0x05, C_ATK, 0), clamp(atk_ms, 0.02, 100.0) / 1000.0)
@@ -69,13 +66,12 @@ def put_comp(w, thr, ratio, atk_ms, rel_ms, knee, makeup, to_fs=None):
     w.put((0x05, C_MK, 0), clamp(makeup, 0.0, 40.0))
 
 
-# Mustard compressor (module 0x1d). Keys from the decoder captures (FORMAT.md, mustard.ses).
 MC = 0x1d
 MC_MODEL = {'classic': 0.0, 'vca': 3.0, 'fet': 4.0, 'optical': 5.0, 'levamp': 8.0}
 MC_ON, MC_TYPE, MC_MIX, MC_THR, MC_KNEE, MC_ATK, MC_REL, MC_RATIO, MC_OUT = (
     0x02, 0x0b, 0x47, 0x0e, 0x0f, 0x11, 0x12, 0x10, 0x09)
 MC_FET_IN, MC_FET_RATIO, MC_FET_OUT = 0x41, 0x4a, 0x4d
-FET_IN_DEFAULT = -20.0    # DiGiCo FET input default
+FET_IN_DEFAULT = -20.0
 
 
 def put_mustard(w, model, thr=None, ratio=None, atk_ms=None, rel_ms=None, knee=None, out=None, mix=1.0, to_fs=None):

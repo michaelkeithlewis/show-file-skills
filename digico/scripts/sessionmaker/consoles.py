@@ -33,15 +33,14 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULTS = (os.environ.get('SM_BASELINES') or os.path.join(ROOT, 'baselines'))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
 FACTS = os.path.join(DEFAULTS, 'console_facts.json')
 BASELINE_RE = re.compile(r'^([a-z0-9]+)_v(\d{3,5})\.ses$')
 
-# key, name, family, default inputs (fallback), max inputs, Mustard, Spice Rack slots, note for the UI
 _MODELS = [
-    ('q112', 'Quantum 112', 'Q1', 48, 80, True, 6, ''),       # 80: console-proven, see _MAX_VERIFIED
+    ('q112', 'Quantum 112', 'Q1', 48, 80, True, 6, ''),
     ('q225', 'Quantum 225', 'Q2', 48, 72, True, 6, ''),
     ('q225p', 'Quantum 225 Pulse', 'Q2', 48, 96, True, 6, 'Needs the Pulse extension on the console (V1742 or newer).'),
     ('q338', 'Quantum 326/338', 'Q3', 48, 128, True, 8, ''),
@@ -52,26 +51,17 @@ _MODELS = [
     ('sd5', 'SD5', 'SD5', 108, 124, False, 0, ''),
     ('sd5cs', 'SD5 CS', 'SD5', 108, 124, False, 0, ''),
     ('sd7', 'SD7', 'SD7', 72, 253, False, 0, 'Theatre and Broadcast extensions use the same file'),
-    ('sd8', 'SD8', 'SD8', 60, 120, False, 0, ''),       # 120: editor-proven, see _MAX_VERIFIED
+    ('sd8', 'SD8', 'SD8', 60, 120, False, 0, ''),
     ('sd9', 'SD9', 'SD9', 48, 96, False, 0, ''),
     ('sd10', 'SD10', 'SD8', 96, 96, False, 0, ''),
     ('sd11', 'SD11 / SD11i', 'SD9', 32, 32, False, 0, ''),
     ('sd12', 'SD12', 'SDC', 48, 72, False, 0, 'SD12-96 uses the same file'),
 ]
-# max_inputs proven in the console's own editor. SD8: DiGiCo lists 60, but the SD8 editors V1455, V1619 and V2242
-# booted 120-input sessions built on their own defaults and re-saved all 120 names,
-# the decode notes (not published), and a real 65-input SD8 show loads in full. The default session has 60.
-# Q112: a session with 80 inputs, written by bytes, loaded on a Quantum 112 (V2242); the same with 82 was refused on
-# load ("console not supported"). Real Q112 shows run 58 and 71 inputs.
 _MAX_VERIFIED = {'sd8', 'q112'}
-MUSTARD_CAP_Q225 = 24          # editor-verified (README: the editor turns Mustard off past 24 instances)
-MUSTARD_CAP_DEFAULT = 24       # other Quantums: unverified, see module docstring
-# DiGiCo's V1742 release notes (Pulse table): Q338 36, Q338 Pulse 48, Q225 Pulse 36 Mustard channels.
-# V2242.4 release notes: Q112 20 (Q112 Pulse 24). No Q112 session numbers a Mustard channel above 19 (cb +86).
+MUSTARD_CAP_Q225 = 24
+MUSTARD_CAP_DEFAULT = 24
 MUSTARD_CAP_SPEC = {'q112': 20, 'q225': MUSTARD_CAP_Q225, 'q225p': 36, 'q338': 36, 'q338p': 48}
 
-# Builds whose generated output has been loaded in the real editor (Quantum 225 V2242: the relayout candidates
-# s01-s13 and v2-v7 all loaded in the offline editor).
 _TESTED = {('q225', 2242)}
 
 CONSOLES = {}
@@ -91,8 +81,8 @@ def _discover():
     return out
 
 
-_readable_cache = {}       # path -> ((size, mtime), ok)
-UNREADABLE = {}            # key -> {build: why}, versions left out of the table (for logs and the selftest)
+_readable_cache = {}
+UNREADABLE = {}
 
 
 def _readable(path):
@@ -114,13 +104,13 @@ def _readable(path):
             d = f.read()
         recs = layout.input_group(layout.Container(d).sec(201)[1])[3]
         ok = bool(recs) and len(recs) == _header_inputs(path) and all(r[2] in CHREC_HL for r in recs)
-    except Exception:  # noqa: BLE001 - a half-written or foreign file is simply not offered
+    except Exception:
         ok = False
     _readable_cache[path] = (sig, ok)
     return ok
 
 
-_room_cache = {}           # path -> ((size, mtime), room)
+_room_cache = {}
 
 
 def _engine_room(path):
@@ -140,7 +130,7 @@ def _engine_room(path):
         with open(path, 'rb') as f:
             r = layout.engine_room(f.read())
         room = r['room'] if r else None
-    except Exception:  # noqa: BLE001 - unreadable files are already left out by _readable()
+    except Exception:
         room = None
     _room_cache[path] = (sig, room)
     return room

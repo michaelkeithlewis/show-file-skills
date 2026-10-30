@@ -57,23 +57,18 @@ CB_HL = (0x50, 0x58, 0x78, 0x79)
 GROUP_HDR = b'\xca\x00\x6c\x00'
 HDR_AUX, HDR_GRP, HDR_MASTER = 0x36, 0x46, 0x5c
 HDR_MTX_OUT, HDR_CG, HDR_MTX_IN = 0x93, 0x94, 0x96
-PER_AUX = (0x02, 0x21)         # modules whose slots run once per aux (band = aux internal index)
-PER_GRP = (0x03,)              # modules whose slots run once per group
-FIXED = {(0x21, 0xff), (0x21, 0xe3)}   # fixed slots inside per-bus modules
-BAND_MAJOR = (0x02,)           # aux sends run aux by aux; group assigns (TB In) run param by param
+PER_AUX = (0x02, 0x21)
+PER_GRP = (0x03,)
+FIXED = {(0x21, 0xff), (0x21, 0xe3)}
+BAND_MAJOR = (0x02,)
 KEY_ROUTE = (0x05, 0x14, 0)
-# slots that hold a raw channel id (00 00 idx type): (object type or None for any, module, param)
 REF_SLOTS = [(None, 0x01, 0x00), (None, 0x05, 0x14), (None, 0x05, 0x16), (T_SOLO, 0x17, 0x00),
              (0x0e, 0x15, 0x00), (T_MTX_IN, 0x01, 0x00), (0x18, 0x1f, 0x16)] + \
             [(t, 0x12, 0x00) for t in range(0x4d, 0x55)]
 DEFAULT_NAME = re.compile(r'^(Aux|Grp) \d+( R)?$')
-# Session Structure 'busses' budget per console (mono equivalents, 48 kHz): used + the dialog's spare counter in
-# the V2242 editor (decode notes, not published). The editor loads up to budget + 4 and drops the layout (default session)
-# from budget + 5. The older editors tested load to the same point (Q225 V1455/V1619 and SD12 V1619: 42 kept, 43
-# dropped; Q338 V2025 drops 74), so the budget is applied at every build. 96 kHz budgets are not measured.
 BUS_LIMIT = {'q112': 26, 'q225': 38, 'q225p': 50, 'q338': 66, 'q338p': 74, 'q5': 130, 'q7': 130, 'q852': 194, 'sd5': 124, 'sd5cs': 58,
              'sd7': 124, 'sd8': 50, 'sd9': 50, 'sd10': 66, 'sd11': 26, 'sd12': 38}
-BUS_LIMIT_BUILD = 2242          # build the budgets were read at
+BUS_LIMIT_BUILD = 2242
 FAMILY_CONSOLES = {'Q1': ['q112'], 'Q2': ['q225', 'q225p'], 'Q3': ['q338', 'q338p'], 'Q5': ['q5'], 'SDQ': ['q7'], 'Q8': ['q852'],
                    'SD5': ['sd5', 'sd5cs'], 'SD7': ['sd7'], 'SD8': ['sd8', 'sd10'], 'SD9': ['sd9', 'sd11'],
                    'SDC': ['sd12']}
@@ -95,7 +90,6 @@ u16 = lambda b, o: struct.unpack_from('<H', b, o)[0]
 u32 = lambda b, o: struct.unpack_from('<I', b, o)[0]
 
 
-# ---------------------------------------------------------------------------- section 201
 def groups(s):
     """{type: [header offset, first record, end, [record bytearrays]]} for the well-formed groups of section 201."""
     s, out = bytes(s), {}
@@ -155,7 +149,6 @@ def bus_lists(c):
     return out, g
 
 
-# ---------------------------------------------------------------------------- describe
 def describe(data):
     """Bus layout of a session: counts, surface lists (internal index, width, name) and the header counts."""
     c = Container(data)
@@ -175,7 +168,6 @@ def describe(data):
     }
 
 
-# ---------------------------------------------------------------------------- planning
 def _plan(old, kind, n_mono, n_stereo, new_id, new_rid):
     """New surface list for one bus kind. Keeps the first n of each width (the master always), adds the rest.
     new_id() / new_rid() hand out internal ids for added buses and their right sides."""
@@ -194,7 +186,7 @@ def _plan(old, kind, n_mono, n_stereo, new_id, new_rid):
     mono_first = [x.width for x in old] == sorted(x.width for x in old)
     if mono_first:
         lst = keep_m + new_m + keep_s + new_s
-    else:   # custom order: keep it, new mono after the last kept mono, new stereo at the end
+    else:
         kept = [x for x in old if any(x is y for y in keep_m + keep_s)]
         last_m = max((i for i, x in enumerate(kept) if x.width == 1), default=-1)
         lst = kept[:last_m + 1] + new_m + kept[last_m + 1:] + new_s
@@ -206,7 +198,6 @@ def _plan(old, kind, n_mono, n_stereo, new_id, new_rid):
     return lst, removed
 
 
-# ---------------------------------------------------------------------------- per-bus slot runs
 def _reband(slots, module, old, new):
     """slots: list of 8-byte slots of one record. Rebuild the per-bus runs for bands old -> new (surface order)."""
     order = []
@@ -228,7 +219,7 @@ def _reband(slots, module, old, new):
     param_major = [(s[2], s[0]) for s in body] == [(b, p) for p in per for b in old]
     if not (band_major or param_major):
         raise ValueError('module %02x: per-bus slots in an unknown order' % module)
-    if band_major and param_major:          # one bus or one param: both orders read the same
+    if band_major and param_major:
         band_major = module in BAND_MAJOR
     have = {(s[0], s[2]): s for s in body}
     dflt = {p: Counter(bytes(have[(p, b)][3:8]) for b in old).most_common(1)[0][0] for p in per}
@@ -315,7 +306,7 @@ def _mask_obj(o):
 
 
 STEREO_SLOTS = {(0x08, 0xe8, 0): (1.0, 2.0, 1.0), (0x08, 0xe8, 1): (1.0, 2.0, 1.0), (0x0e, 0xe8, 0): (1.0, 2.0, 1.0),
-                (0x1d, 0x3f, 0): (0.0, 1.0, 1.0)}   # (mono, stereo left, right side); 1d only on Quantum
+                (0x1d, 0x3f, 0): (0.0, 1.0, 1.0)}
 
 
 def _convert(o, width):
@@ -348,7 +339,6 @@ def _pick_template(objs):
     return next(o for o in objs if m(o) == best)
 
 
-# ---------------------------------------------------------------------------- banks
 def _bank_kind(b):
     kinds = {b[0x24 + 2 * j] for j in range(12)} - {0}
     if kinds == {T_AUX}:
@@ -362,7 +352,7 @@ def _make_banks(tmpl, buses, prefix, kind_type):
     out = []
     filled = next(j for j in range(12) if tmpl[0x24 + 2 * j] == kind_type)
     lock = bytes(tmpl[0x6b + 16 * filled:0x6b + 16 * (filled + 1)])
-    view = tmpl[0x12b + filled]   # +0x12b: which of the slot's locked encoder rows (+0x6b) are locked; the SD / M view is +0x15d
+    view = tmpl[0x12b + filled]
     for k in range(0, len(buses), 12):
         chunk = buses[k:k + 12]
         b = bytearray(tmpl)
@@ -392,7 +382,7 @@ def _rebuild_banks(c, new_aux, new_grp):
     """Rebuild every run of pure aux / pure group banks. Returns old key -> [new keys] for the 212 remap."""
     s243 = c.sec(243)[1]
     bl, btail = split_banks(s243)
-    out, origin = [], []          # origin: old key for kept banks, ('new', old key of the run) for added ones
+    out, origin = [], []
     k = 0
     while k < len(bl):
         kind = _bank_kind(bl[k])
@@ -403,20 +393,19 @@ def _rebuild_banks(c, new_aux, new_grp):
             continue
         run = [k]
         while k + len(run) < len(bl) and _bank_kind(bl[k + len(run)]) == kind and \
-                bl[k + len(run)][0x23] != bl[k][0x23]:      # a bank that starts over is a second copy
+                bl[k + len(run)][0x23] != bl[k][0x23]:
             run.append(k + len(run))
         lst = new_aux if kind == 'aux' else new_grp
         made = _make_banks(bl[k], lst, 'Aux' if kind == 'aux' else 'Grp', T_AUX if kind == 'aux' else T_GROUP)
         for i, b in enumerate(made):
             if i < len(run):
-                b[0x3b:0x6b] = bl[run[i]][0x3b:0x6b]        # keep the old heap words (save noise anyway)
+                b[0x3b:0x6b] = bl[run[i]][0x3b:0x6b]
                 b[0x1a:0x20] = bl[run[i]][0x1a:0x20]
                 origin.append(run[i])
             else:
                 origin.append(('new', run[-1]))
             out.append(b)
         k += len(run)
-    # strips of other banks that show a removed bus become empty
     aux_set, grp_set = {x.id & 0xff for x in new_aux}, {x.id & 0xff for x in new_grp}
     for b, org in zip(out, origin):
         if isinstance(org, tuple) or _bank_kind(bl[org]) is not None:
@@ -427,8 +416,6 @@ def _rebuild_banks(c, new_aux, new_grp):
                 b[0x23 + 2 * j] = b[0x24 + 2 * j] = 0
                 b[0x6b + 16 * j:0x6b + 16 * (j + 1)] = b'\0' * 16
                 b[0x12b + j] = 0
-    # locked rows (4 per strip: param, module, band, 0) that show a send to a removed bus point at the first buses
-    # that are left, the way the editor re-points them (rows 1-2 of an input strip show Aux 1 and Aux 2 sends)
     for b in out:
         for j in range(12):
             for mods, bands in ((PER_AUX, [x.id & 0xff for x in new_aux]), (PER_GRP, [x.id & 0xff for x in new_grp])):
@@ -439,8 +426,6 @@ def _rebuild_banks(c, new_aux, new_grp):
                         if b[q + 2] not in bands:
                             b[q + 2] = bands[k] if k < len(bands) else 0
                         k += 1
-    # keys and overview slots: kept banks move by (banks added before them - banks removed before them),
-    # an added bank takes the slot after the bank before it
     old_slots = [bank_slot(b) for b in bl]
     kept = {o for o in origin if not isinstance(o, tuple)}
     added, prev = 0, None
@@ -485,8 +470,6 @@ def _remap_212(t212, origin, n_old):
     for u, j in slots:
         tabs[u][j] = 0xffff
     used = {(u, j) for u, tab in enumerate(tabs) for j, v in enumerate(tab) if v != 0xffff}
-    # a fader-section table is paged in layers of 6; each table uses the first few positions of every page
-    # (Q338 master section: 4, i.e. 0-3, 6-9, 12; Q5 inputs: 5). Extra banks continue the pattern.
     top = {u: max([3] + [j % 6 for j, v in enumerate(tab) if v != 0xffff]) for u, tab in enumerate(_tables(t))}
     m = len({u for u, _ in slots}) or 1
     while slots and len(slots) < len(place):
@@ -505,7 +488,6 @@ def _remap_212(t212, origin, n_old):
     return t
 
 
-# ---------------------------------------------------------------------------- engine channels
 def _engine_plan(c, g, new_aux, new_grp):
     """{record id: EngineChannel} for buses, plus a delta for inputs/TB In on SD models. None on V1455 files."""
     recs = g[T_AUX][3] + g[T_GROUP][3]
@@ -557,8 +539,7 @@ def _old_bus_width(g):
     return sum(r[41] for r in g[T_AUX][3]) + sum(r[41] for r in g[T_GROUP][3])
 
 
-SD_SOLO_TOP = 126   # SD: solo 2 sits at min(8, 126 - total aux + group width); 138 of 138 SD files, and the
-                    # V2242 SD5/SD7 editors moved it to 2/3/4 for widths 124/123/122 (decode notes, not published)
+SD_SOLO_TOP = 126
 
 
 def _sd_solo(g, width):
@@ -573,7 +554,6 @@ def _sd_solo(g, width):
     return [0, min(8, SD_SOLO_TOP - width)]
 
 
-# ---------------------------------------------------------------------------- the operation
 def snapshot_count(c):
     """Snapshot object lists in section 210 ('d3 00' u32 'd5 00 01 00'). The default sessions have none."""
     try:
@@ -603,7 +583,7 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
         raise ValueError('a session needs at least one aux (the send layout is copied from the existing ones)')
     has_master = any(x.master for x in b['grp'])
     if has_master and grp_stereo < 1:
-        grp_stereo = 1           # the master stereo group cannot be removed (the editor's minimum is 1)
+        grp_stereo = 1
     if u16(c.head, HDR_GRP + 4):
         raise ValueError('LCR groups are not supported')
     for want, typ, name in ((matrix, T_MTX_OUT, 'matrix outputs'), (cgs, T_CG, 'control groups')):
@@ -644,7 +624,6 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
     new_grp_b = [x.id & 0xff for x in new_grp]
     dead = {x.id for x in rm_aux + rm_grp} | {x.rid for x in rm_aux + rm_grp if x.rid is not None}
 
-    # ---- 201 records
     eng, in_shift, solo_shift = _engine_plan(c, g, new_aux, new_grp)
     tmpl_rec = {}
     for kind, lst in (('aux', b['aux']), ('grp', b['grp'])):
@@ -678,7 +657,7 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
     s201 = bytearray(c.sec(201)[1])
     if T_RIGHT not in g:
         raise ValueError('section 201 has no Busses group')
-    for typ in sorted(new_recs, key=lambda t: -g[t][0]):           # back to front keeps offsets valid
+    for typ in sorted(new_recs, key=lambda t: -g[t][0]):
         q, p0, p1, _ = g[typ]
         s201[p0:p1] = b''.join(new_recs[typ])
         struct.pack_into('<I', s201, q + 0x70, len(new_recs[typ]))
@@ -704,11 +683,10 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
                 p += len(r)
     c.sec(201)[1] = s201
 
-    # ---- 211 objects
     rules_aux = {m: (old_aux_b, new_aux_b) for m in PER_AUX}
     rules_grp = {m: (old_grp_b, new_grp_b) for m in PER_GRP}
     rules = {**rules_aux, **rules_grp}
-    kept_names = {}             # kept buses whose default name follows a new surface number
+    kept_names = {}
     for x in new_aux + new_grp:
         if not x.new and x.name != rec_name(x.rec):
             kept_names[x.id] = x.name
@@ -750,13 +728,12 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
             _obj_name(o, x.name + (' R' if right else ''))
             if x.width == 2:
                 _set_raw(o, *KEY_ROUTE, b'\0\0' + struct.pack('<H', x.id if right else x.rid))
-            _set_raw(o, 0x0e, 0xfe, 0, b'\0\0\0\0')           # no output patch on a new bus
+            _set_raw(o, 0x0e, 0xfe, 0, b'\0\0\0\0')
             out.append(o)
     out.sort(key=obj_id)
     head = bytearray(s211[:6])
     struct.pack_into('<I', head, 2, len(out))
 
-    # ---- 243 banks, 212 placement (and its copy in the 211 tail)
     origin, n_old = _rebuild_banks(c, new_aux, new_grp)
     t212 = c.sec(212)[1]
     t212n = _remap_212(t212, origin, n_old)
@@ -767,7 +744,6 @@ def restructure(data, aux_mono, aux_stereo, grp_mono, grp_stereo, matrix=None, c
     c.sec(212)[1] = t212n
     c.sec(211)[1] = head + b''.join(out) + tail
 
-    # ---- header counts
     for off, v in ((HDR_AUX, aux_mono), (HDR_AUX + 2, aux_stereo), (HDR_GRP, grp_mono), (HDR_GRP + 2, grp_stereo)):
         struct.pack_into('<H', c.head, off, v)
     if report is not None:
@@ -797,7 +773,6 @@ def _tb_follows(g):
     return struct.unpack_from('<h', tb[0], 84)[0] == first + sum(r[41] for r in ins)
 
 
-# ---------------------------------------------------------------------------- fallbacks (pristine defaults)
 FAMILY_KEY = {'Q1': 'q112', 'Q2': 'q225', 'Q3': 'q338', 'Q5': 'q5', 'SDQ': 'q7', 'Q8': 'q852', 'SD5': 'sd5',
               'SD7': 'sd7', 'SD8': 'sd8', 'SD9': 'sd9', 'SDC': 'sd12'}
 DEFAULTS = os.environ.get('SM_BASELINES') or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'baselines')

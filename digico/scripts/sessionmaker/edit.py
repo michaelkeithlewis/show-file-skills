@@ -78,19 +78,19 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-from ses import Channel, Record, Session  # noqa: E402
-import sesproc  # noqa: E402
+from ses import Channel, Record, Session
+import sesproc
 
-from . import buses as B  # noqa: E402
-from . import consoles, layout, process, taxonomy, validate  # noqa: E402
-from . import fx as FX  # noqa: E402
-from . import inspect as I  # noqa: E402
-from . import options as O  # noqa: E402
-from . import patch as P  # noqa: E402
-from . import sends as S  # noqa: E402
+from . import buses as B
+from . import consoles, layout, process, taxonomy, validate
+from . import fx as FX
+from . import inspect as I
+from . import options as O
+from . import patch as P
+from . import sends as S
 
 NAME_MAX = 8
 
@@ -108,7 +108,6 @@ def _sentence(e):
     return s if s.endswith(('.', '!', '?')) else s + '.'
 
 
-# ---------------------------------------------------------------------------------------------------- the session
 _KEYS = None
 
 
@@ -129,7 +128,7 @@ class LiveSession(Session):
     library too), about 1.2 s on a 28 MB show; this takes a fraction of that. records holds the live input and Spice
     Rack records only; _name_bus swaps in the copies a bus rename needs."""
 
-    def __init__(self, data):  # noqa: D107 - same contract as Session, bytes only
+    def __init__(self, data):
         self.d = bytearray(data)
         self.keys = _keys_json()
         self._parse()
@@ -137,7 +136,7 @@ class LiveSession(Session):
     def _parse(self):
         d = self.d
         if hasattr(self, '_sends_objs'):
-            del self._sends_objs            # sends.objects() caches by file length; a move keeps the length
+            del self._sends_objs
         span = self.section_span(211)
         if span is None:
             raise Refuse('This session has no channel data, so it can not be edited.')
@@ -180,7 +179,6 @@ def _records_named(ses, names):
     return [out[p] for p in sorted(out)]
 
 
-# ---------------------------------------------------------------------------------------------------- categories
 def _group_sets():
     t = taxonomy._templates()['groups']
     g = {k: set(v) for k, v in t.items()}
@@ -229,11 +227,10 @@ def _categorize(name, stereo=False):
                 if p2 >= 0.6:
                     return c2
         return c
-    except Exception:  # noqa: BLE001 - a name the rules choke on is just 'other'
+    except Exception:
         return 'other'
 
 
-# ---------------------------------------------------------------------------------------------------- the state
 def _resolve_key(d, want=None):
     """(console key, note or None) for the file: the family code, the Pulse bit and the fixed header counts decide
     (inspect._models); `want` picks between the keys the file loads on."""
@@ -272,10 +269,9 @@ class _State:
         self.warnings = []
         self._cat = {}
         self._base = None
-        self.structural = False             # set by ops that change the layout (validate runs after them)
-        self.routing = False                # set by ops that change patch or bus routing
+        self.structural = False
+        self.routing = False
 
-    # -- bytes ----------------------------------------------------------------------------------------------------
     def data(self):
         return bytes(self.ses.d)
 
@@ -286,7 +282,6 @@ class _State:
         if text not in self.warnings:
             self.warnings.append(text)
 
-    # -- channels ---------------------------------------------------------------------------------------------------
     def numbers(self):
         return sorted(self.ses.display)
 
@@ -342,7 +337,6 @@ class _State:
     def mustard_used(self):
         return sum(self.width(n) for n in self.numbers() if self.mustard_uses(n))
 
-    # -- the console's default channel (for new channels and "is this value still the default?") -----------------
     def base(self):
         """{(module, param, band): raw 4 bytes} of a pristine input channel of this console and build (the editor's
         default session in baselines, nearest build when this one is missing), plus its master band and
@@ -371,7 +365,7 @@ class _State:
                                   'aux0': bs.auxes[0]['band'] if bs.auxes else 0,
                                   'grp_other': next((g['band'] for g in bs.groups if g['band'] != dd[S.MASTER_ID_AT]),
                                                     None), 'build': bs.version}
-                except Exception:  # noqa: BLE001 - no default: new channels stay clones, defaults stay unknown
+                except Exception:
                     self._base = False
         return self._base or None
 
@@ -387,7 +381,6 @@ class _State:
         return bytes(self.ses.d[q:q + 4]) == b['vals'][key]
 
 
-# ---------------------------------------------------------------------------------------------------- selectors
 def _ints(v, what='channel'):
     if isinstance(v, (int, float)) and not isinstance(v, bool):
         return [int(v)]
@@ -558,7 +551,6 @@ def _who(st, ns, limit=6):
     return '%d channels (%s)' % (len(ns), _nums(ns))
 
 
-# ---------------------------------------------------------------------------------------------------- reading values
 K = None
 
 
@@ -601,7 +593,7 @@ MUTE = (0x0c, 0x22, 0)
 def _edit_params(st, idx):
     """Every value the editor's inspector can change on internal channel idx, display units, with on flags."""
     k = _k()
-    g = lambda key: _get(st, idx, key)  # noqa: E731
+    g = lambda key: _get(st, idx, key)
     out = {}
     hf, lf = g(k['hpf_f']), g(k['lpf_f'])
     out['hpf'] = {'on': g(k['hpf_in']) == 1.0, 'freq': _r(hf * process.HPF_PER if hf is not None else None)}
@@ -622,14 +614,14 @@ def _edit_params(st, idx):
     out['gate'] = {'on': g(D['in']) == 1.0, 'mode': process.DYN2_MODES.get(int(mode), 'gate') if mode is not None else None,
                    'thr': _r(g(D['thr'])), 'range': _r(g(D['range'])), 'attack': _ms(g(D['atk'])),
                    'hold': _ms(g(D['hold']), 1), 'release': _ms(g(D['rel']), 1), 'ratio': _r(g(D['ratio']), 2)}
-    c = lambda p: g((0x05, p, 0))  # noqa: E731
+    c = lambda p: g((0x05, p, 0))
     cm, kn = c(sesproc.C_MODE), c(sesproc.C_KNEE)
     out['comp'] = {'on': c(sesproc.C_IN) == 1.0, 'mode': process.COMP_MODES.get(int(cm), 'comp') if cm is not None else None,
                    'thr': _r(c(sesproc.C_THR)), 'ratio': _r(c(sesproc.C_RATIO), 2), 'attack': _ms(c(sesproc.C_ATK)),
                    'release': _ms(c(sesproc.C_REL), 1), 'knee': process.KNEE_NAMES.get(int(kn), 'hard') if kn is not None
                    else None, 'makeup': _r(c(sesproc.C_MK))}
     if st.ses.has_module(sesproc.MC, idx):
-        mc = lambda p: g((sesproc.MC, p, 0))  # noqa: E731
+        mc = lambda p: g((sesproc.MC, p, 0))
         mt = mc(sesproc.MC_TYPE)
         out['mustard'] = {'on': mc(sesproc.MC_ON) == 1.0,
                           'model': process.MUSTARD_MODELS.get(mt, 'classic') if mt is not None else None,
@@ -663,7 +655,6 @@ def _views(ses):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- the model
 def _model(st):
     d = st.data()
     r = I.inspect(d)
@@ -722,7 +713,6 @@ def _snap_why(st):
                                                                             '' if st.snapshots == 1 else 's'))
 
 
-# ---------------------------------------------------------------------------------------------------- 'set'
 SET_ORDER = ('name', 'hpf', 'lpf', 'eq_on', 'eq', 'gate', 'comp', 'mustard', 'delay_ms', 'polarity', 'trim_db',
              'fader_db', 'mute', 'pan', 'view')
 ALIASES = {'threshold': 'thr', 'threshold_db': 'thr', 'thr_db': 'thr', 'attack_ms': 'attack', 'release_ms': 'release',
@@ -858,7 +848,7 @@ BAND_CENTRE = {1: 100.0, 2: 500.0, 3: 2500.0, 4: 8000.0}
 
 def _band_state(st, idx, n):
     m, bb = _k()['eq'], 4 - n
-    g = lambda f: _get(st, idx, (m[f][0], m[f][1], bb))  # noqa: E731
+    g = lambda f: _get(st, idx, (m[f][0], m[f][1], bb))
     return {'on': g('on') == 1.0, 'gain': g('gain') or 0.0, 'freq': g('freq') or BAND_CENTRE[n],
             'shape': process.SHAPE_NAMES.get(int(g('shape') or 1), 'bell')}
 
@@ -873,7 +863,7 @@ def _pick_band(st, idx, typ, freq):
                          and abs(_band_state(st, idx, 4)['gain']) >= 0.05) else 3
     if freq is None:
         return None
-    oct_ = lambda a, b: abs(math.log2(max(a, 1.0) / max(b, 1.0)))  # noqa: E731
+    oct_ = lambda a, b: abs(math.log2(max(a, 1.0) / max(b, 1.0)))
     bands = {n: _band_state(st, idx, n) for n in (1, 2, 3, 4)}
     busy = {n for n, b in bands.items() if b['on'] and abs(b['gain']) >= 0.05}
     near = sorted((oct_(bands[n]['freq'], freq), n) for n in busy if bands[n]['shape'] == 'bell')
@@ -881,7 +871,6 @@ def _pick_band(st, idx, typ, freq):
         return near[0][1]
     free = [n for n in (1, 2, 3, 4) if n not in busy]
     if not free:
-        # every band is busy: retune the nearest bell within an octave (the sentence says what it held)
         return near[0][1] if near and near[0][0] <= 1.0 else None
     return min(free, key=lambda n: (oct_(BAND_CENTRE[n], freq), n))
 
@@ -1048,7 +1037,7 @@ def _comp_from(st, n):
 
 def _write_comp(st, idx, vals):
     if 'thr' in vals:
-        for band in (0, 1, 2):          # the editor mirrors the comp threshold into all three records
+        for band in (0, 1, 2):
             if st.ses.has_slot(idx, 0x05, sesproc.C_THR, band):
                 st.ses.set(idx, 0x05, sesproc.C_THR, band, process.dbfs(vals['thr']))
     if 'ratio' in vals:
@@ -1114,7 +1103,6 @@ def _set_comp(st, ns, v):
     return ['SD comp in on %s%s.' % (_who(st, ns), (': ' + ', '.join(bits)) if bits else '')]
 
 
-# ---------------------------------------------------------------------------------------------------- Mustard
 MODEL_ALIASES = {'classic': 'classic', 'vca': 'vca', 'vintage vca': 'vca', 'vintage': 'vca', 'fet': 'fet',
                  '1176': 'fet', 'optical': 'optical', 'opto': 'optical', 'la2a': 'optical', 'la-2a': 'optical',
                  'levamp': 'levamp', 'leveling amp': 'levamp', 'levelling amp': 'levamp', 'leveler': 'levamp'}
@@ -1138,7 +1126,7 @@ def _mustard_base(st, n):
     on (its threshold, ratio and times carried over), else the category template's Mustard comp, else its SD comp
     template, else Classic -20 dB 3:1."""
     idx = st.idx(n)
-    c = lambda p: _get(st, idx, (0x05, p, 0))  # noqa: E731
+    c = lambda p: _get(st, idx, (0x05, p, 0))
     if c(sesproc.C_IN) == 1.0 and c(sesproc.C_THR) is not None:
         return {'model': 'classic', 'thr': c(sesproc.C_THR), 'ratio': sesproc.clamp(c(sesproc.C_RATIO) or 3.0, 1.0, 20.0),
                 'attack': (c(sesproc.C_ATK) or 0.01) * 1000.0, 'release': (c(sesproc.C_REL) or 0.15) * 1000.0,
@@ -1163,7 +1151,7 @@ def _mustard_base(st, n):
 def _mustard_current(st, n):
     """The Mustard comp values channel n holds now, in _write_mustard's units."""
     idx = st.idx(n)
-    g = lambda p: _get(st, idx, (sesproc.MC, p, 0))  # noqa: E731
+    g = lambda p: _get(st, idx, (sesproc.MC, p, 0))
     vals = {'model': process.MUSTARD_MODELS.get(g(sesproc.MC_TYPE), 'classic'), 'thr': g(sesproc.MC_THR),
             'ratio': g(sesproc.MC_RATIO), 'attack': None if g(sesproc.MC_ATK) is None else g(sesproc.MC_ATK) * 1000.0,
             'release': None if g(sesproc.MC_REL) is None else g(sesproc.MC_REL) * 1000.0,
@@ -1233,7 +1221,6 @@ def _set_mustard(st, ns, v):
         raise Refuse('%s %s no Mustard modules in this file.' % (_who(st, no_mod), 'has' if len(no_mod) == 1 else 'have'))
     if not on:
         return _mustard_off(st, ns, f.get('sd_comp', True))
-    # allocation: channels already holding an instance keep it; the rest by priority within the cap
     cap = st.cap
     holding = [n for n in ns if st.mustard_uses(n)]
     others = sum(st.width(n) for n in st.numbers() if n not in ns and st.mustard_uses(n))
@@ -1254,7 +1241,7 @@ def _set_mustard(st, ns, v):
         idx = st.idx(n)
         cur_on = _get(st, idx, (sesproc.MC, sesproc.MC_ON, 0)) == 1.0
         if cur_on:
-            vals = _mustard_current(st, n)    # already on: only the given values change
+            vals = _mustard_current(st, n)
         else:
             base = _mustard_base(st, n)
             vals = {k_: x for k_, x in base.items() if x is not None and k_ != 'from'}
@@ -1265,7 +1252,7 @@ def _set_mustard(st, ns, v):
         vals.update(given)
         if not cur_on or given or model is not None:
             _write_mustard(st, n, vals)
-        _put(st, idx, (0x05, sesproc.C_IN, 0), 0.0)                 # the Mustard comp replaces the SD comp
+        _put(st, idx, (0x05, sesproc.C_IN, 0), 0.0)
         st.ses.set_strip_view(idx, st.ses.VIEW_MUSTARD)
     out = []
     if got:
@@ -1302,7 +1289,7 @@ def _mustard_off(st, ns, sd_comp=True):
         idx = st.idx(n)
         if _get(st, idx, (sesproc.MC, sesproc.MC_ON, 0)) != 1.0:
             continue
-        g = lambda p: _get(st, idx, (sesproc.MC, p, 0))  # noqa: E731
+        g = lambda p: _get(st, idx, (sesproc.MC, p, 0))
         vals = {'thr': g(sesproc.MC_THR), 'ratio': sesproc.clamp(g(sesproc.MC_RATIO) or 3.0, 1.0, 50.0),
                 'attack': (g(sesproc.MC_ATK) or 0.01) * 1000.0, 'release': (g(sesproc.MC_REL) or 0.15) * 1000.0,
                 'knee': 'hard' if g(sesproc.MC_KNEE) == 1.0 else 'soft', 'makeup': max(0.0, g(sesproc.MC_OUT) or 0.0)}
@@ -1401,12 +1388,12 @@ def _follow_linked_pans(st, ns):
     from . import sends as SE
     try:
         auxes = [b for b in SE.buses(st.ses, 'aux') if b.get('width') == 2]
-    except Exception:      # noqa: BLE001 - an odd bus table: leave the sends for the editor to settle
+    except Exception:
         return
     for b in auxes:
         try:
             mode = SE.link_pans(st.ses, b['number'])
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
         if not mode:
             continue
@@ -1434,7 +1421,6 @@ SETTERS = {'name': _set_name, 'hpf': _set_filter('hpf'), 'lpf': _set_filter('lpf
            'mute': _set_simple('mute', 'mute'), 'pan': _set_simple('pan', 'pan'), 'view': _set_simple('view', 'view')}
 
 
-# ---------------------------------------------------------------------------------------------------- names
 def _clean_name(name, n):
     from .build import short_name, clean_text
     full = clean_text(name, 80)
@@ -1467,7 +1453,6 @@ def _op_rename(st, op):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- sends
 def _aux_number(st, a):
     if isinstance(a, dict):
         a = a.get('n', a.get('number', a.get('aux')))
@@ -1550,7 +1535,6 @@ def _op_send(st, op):
     return [s + (': ' + ', '.join(bits) if bits else '') + '.']
 
 
-# ---------------------------------------------------------------------------------------------------- patch
 def _socket(st, spec):
     """An input socket dict (patch.input_sockets shape) from a spec: 'Rack 1:5', 'Local 3', 'MADI 12', '1:Mic 5',
     ('Rack 1', 5), {'device'|'group', 'number'} or {'type', 'idx'}."""
@@ -1714,7 +1698,6 @@ def _op_preamp(st, op):
                                                        's' if len(done) > 1 else '')]
 
 
-# ---------------------------------------------------------------------------------------------------- templates
 def _reset_processing(st, n):
     idx, k = st.idx(n), _k()
     for key in (k['hpf_in'], k['lpf_in'], k['eq_in'], k['dyn2']['in'], (0x05, sesproc.C_IN, 0), k['delay_on'],
@@ -1784,7 +1767,6 @@ def _op_apply_template(st, op):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- structure
 def _need_layout(st):
     if st.snapshots:
         raise Refuse(_snap_why(st))
@@ -1977,7 +1959,6 @@ def _after_width(st, idxs, w):
                     ses.d[q:q + 4] = b'\0\0\0\0'
                 if (0x0e, 0) in rec.slots:
                     ses.set(idx, 0x01, 0x0e, 0, 0.0)
-    # FX units fed from these channels' direct outs: L/R legs follow the width
     objs = S.objects(ses)
     for oid, o in objs.items():
         if oid >> 8 != FX.FX_TYPE or not o.has(FX.FX_MODULE, 0x00, 0) or not o.has(FX.FX_MODULE, 0x00, 1):
@@ -2076,7 +2057,6 @@ def _op_stereo(st, op):
                 spec += _spec(st, [n])
         _relayout(st, spec, clones=clones)
         _after_width(st, set(idxs), 1)
-        # the R copy: right socket, no FX direct-out feed of its own
         for pos in clones:
             rn = pos + 1
             left_n = rn - 1
@@ -2235,7 +2215,6 @@ def _op_remove_channels(st, op):
     return ['Removed %s. The channels after %s moved up.' % (labels, 'it' if len(ns) == 1 else 'them')]
 
 
-# ---------------------------------------------------------------------------------------------------- FX
 def _aux_busy(st, a):
     """(input sends on, pre-fader sends on, feeds an FX unit) for aux a."""
     band = st.ses.aux_band[a]
@@ -2391,8 +2370,8 @@ def _op_remove_fx(st, op):
         _need_layout(st)
     cid, k = u['id'], u['id'] & 0xff
     d = FX._Doc(st.ses.d)
-    FX._clear_stale(d, cid, set())            # every output that names the unit: route cleared, mono mode back
-    for oid, o in d.obj.items():              # inputs patched to its return
+    FX._clear_stale(d, cid, set())
+    for oid, o in d.obj.items():
         if oid >> 8 != 0x01:
             continue
         q = layout.obj_slot(o, 0x01, 0x00, 0)
@@ -2423,7 +2402,6 @@ def _op_remove_fx(st, op):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- buses, mixes
 def _layout_now(st):
     return B.describe(st.data())
 
@@ -2496,11 +2474,9 @@ def _op_mixes(st, op):
         add_s, add_m = max(0, need_s - len(fs)), max(0, need_m - len(fm))
         limit = B.bus_limit(st.data(), st.key)
         am, ast, gm, gs = cur['aux_mono'] + add_m, cur['aux_stereo'] + add_s, cur['grp_mono'], cur['grp_stereo']
-        width = lambda: am + 2 * ast + gm + 2 * gs  # noqa: E731
+        width = lambda: am + 2 * ast + gm + 2 * gs
         took = []
         if limit is not None and width() > limit:
-            # take back unused buses from the end of each class (restructure removes from the end), mono auxes first,
-            # then mono groups, then stereo groups (never the Master), as the builder's automatic layout does
             spare = 0 if add_m else len(fm) - need_m
             k = _trailing_unused(st, 'aux', 1, spare)
             while k and width() > limit:
@@ -2542,7 +2518,7 @@ def _op_mixes(st, op):
              if not p['fx_return']]
     for m in mixes:
         _name_bus(st, 'aux', m['aux'], m['name'][:S.NAME_MAX])
-    for m in mixes:                                     # monitor_mixes without its own rename (done above, fast)
+    for m in mixes:
         S.set_bus_fader(st.ses, 'aux', m['aux'], db=0.0, mute=False)
         _mix_sends(st, m, chans)
     out = ['%s on aux %s: %s. Every channel goes pre-fader at a starting level, each player\'s own channels 6 dB up%s.'
@@ -2649,7 +2625,6 @@ def _op_name_bus(st, op):
     return ['Renamed %s %d%s to %s.' % (kind.capitalize(), n, '' if dflt else ' (%s)' % old.strip(), name)]
 
 
-# ---------------------------------------------------------------------------------------------------- the pipeline
 HANDLERS = {'set': _op_set, 'rename': _op_rename, 'stereo': _op_stereo, 'move': _op_move,
             'add_channels': _op_add_channels, 'remove_channels': _op_remove_channels,
             'apply_template': _op_apply_template, 'send': _op_send, 'patch': _op_patch, 'preamp': _op_preamp,
@@ -2665,12 +2640,12 @@ def _checks(st):
     d = st.data()
     try:
         errs, _ = validate.check(d)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         errs = ['structure check failed (%s)' % type(e).__name__]
     rerrs = []
     try:
         rerrs = S.route_errors(st.ses) + P.patch_errors(st.ses)
-    except Exception:  # noqa: BLE001 - a reader gap on an odd real session is not a new error
+    except Exception:
         pass
     return errs, rerrs
 
@@ -2708,7 +2683,7 @@ def apply_ops(data, ops, console_key=None):
     ops = list(ops or [])
     try:
         st = _State(data, console_key)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         why = str(e) if isinstance(e, Refuse) else e.msg if isinstance(e, I.Stop) else \
             'This file can not be edited (%s).' % type(e).__name__
         return {'data': data, 'model': None, 'changes': [], 'warnings': [why],
@@ -2743,7 +2718,7 @@ def apply_ops(data, ops, console_key=None):
             st.reload(before)
             del st.warnings[w0:]
             refused.append({'op': op, 'why': str(e)})
-        except Exception as e:  # noqa: BLE001 - never crash on a weird real session
+        except Exception as e:
             st.reload(before)
             del st.warnings[w0:]
             refused.append({'op': op, 'why': 'That change could not be made on this session (%s: %s).' % (
@@ -2751,11 +2726,11 @@ def apply_ops(data, ops, console_key=None):
     out = st.data()
     try:
         model = _model(st)
-    except Exception as e:  # noqa: BLE001 - the edits left a file the reader refuses: give back the original
+    except Exception as e:
         try:
             st.reload(data)
             m0 = _model(st)
-        except Exception:  # noqa: BLE001 - the original does not read either
+        except Exception:
             m0 = None
         return {'data': data, 'model': m0, 'changes': [], 'warnings': list(st.warnings),
                 'refused': [{'op': o, 'why': 'The edited file did not read back (%s), so nothing was changed.' %
@@ -2763,7 +2738,6 @@ def apply_ops(data, ops, console_key=None):
     return {'data': out, 'model': model, 'changes': changes, 'warnings': list(st.warnings), 'refused': refused}
 
 
-# ---------------------------------------------------------------------------------------------------- CLI
 def main(argv):
     if len(argv) < 3:
         print("usage: python3 -m sessionmaker.edit <in.ses> '<ops json>' [out.ses]", file=sys.stderr)

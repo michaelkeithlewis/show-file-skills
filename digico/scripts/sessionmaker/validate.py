@@ -15,9 +15,9 @@ import sys
 
 try:
     from . import layout
-except ImportError:                       # run as a plain script
+except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import layout  # noqa: E402
+    import layout
 
 
 def engine_pool_errors(family, em, taken):
@@ -44,11 +44,6 @@ def engine_pool_errors(family, em, taken):
     return errs
 
 
-# Header counts (tConsoleRec) against the section 201 records they count: (header offset, struct format, record type,
-# width or None for any, label). Equal in all 716 editor-saved files (116+ defaults, 39 real sessions,
-# 557 boot re-saves;. The editors trust the header: the Quantum 225 V2242 editor crashed
-# (access violation in Quantum2.exe) on a file whose header said 7 mono auxes over 6 aux records, and threw away a
-# file whose header said 255 (decode notes, not published).
 HEADER_COUNTS = [(0x36, 'H', 0x05, 1, 'mono auxes'), (0x38, 'H', 0x05, 2, 'stereo auxes'),
                  (0x46, 'H', 0x06, 1, 'mono groups'), (0x48, 'H', 0x06, 2, 'stereo groups'),
                  (0x93, 'B', 0x10, None, 'matrix outputs'), (0x94, 'B', 0x0a, None, 'control groups'),
@@ -62,7 +57,7 @@ def header_count_errors(d, s201):
     s201 = bytes(s201)
     g = layout.groups201(s201)
     errs = []
-    width = lambda t, w: sum(1 for p in g.get(t, []) if w is None or s201[p + 41] == w)  # noqa: E731
+    width = lambda t, w: sum(1 for p in g.get(t, []) if w is None or s201[p + 41] == w)
     for off, fmt, typ, w, label in HEADER_COUNTS:
         want = struct.unpack_from('<' + fmt, d, off)[0]
         got = width(typ, w)
@@ -108,9 +103,6 @@ def check(path_or_bytes):
         errs.append('channel record surface numbers are not 1..N in order')
     cumulative = None
     if layout.cb_has_engine(cbs[0]):
-        # EngineChannel: after a Restructure it is first + running sum of widths (surface order); a later
-        # per-channel flip takes the next free engine channels instead (seen in a real SD8 session). The hard
-        # invariant is that the ranges [eng, eng + width) never overlap.
         acc = struct.unpack_from('<H', cbs[0], 84)[0]
         cumulative = True
         taken = set()
@@ -148,7 +140,6 @@ def check(path_or_bytes):
         for (m, p, b), (mono, st) in layout.STEREO_SLOTS.items():
             q = layout.obj_slot(o, m, p, b)
             v = struct.unpack_from('<f', o, q)[0] if q is not None else None
-            # stereo must carry the stereo value; real mono channels hold the mono value or 0.0
             if q is not None and not (v == st if w == 2 else v in (mono, 0.0)):
                 errs.append('slot %02x/%02x/%d inconsistent with width for id %#x'
                             % (m, p, b, struct.unpack_from('<H', r, 4)[0]))

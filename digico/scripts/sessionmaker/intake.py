@@ -38,24 +38,14 @@ from sessionmaker import taxonomy as T
 log = logging.getLogger('sessionmaker.intake')
 
 MAX_NAME = 8
-JEV_TIMEOUT = float(os.environ.get('SM_JEV_TIMEOUT', '3.0'))   # seconds, wall clock, whole classifier step
-JEV_ACCEPT = 0.6            # averaged probability needed to take the classifier's channel category
-JEV_Q_ACCEPT = 0.55         # same for a questionnaire answer (a wrong one is visible and cheap)
+JEV_TIMEOUT = float(os.environ.get('SM_JEV_TIMEOUT', '3.0'))
+JEV_ACCEPT = 0.6
+JEV_Q_ACCEPT = 0.55
 
-# per-process counters
 STATS = {'calls': 0, 'errors': 0, 'timeouts': 0, 'last_ms': None}
 _lock = threading.Lock()
 
 
-# --------------------------------------------------------------------------------------------
-# optional classifier hook ("the classifier" in the names below)
-# --------------------------------------------------------------------------------------------
-# The original tool asked an external closed-set classifier about the channels the rules were not sure of.
-# That service is not part of this repo. Without it everything runs on the rules (taxonomy.rule_category) and
-# the description regexes, which is the documented fallback. To plug in your own classifier, set CLASSIFIER to
-# a callable (state, questions, timeout) -> ({qid: {'choice', 'p', 'orders', 'probs'}}, info), where
-# questions = {qid: (instructions, {option: description})} and p is the probability of 'choice' (0..1).
-# 'orders' = 2 tells the callers the answer is stable when the option order is reversed.
 
 CLASSIFIER = None
 
@@ -76,7 +66,7 @@ def jev_choices(state, questions, timeout=None):
         out, extra = CLASSIFIER(state, questions, JEV_TIMEOUT if timeout is None else timeout)
         info.update(extra or {})
         info['ok'] = info.get('ok') or 1
-    except Exception as e:      # noqa: BLE001 - any failure means "no answer"
+    except Exception as e:
         with _lock:
             STATS['errors'] += 1
         info['error'] = type(e).__name__
@@ -88,11 +78,7 @@ def jev_choices(state, questions, timeout=None):
     return out or {}, info
 
 
-# --------------------------------------------------------------------------------------------
-# names
-# --------------------------------------------------------------------------------------------
 
-# Letters NFKD does not split into a base letter + accent.
 TRANSLIT = str.maketrans({'Ł': 'L', 'ł': 'l', 'Ø': 'O', 'ø': 'o', 'ß': 'ss', 'Æ': 'AE', 'æ': 'ae', 'Œ': 'OE',
                           'œ': 'oe', 'Đ': 'D', 'đ': 'd', 'Þ': 'Th', 'þ': 'th', 'ı': 'i', 'Ð': 'D', 'ð': 'd'})
 
@@ -120,9 +106,6 @@ def _uniquify(chans):
         c['name'] = n
 
 
-# --------------------------------------------------------------------------------------------
-# input lists
-# --------------------------------------------------------------------------------------------
 
 def _ranges(nums):
     """[17, 18, 19, 23] -> '17-19, 23'."""
@@ -162,7 +145,6 @@ def _from_parser(c, k):
     }
 
 
-# Console names for inputs pulled out of a sentence ("I'll need a bass DI and a vocal mic").
 DEFAULT_NAMES = {
     'kick_in': 'Kick', 'kick_out': 'Kick Out', 'kick_sub': 'Sub Kick', 'snare_top': 'Snare', 'snare_bottom': 'Snr Bot',
     'hihat': 'Hi Hat', 'rack_tom': 'Rack', 'floor_tom': 'Floor', 'overheads': 'OH', 'ride': 'Ride',
@@ -202,7 +184,7 @@ def split_rows(rows):
         if r.get('_prose') or r.get('_described'):
             text = L.BULLET.sub('', r.get('raw') or r['name'])
             text = re.sub(r'\([^)]*\)', ' ', text)
-            m = re.match(r'^\s*([A-Z][a-z]+)\s*[-:]\s+(.+)$', text)      # "Sam - lead vocal ..." -> who = Sam
+            m = re.match(r'^\s*([A-Z][a-z]+)\s*[-:]\s+(.+)$', text)
             who = m.group(1) if m and L.is_person(m.group(1)) else ''
             body = m.group(2) if who else text
             body = re.sub(r'(?i)^\s*(?:di|di line|line|mic|xlr|input)\s*:\s*', '', body)
@@ -237,7 +219,6 @@ def split_rows(rows):
     return out, split_raw
 
 
-# "add a talkback for the MD, an audience pair", "plus a vocal mic for the bassist", "extra AG DI"
 ADD_VERB = re.compile(r"(?i)\b(?:also add|add in|add|adding|throw in|include|plus(?= (?:an?|one|two|three|\d+|a pair of)\b)|"
                       r"an? extra|another|(?:we|i)(?:'ll| will)? (?:also )?need)\b")
 FOR_WHO = re.compile(r"(?i)\s+(?:for|from|on|by)\s+(?:the\s+|our\s+|my\s+)?([\w'’ ]{1,24})$")
@@ -310,9 +291,6 @@ def guess_artist(filename=None, description=None):
     return None
 
 
-# Rows that are not inputs: a time or date ("9:30 AM CT", "1:30 - 3:00 PM", "Thu 9/17"), which is what a run
-# sheet or schedule PDF turns into, and a header line that came through as a row ("Ch,Name,Mic" in a CSV with
-# no data under it).
 TZ = r'(?:ct|mt|et|pt|cst|cdt|mst|mdt|est|edt|pst|pdt|utc|gmt|bst|cet|local)'
 TIME_ROW = re.compile(r'(?i)^[\W_]*(?:(?:mon|tue|wed|thu|fri|sat|sun)\w*\.?\s*)?'
                       r'(?:\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?\s*(?:-|to|until)?\s*)+'
@@ -350,10 +328,10 @@ def parse_input_list(filename=None, data=None, text=None, artist=None):
         rows, meta = L.load_rows_from(filename, data, text)
     except ValueError as e:
         msg = str(e)
-        if not (msg[:1].isupper() and msg.endswith('.')):        # a reader's internal note, not a sentence
+        if not (msg[:1].isupper() and msg.endswith('.')):
             msg = "That file couldn't be read. Save it as CSV or XLSX, or paste the channel names."
         return {'channels': [], 'warnings': [msg], 'notes': [], 'skipped': [], 'meta': {'error': 'unreadable'}}
-    except Exception as e:      # noqa: BLE001 - a broken file must not take the page down
+    except Exception as e:
         log.warning('input list reader failed: %s', type(e).__name__)
         return {'channels': [], 'warnings': ['That file could not be read. Try CSV, XLSX or pasted text.'],
                 'notes': [], 'skipped': [], 'meta': {'error': type(e).__name__}}
@@ -375,7 +353,6 @@ def parse_input_list(filename=None, data=None, text=None, artist=None):
     skipped += [{'list_ch': [s['ch']], 'text': '', 'why': 'blank'} for s in meta.get('skipped') or []]
     live = [c for c in chans if 'skip' not in c['flags'] and id(c) not in junk]
     if junk and len(junk) >= len(live):
-        # mostly times, dates or a lone header line: a schedule, a run sheet or an empty template, not an input list
         only_header = all(w == 'header' for w in junk.values())
         msg = ('The list has a header row but no channels under it.' if only_header and not live else
                "That file doesn't look like an input list.")
@@ -427,9 +404,6 @@ def _meta_out(meta, t0):
     return m
 
 
-# --------------------------------------------------------------------------------------------
-# classify
-# --------------------------------------------------------------------------------------------
 
 JEV_CLASSIFY_INSTR = ('A live-sound input list for a mixing console names input {k} "{name}"{extra}. '
                       'Inputs just before it: {before}. Inputs just after it: {after}. '
@@ -451,7 +425,7 @@ def _jev_classify_questions(chans, idx, description=None):
             extra.append('listed under "%s"' % str(c['section'])[:40])
         if c.get('stereo'):
             extra.append('stereo')
-        ctx = c.get('context')                  # benchmark: neighbours from the real session
+        ctx = c.get('context')
         bn = ctx['before'] if ctx else names[max(0, i - 2):i]
         an = ctx['after'] if ctx else names[i + 1:i + 3]
         before = ', '.join('"%s"' % n[:24] for n in bn) or 'none'
@@ -474,7 +448,7 @@ def classify(channels, artist=None, description=None, use_jev=None):
     for i, c in enumerate(chans):
         c['flags'] = [f for f in (c.get('flags') or []) if f not in ('lead_guess',)]
         c.pop('suggestion', None)
-        if c.get('category_locked'):            # set by the user in the UI: keep it
+        if c.get('category_locked'):
             c['via'] = c.get('via') or 'user'
             continue
         cat, p, why = T.rule_category(c.get('full_name') or c.get('name'), c.get('source') or '', c.get('section'),
@@ -503,7 +477,7 @@ def classify(channels, artist=None, description=None, use_jev=None):
             if r and r['choice'] != 'other':
                 c['suggestion'] = {'category': r['choice'], 'p': r['p']}
             elif r:
-                c['category'] = 'other'          # the classifier says none of the templates: a flat channel, marked as a guess
+                c['category'] = 'other'
     _lead_pass(chans)
     _tom_pass(chans)
     info['ms_total'] = round((time.time() - t0) * 1000, 1)
@@ -543,13 +517,9 @@ def _lead_pass(chans):
             return
 
 
-# --------------------------------------------------------------------------------------------
-# description -> channels
-# --------------------------------------------------------------------------------------------
 
 STYLES = ('rock_pop', 'worship_band', 'traditional_church', 'singer_songwriter', 'jazz', 'hiphop', 'country', 'corporate')
 
-# (qid, question, {option: description}). 'not_said' means "use the style default".
 QUESTIONS = [
     ('style', 'What kind of show does the description in `description` describe?', {
         'rock_pop': 'A rock, pop, indie or punk band',
@@ -647,7 +617,6 @@ QUESTIONS = [
 ]
 QUESTION_IDS = [q for q, _, _ in QUESTIONS]
 
-# style -> default answer for every question (used when neither the text nor the classifier settles it)
 STYLE_DEFAULTS = {
     'rock_pop': dict(drums='full_kit', kick='in_out', snare='top_bottom', toms='t2', drum_extras='none', bass='di',
                      egtr='g2', agtr='a0', keys='k1', piano_organ='none', horns_strings='none', tracks='none',
@@ -678,7 +647,7 @@ STYLE_DEFAULTS = {
 NUM_WORDS = {'a': 1, 'an': 1, 'one': 1, 'single': 1, 'solo': 1, 'two': 2, 'pair': 2, 'couple': 2, 'double': 2, 'three': 3,
              'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'twelve': 12}
 NUM = r'(\d{1,2}|a|an|one|single|two|pair of|couple of|three|four|five|six|seven|eight|nine|ten|twelve)'
-NUM_STRICT = r'(\d{1,2}|one|two|pair of|couple of|three|four|five|six|seven|eight|nine|ten|twelve)'   # no "a"
+NUM_STRICT = r'(\d{1,2}|one|two|pair of|couple of|three|four|five|six|seven|eight|nine|ten|twelve)'
 ABSENT = {'none', 'not_said', 'g0', 'a0', 'k0', 't0', 's0', 'v0'}
 
 
@@ -703,11 +672,11 @@ def _tom_split(t):
     if rack is None and floor is None:
         return None
     not_gear = r'(?! ?(wedges?|monitors?|mons?|units?|mounts?|cases?|of))'
-    if floor is None:                                      # "and a floor", "plus 2 floors", ", floor tom"
+    if floor is None:
         floor = _count(r'floors?\b' + not_gear, t)
         if floor is None:
             floor = 1 if re.search(r'\bfloor toms?\b|(\band|&|plus|\+|,) (a |one )?floor\b' + not_gear, t) else 0
-    if rack is None:                                       # "a rack and 2 floor toms", "rack, 2 floor toms"
+    if rack is None:
         rack = _count(r'racks?\b' + not_gear, t)
         if rack is None:
             rack = 1 if re.search(r'\brack toms?\b|\brack( tom)? ?(and|&|plus|\+|,)', t) else 0
@@ -733,7 +702,6 @@ def regex_answers(text):
         else:
             weak.discard(q)
 
-    # style
     if re.search(r'\b(worship|praise)\b', t):
         put('style', 'worship_band')
     elif re.search(r'\b(church|mass|liturgy|hymns?|cathedral|chapel)\b', t) and re.search(r'\b(organ|choir|hymn)', t) \
@@ -754,7 +722,7 @@ def regex_answers(text):
                    r'lectern)\b', t) and not re.search(r'\b(band|drums?|drummer|bass|guitars?|gtrs?|keys|keyboards?|piano|'
                                                      r'organ|synths?|singers?|vocals?|vox|choir|horns?|sax|trumpets?|'
                                                      r'strings|violins?|fiddle|musical|orchestra|pit|tracks)\b', t):
-        put('style', 'corporate')                 # speech mics and no instrument: "Theatre show: 12 wireless lavs"
+        put('style', 'corporate')
     elif re.search(r'\b(rock|pop|indie|punk|metal|band)\b', t):
         put('style', 'rock_pop', True)
     m = re.search(r'\b(\d|two|three|four|five|six|seven|eight|nine|ten) piece\b', t)
@@ -766,7 +734,6 @@ def regex_answers(text):
         x['members'] = 4
     elif re.search(r'\bduo\b', t):
         x['members'] = 2
-    # drums
     if re.search(r'\bno (drums|drummer|kit)\b|\bwithout (drums|a drummer)\b', t):
         put('drums', 'none')
     elif re.search(r'\b(electronic|e) ?(drum )?kit\b|\be drums\b|\broland td\b|\bedrums\b', t):
@@ -778,7 +745,7 @@ def regex_answers(text):
     elif re.search(r'\b(cajon|djembe|hand percussion|percussion)\b', t):
         put('drums', 'hand_perc_only', True)
     elif re.search(r'\b(kick|snare|toms?|hi ?hats?|hats|overheads?|cymbals?)\b', t):
-        put('drums', 'full_kit', True)                   # "kick in and out, snare top and bottom": a kit
+        put('drums', 'full_kit', True)
     if re.search(r'\bsub ?kick\b|\bkick sub\b', t):
         put('kick', 'in_out_sub')
     elif re.search(r'\bkick in (and|&|/) ?(kick )?out\b|\bkick (in|inside) and (outside|out)\b|\b(2|two) kick mics?\b', t):
@@ -811,7 +778,6 @@ def regex_answers(text):
         put('drum_extras', 'perc')
     elif trig:
         put('drum_extras', 'triggers')
-    # bass
     if re.search(r'\bno bass\b', t):
         put('bass', 'none')
     elif re.search(r'\b(upright|double|stand up|acoustic) bass\b', t):
@@ -822,15 +788,14 @@ def regex_answers(text):
         put('bass', 'di_amp')
     elif re.search(r'\bbass(ist| guitar| player)?\b', t) and not re.search(r'\bbass drum\b', t):
         put('bass', 'di', True)
-    # guitars
     e = _count(r'(electric )?(guitars?|gtrs?|guitarists?|guitar players)\b', t)
-    e_said = _count(r'electric (guitars?|gtrs?|guitarists?|guitar players)\b', t)   # "2 electric guitars"
+    e_said = _count(r'electric (guitars?|gtrs?|guitarists?|guitar players)\b', t)
     ac = _count(r'(acoustic|acoustics|acoustic guitars?|ags?)\b', t)
     if e_said is not None:
-        put('egtr', 'g%d' % min(3, e_said))   # stated outright, even with "and an acoustic" next to it
+        put('egtr', 'g%d' % min(3, e_said))
         x['n_egtr'] = e_said
     elif e is not None and not re.search(NUM + r'\s+acoustic', t):
-        put('egtr', 'g%d' % min(3, e))         # "3 guitars", unless an acoustic count may be part of it
+        put('egtr', 'g%d' % min(3, e))
         x['n_egtr'] = e
     elif re.search(r'\b(electric guitar|electric|eg|guitarist|lead guitar)\b', t):
         put('egtr', 'g1', True)
@@ -843,7 +808,6 @@ def regex_answers(text):
         put('agtr', 'a1', True)
     if re.search(r'\b(no|without) (electric )?guitars?\b', t):
         put('egtr', 'g0')
-    # keys
     kk = _count(r'(keys|keyboards?|keyboard players?|synths?|key players?)\b', t)
     if kk is not None:
         put('keys', 'k%d' % min(3, kk))
@@ -854,11 +818,9 @@ def regex_answers(text):
     org = re.search(r'\b(organ|b3|hammond)\b', t)
     if pno or org:
         put('piano_organ', 'both' if (pno and org) else ('piano' if pno else 'organ'))
-    # horns / strings and named instruments
     horns = [w for w in ('trumpet', 'sax', 'saxophone', 'trombone', 'flute', 'clarinet', 'flugelhorn')
              if re.search(r'\b%s(?:e?s)?\b' % w, t)]
     strs = [w for w in ('violin', 'viola', 'cello') if re.search(r'\b%ss?\b' % w, t)]
-    # "5 saxes, 4 trumpets": one channel each (house_order), not one per instrument type
     x['n_horns'] = {w: n for w in horns for n in [_count(r'%s(?:e?s)?\b' % w, t, strict=True)] if n}
     x['n_strings'] = {w: n for w in strs for n in [_count(r'%ss?\b' % w, t, strict=True)] if n}
     hs = re.search(r'\bhorn section\b|\bhorns\b', t)
@@ -881,14 +843,13 @@ def regex_answers(text):
                        ('harmonica', 'Harmnca', 'horns'), ('accordion', 'Accrdn', 'keys'), ('ukulele', 'Uke', 'folk_strings')):
         if re.search(r'\b%s\b' % w, t):
             x['named'].append((nm, cat))
-    # playback
     stems = re.search(r'\b(stems|multitrack|multi track)\b', t)
     trk = re.search(r'\b(tracks|playback|ableton|backing track|track rig|laptop rig|sequence|stems)\b', t)
     clk = re.search(r'\b(click|in ear click|metronome)\b', t)
     media = re.search(r'\b(walk ?in|video|propresenter|pro presenter|announcement video)\b', t)
     media_only = trk and media and not re.search(r'\b(tracks|ableton|backing track|track rig|sequence|stems|click)\b', t)
     if media_only:
-        trk = None                                         # "walk-in music and video playback": the Media channel
+        trk = None
     if re.search(r'\bno (tracks|playback)\b', t) or media_only:
         put('tracks', 'none')
     elif re.search(r'\bdj\b', t) and not trk:
@@ -899,7 +860,6 @@ def regex_answers(text):
         put('tracks', 'stereo_click' if clk else 'stereo')
     elif clk:
         put('tracks', 'stereo_click')
-    # vocals
     v = _count(r'(singers?|vocalists?|vocal mics?|vocals|voices|vox)\b', t, strict=True)
     bg = _count(r'(bgvs?|backing (vocals?|vocalists|singers)|background (vocals?|vocalists|singers)|harmony (vocals?|singers))\b', t)
     lead_said = re.search(r'\b(lead (vocal|singer|vox)|singer|sings|vocalist|rapper|mc|worship leader|frontman|frontwoman)\b', t)
@@ -909,8 +869,6 @@ def regex_answers(text):
                    r'(?:also )?sing (?:harmony|harmonies|bgvs?|backing( vocals)?|backups?)\b', t)
     if hm and bg is None:
         bg = _n(hm.group(1))
-    # "a fiddle player who sings harmony": one harmony singer per mention that gives no number; "the guitar players
-    # sing harmonies" (plural subject, "sing") counts two
     harm = sum(1 if v_ == 'sings' else 2 for v_ in
                re.findall(r'\b(sings?) (?:harmony|harmonies|bgvs?|backing(?: vocals)?|backups?|background)\b', t))
     if bg is None and harm and not hm:
@@ -969,8 +927,6 @@ def regex_answers(text):
     return a, weak, x
 
 
-# Speech mics a description lists one by one. (kind, regex after an optional count, console name). Earlier kinds
-# win where matches overlap, so "a moderator with a handheld" is one mic and "6 panelists on lavs" is six.
 SPEECH_KINDS = [
     ('role', r'(moderator|host|emcee|mc|pastor|presenter|officiant|preacher|priest|minister|reader|lector|narrator|'
              r'announcer|keynote speaker)s?(?: (?:with|on|using|at) (?:an? |the )?(?:handheld|hand held|lav|lavalier|'
@@ -982,7 +938,6 @@ SPEECH_KINDS = [
     ('lav', r'(?:lavs?|lavaliers?|lapel mics?)', 'Lav'),
     ('headset', r'headsets?(?: mics?)?', 'Headset'),
 ]
-# Words that may stand between a count and the mic kind: "12 wireless lav mics", "2 radio handhelds".
 SPEECH_ADJ = r'(?:(?:wireless|radio|rf|cordless|lapel|headworn|head-worn|omni|countryman|dpa|shure|sennheiser)\s+)*'
 ROLE_NAMES = {'moderator': 'Mod', 'host': 'Host', 'emcee': 'MC', 'mc': 'MC', 'pastor': 'Pastor', 'presenter': 'Presenter',
               'officiant': 'Officiant', 'preacher': 'Preacher', 'announcer': 'Announcer', 'keynote speaker': 'Keynote',
@@ -1018,7 +973,6 @@ def _speech_plan(t):
     return out
 
 
-# Who fills the seats of an N-piece band after drums, bass and any named instruments, in order.
 SEAT_ORDER = {'rock_pop': ['egtr', 'egtr', 'keys', 'agtr'], 'country': ['egtr', 'agtr', 'keys', 'egtr'],
               'worship_band': ['egtr', 'keys', 'agtr', 'egtr']}
 
@@ -1082,7 +1036,7 @@ def house_order(ans, via, extras):
         names = {1: ['Rack'], 2: ['Rack', 'Floor'], 3: ['Rack 1', 'Rack 2', 'Floor'],
                  4: ['Rack 1', 'Rack 2', 'Floor 1', 'Floor 2']}.get(toms, [])
         split = extras.get('tom_split')
-        if split and sum(split) == toms and via.get('toms') == 'rule':     # the text said racks vs floors
+        if split and sum(split) == toms and via.get('toms') == 'rule':
             r, f = split
             names = (['Rack'] if r == 1 else ['Rack %d' % (i + 1) for i in range(r)]) + \
                     (['Floor'] if f == 1 else ['Floor %d' % (i + 1) for i in range(f)])
@@ -1192,14 +1146,14 @@ def house_order(ans, via, extras):
     s = int(ans['speech'][1:])
     sp_names = {'worship_band': ['Pastor', 'Speech 2', 'Speech 3'], 'traditional_church': ['Pulpit', 'Lectern', 'Speech 3'],
                 'corporate': ['Podium', 'HH 1', 'HH 2', 'HH 3']}.get(style, ['MC', 'Speech 2', 'Speech 3'])
-    if extras.get('speech_plan'):                 # the text named them: "podium, 2 handhelds, 4 panelist lavs"
+    if extras.get('speech_plan'):
         for nm, full in extras['speech_plan']:
             add(nm, 'speech_mic', 'speech')
             out[-1]['full_name'] = '%s (%s)' % (nm, full) if full.lower() != nm.lower() else nm
         s = len(extras['speech_plan'])
     else:
         if style == 'corporate' and s >= 3:
-            s = 4                                 # a panel: podium + three handhelds
+            s = 4
         for i in range(s):
             add(sp_names[i] if i < len(sp_names) else 'Speech %d' % (i + 1), 'speech_mic', 'speech')
     if style != 'corporate' or s:
@@ -1212,14 +1166,12 @@ def house_order(ans, via, extras):
     return out
 
 
-# Questions whose answer adds inputs. When a description names three or more of them it is an inventory: the
-# ones it does not name are absent (not the style default, not a guess from the classifier).
 INVENTORY_QS = ('drums', 'drum_extras', 'bass', 'egtr', 'agtr', 'keys', 'piano_organ', 'horns_strings', 'tracks', 'vocals',
                 'choir', 'speech', 'audience')
 SILENT_ABSENT = {'drums': 'none', 'drum_extras': 'none', 'bass': 'none', 'egtr': 'g0', 'agtr': 'a0', 'keys': 'k0',
                  'piano_organ': 'none', 'horns_strings': 'none', 'tracks': 'none', 'choir': 'none', 'audience': 'none',
                  'speech': 's0'}
-COUNT_CAP = 24        # most channels one stated count may add ("8 singers", "5 saxes")
+COUNT_CAP = 24
 
 
 def describe_to_channels(description, use_jev=None):
@@ -1245,16 +1197,16 @@ def describe_to_channels(description, use_jev=None):
         jev_ok = r and r['p'] >= need and r['choice'] != 'not_said'
         if jev_ok and r['choice'] not in ABSENT and ((q == 'choir' and not extras['said_choir']) or
                                                       (q == 'audience' and not extras['said_audience'])):
-            jev_ok = False                                    # "8 singers" is not a choir
+            jev_ok = False
         if q not in rx and inventory and q in SILENT_ABSENT:
-            ans[q], via[q] = SILENT_ABSENT[q], 'fallback'     # an inventory leaves it out (an assumption)
+            ans[q], via[q] = SILENT_ABSENT[q], 'fallback'
             detail[q] = {'answer': ans[q], 'via': 'fallback', 'not_said': True,
                          'jev': ({'choice': r['choice'], 'p': r['p']} if r else None)}
             return
         if q in rx and q not in weak:
-            ans[q], via[q] = rx[q], 'rule'                    # the text says it outright
+            ans[q], via[q] = rx[q], 'rule'
         elif q in rx and jev_ok and r['choice'] not in ABSENT and (rx[q] in ABSENT) == (r['choice'] in ABSENT):
-            ans[q], via[q] = r['choice'], 'jev'               # a mention, refined by the classifier ("choir" -> large)
+            ans[q], via[q] = r['choice'], 'jev'
         elif q in rx:
             ans[q], via[q] = rx[q], 'rule'
         elif jev_ok:
@@ -1268,7 +1220,6 @@ def describe_to_channels(description, use_jev=None):
                                    len(extras.get('named', [])))
     for q in QUESTION_IDS[1:]:
         settle(q, defaults[q])
-    # keep the answers consistent with each other
     if ans['drums'] in ('none', 'electronic', 'hand_perc_only'):
         for q in ('kick', 'snare', 'toms'):
             detail[q]['used'] = False
@@ -1278,10 +1229,9 @@ def describe_to_channels(description, use_jev=None):
         ans['vocals'] = 'v2'
     if extras.get('named') and ans['horns_strings'] in ('strings2', 'quartet') and via['horns_strings'] == 'jev' \
             and not extras.get('strings') and not re.search(r'(?i)\bstrings?\b', description):
-        ans['horns_strings'], via['horns_strings'] = 'none', 'rule'     # a fiddle or mandolin is not a string section
+        ans['horns_strings'], via['horns_strings'] = 'none', 'rule'
         detail['horns_strings'].update(answer='none', via='rule')
     extras['inventory'] = inventory
-    # counts the options cap ("Six or more singers", "Three electric guitars") stay exact when the text gave them
     counts = {'vocals': 'n_vocals', 'egtr': 'n_egtr', 'agtr': 'n_agtr', 'keys': 'n_keys', 'choir': 'n_choir'}
     dropped = []
     for q, k in counts.items():
@@ -1311,12 +1261,7 @@ CHIP_NOUNS = {'vocals': 'singers', 'egtr': 'electric guitars', 'agtr': 'acoustic
               'choir': 'choir mics'}
 
 
-# --------------------------------------------------------------------------------------------
-# plan
-# --------------------------------------------------------------------------------------------
 
-# An item that describes the band rather than naming an input: a count of a plural ("2 guitars", "three vocals"),
-# or a player or the whole kit ("drums", "a drummer", "band", "singers").
 DESC_ITEM = re.compile(r"(?i)^(?:(?:\d{1,2}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple of|a pair of)"
                        r"\s+(?:\w+\s+)?\w+s\b|.*\b(?:drums|drummer|kit|band|piece|players?|musicians?|bassist|guitarists?|"
                        r"keyboardists?|singers?|vocalists?|rapper|trio|quartet|duo|section)\b)")
@@ -1331,8 +1276,8 @@ def _list_items(items):
     known = 0
     for it in items:
         t = L.BULLET.sub('', it).strip()
-        sentence = re.search(r'[.!?]\s+\S', t)                  # two sentences in one item
-        joined = re.search(r'(?i)\b(and|with|plus)\b', t)      # "Vocal and guitar" describes, a list splits it
+        sentence = re.search(r'[.!?]\s+\S', t)
+        joined = re.search(r'(?i)\b(and|with|plus)\b', t)
         if not t or len(t.split()) > 5 or sentence or joined or L.PROSE_RX.search(t) or DESC_ITEM.match(t):
             return False
         known += T.rule_category(t)[1] >= 0.6
@@ -1364,7 +1309,7 @@ def looks_like_list(text):
     return None
 
 
-COMMA_SPLIT = re.compile(r'\s*[,;]\s*(?:and\s+)?|\s+and\s+(?=\S+$|\S+\s+\S+$)')   # "..., Hat and OH" -> Hat, OH
+COMMA_SPLIT = re.compile(r'\s*[,;]\s*(?:and\s+)?|\s+and\s+(?=\S+$|\S+\s+\S+$)')
 
 
 def plan_from(description=None, filename=None, data=None, text=None, max_inputs=None):
@@ -1382,7 +1327,6 @@ def plan_from(description=None, filename=None, data=None, text=None, max_inputs=
     listed = data is not None or bool((text or '').strip())
     kind = looks_like_list(desc) if not listed and desc else None
     if kind:
-        # a pasted list: one channel per line (a comma list is split into lines first)
         text = '\n'.join(i.strip() for l in desc.splitlines() for i in COMMA_SPLIT.split(l.strip().rstrip('.'))
                          if i.strip()) if kind == 'commas' else desc
         listed, desc_is_list = True, True
@@ -1443,8 +1387,6 @@ def plan_from(description=None, filename=None, data=None, text=None, max_inputs=
     if max_inputs and len(out['channels']) > max_inputs:
         out['warnings'].append('%d channels, but this console has %d inputs. Remove %d or pick a bigger console.' % (
             len(out['channels']), max_inputs, len(out['channels']) - max_inputs))
-    # options the show asks for (IEM / wedge mixes, reverbs and delays, a monitor desk), from the description text
-    # and the FX return rows of a list (options.suggest; never raises into the plan)
     try:
         from sessionmaker import options as _opts
         sug, note = _opts.suggest(None if desc_is_list else desc, out['channels'])
@@ -1452,10 +1394,10 @@ def plan_from(description=None, filename=None, data=None, text=None, max_inputs=
             out['options'] = sug
             if note:
                 out['notes'].append(note)
-    except Exception:  # noqa: BLE001 - suggestions are a convenience; the channel plan stands without them
+    except Exception:
         log.warning('option suggestions failed', exc_info=False)
     blank = [c for c in out['channels'] if not (c.get('name') or '').strip()]
-    for c in blank:                  # nothing printable left (only emoji): the instrument's house name, else Ch N
+    for c in blank:
         c['name'] = DEFAULT_NAMES.get(c.get('category')) or 'Ch %d' % c.get('n', 0)
     if blank:
         _uniquify(out['channels'])

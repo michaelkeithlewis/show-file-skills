@@ -45,33 +45,25 @@ import sys
 
 try:
     from . import layout
-except ImportError:                       # run as a plain script
+except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import layout  # noqa: E402
+    import layout
 
-FX_TYPE = 0x0e          # section 201 record type, object id high byte and patch source type of an FX unit
-FX_MODULE = 0x15        # module record type of an FX unit
+FX_TYPE = 0x0e
+FX_MODULE = 0x15
 T_AUX, T_RIGHT = 0x05, 0x07
-LIVE_FLAG = 57          # record header byte: 01 on live records, 00 on library copies
-MAX_UNITS = 32          # FX ids are 0x0e00 | k; the editors kept 32 units (largest real session: 15 units)
-POOL_UNITS = 16         # units with DSP per pool (reverbs / other effects): the editors give a 17th reverb no DSP
+LIVE_FLAG = 57
+MAX_UNITS = 32
+POOL_UNITS = 16
 
-# The categories of the factory presets. FPGA reverbs and the other effects use separate DSP pools (EngineChannel).
 REVERB_GROUPS = ('Hall Reverbs', 'Room Reverbs', 'Plate Reverbs', 'Non-Lin Reverbs')
 KIND_OF_GROUP = {'Hall Reverbs': 'reverb', 'Room Reverbs': 'reverb', 'Plate Reverbs': 'reverb',
                  'Non-Lin Reverbs': 'reverb', 'Delays': 'delay', 'Choruses': 'chorus',
                  'Pitch Shifters': 'pitch', 'Specials': 'special'}
-# EngineChannel of the first unit in each pool, by file family: reverbs at 128 (Quantum) or 64 (SD), the other
-# effects at 0, 2 per unit, in rack order (real sessions V1455-V2025, the V2242 editor's own v4 edit and the
-# editor proofs in the decode notes (not published). engine_slots() has the full order.
 QUANTUM_FAMILIES = layout.QUANTUM_FAMILIES
 REVERB_BASE = {'quantum': 128, 'sd': 64}
-# Quantum families whose other-effects pool stops at 26: the Quantum 112 V2242 editor gives a 15th and 16th
-# non-reverb unit EngineChannel -1 (no DSP) whether they are written at 64/66 or at 28/30 (verifier probes,
-# q112_v2242_cap and results_probe.jsonl q112_v2242_capsd).
 SHORT_OTHER_POOL = {'Q1'}
 
-# Friendly names for kind and preset words -> factory preset name.
 KIND_PRESET = [
     (r'^(hall|large hall|big hall|reverb)$', 'Large hall'),
     (r'^(warm hall)$', 'Warm hall'), (r'^(stage hall)$', 'Stage hall'), (r'^(ambient hall)$', 'Ambient hall'),
@@ -91,9 +83,6 @@ KIND_PRESET = [
     (r'^(octave|octave down|octaver)$', 'Octave Down'), (r'^(enhancer|audio enhancer)$', 'Audio Enhancer'),
 ]
 
-# Named parameters -> (param, band) on the type 0x15 record. Every name was matched to its control on the V2242
-# editor's FX rack display. predelay, lo/hi_filter, hi_damping, decay, time, feedback and mix
-# were also written, booted and re-saved unchanged on 18 console/firmware pairs (decode notes, not published).
 PARAMS = {
     'reverb': {'early_reflect': (0x2e, 0), 'predelay': (0x0f, 0), 'lo_filter': (0x14, 1), 'hi_filter': (0x14, 0),
                'hi_damping': (0x37, 0), 'decay': (0x12, 0), 'mix': (0x01, 0)},
@@ -102,7 +91,6 @@ PARAMS = {
     'pitch': {'pitch_left': (0x02, 0), 'pitch_right': (0x02, 1), 'mix': (0x01, 0)},
     'special': {'mix': (0x01, 0)},
 }
-# Keys whose meaning depends on the preset (same key, different control on the rack display).
 PRESET_PARAMS = {
     'Studio delay': {'hi_pass': (0x06, 0), 'lo_pass': (0x06, 16)},
     'Simple delay': {'lo_pass': (0x06, 0)},
@@ -112,7 +100,6 @@ UNITS = {'early_reflect': 'dB', 'predelay': 's', 'decay': 's', 'time': 's', 'lo_
          'depth': 's', 'pitch_left': 'ratio', 'pitch_right': 'ratio'}
 
 
-# ---------------------------------------------------------------------------------------------------- helpers
 def _f(b, p):
     return struct.unpack_from('<f', b, p)[0]
 
@@ -166,9 +153,9 @@ def library(data):
     p, out = 6, []
     for i in range(n):
         if p + 8 > len(s) or s[p:p + 2] != b'\xd7\x00' or s[p + 6:p + 8] != b'\xd5\x00':
-            break                         # entry kinds this reader does not know (big V2025 libraries): stop here
+            break
         end = _obj_end(s, p + 6)
-        o = p + 6 + 4 + struct.unpack_from('<H', s, p + 8)[0] + 4      # first record
+        o = p + 6 + 4 + struct.unpack_from('<H', s, p + 8)[0] + 4
         typ = struct.unpack_from('<H', s, o + 4)[0]
         cnt = struct.unpack_from('<H', s, o + 0x30)[0]
         rec = s[o:o + 4 + 0x3a + 8 * cnt + 12]
@@ -215,8 +202,7 @@ def _signatures(lib, kinds):
     return kind, {ks: v[0] for ks, v in names.items() if len(v) == 1}
 
 
-# ---------------------------------------------------------------------------------------------------- reading
-CB_HL = (0x50, 0x58, 0x78, 0x79)     # channel record header lengths; 0x78 = Quantum 112 / 852 at V1926-V2126
+CB_HL = (0x50, 0x58, 0x78, 0x79)
 
 
 def _groups201(s201):
@@ -258,7 +244,6 @@ class _Doc:
             raise ValueError('this session has no FX group in section 201')
         self.gq = m.start()
 
-    # section 201 ---------------------------------------------------------
     def fx_cbs(self):
         """[(offset, record bytes)] of the FX group's channel records, in rack order."""
         s, q = self.s201, self.gq
@@ -281,7 +266,6 @@ class _Doc:
                     return p, r
         return None, None
 
-    # section 211 ---------------------------------------------------------
     def slot(self, cid, module, param, band):
         o = self.obj[cid]
         q = layout.obj_slot(o, module, param, band)
@@ -373,7 +357,6 @@ def units(ses):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------- writing
 def resolve_preset(lib, kinds, preset):
     """A library index from a preset name ('Vocal Plate'), a kind word ('hall', 'plate', 'delay'), or an index."""
     fx = [e for e in lib if e['type'] == FX_MODULE]
@@ -518,7 +501,7 @@ def feed_from_aux(ses, unit, aux, replace=False):
         d.put_raw(cid, FX_MODULE, 0x00, 0, bytes([0, 0, lid & 0xff, T_AUX]))
         d.put_raw(cid, FX_MODULE, 0x00, 1, bytes([0, 0, rid & 0xff, T_RIGHT]))
     else:
-        d.put(lid, 0x0e, 0xe8, 0, 0.0)                     # mono > stereo: the aux feeds both sides
+        d.put(lid, 0x0e, 0xe8, 0, 0.0)
         d.put_raw(cid, FX_MODULE, 0x00, 0, bytes([0, 0, lid & 0xff, T_AUX]))
         d.put_raw(cid, FX_MODULE, 0x00, 1, bytes([0, 0, lid & 0xff, T_AUX]))
     _reload(ses, d.build())
@@ -564,7 +547,7 @@ def restore_feed_modes(ses):
         if q0 is None or q1 is None or o[q0:q0 + 4] != o[q1:q1 + 4] or o[q0 + 3] != 0x01 or o[q0 + 1] != 0:
             continue
         src = d.obj.get(0x0100 | o[q0 + 2])
-        if src is None or src[-1] != 1:                     # object trailer: last byte = width
+        if src is None or src[-1] != 1:
             continue
         q, m = layout.obj_slot(src, 0x0e, 0xfe, 0), layout.obj_slot(src, 0x0e, 0xe8, 0)
         if q is None or m is None or src[q + 3] != FX_TYPE or src[q + 2] != cid & 0xff:
@@ -644,7 +627,7 @@ def _add_fx(ses, preset, feed_aux, return_to, name, return_name, make_stereo, fe
     entry, kind = d.lib[pi], d.kinds[pi]
     pool = [c for c, _ in ((struct.unpack_from('<H', r, 4)[0], r) for _, r in d.fx_cbs())
             if c in d.obj and (d.unit_kind(c)[0] == 'reverb') == (kind == 'reverb')]
-    cap = len(engine_slots(d.family, kind))      # V1455 records have no EngineChannel, so count the units too
+    cap = len(engine_slots(d.family, kind))
     if len(pool) >= cap:
         raise ValueError('this session already has %d %s units (%d per session on this console)'
                          % (len(pool), 'reverb' if kind == 'reverb' else 'non-reverb', cap))
@@ -657,7 +640,6 @@ def _add_fx(ses, preset, feed_aux, return_to, name, return_name, make_stereo, fe
     cid = (FX_TYPE << 8) | k
     number = len(cbs) + 1
 
-    # 201: a mono aux record turned into an FX record, appended to the FX group
     tpl = next((bytearray(r) for _, r in cbs), None)
     if tpl is None:
         tpl = next((bytearray(r) for _, r in d.cbs(T_AUX) if r[41] == 1), None)
@@ -674,7 +656,6 @@ def _add_fx(ses, preset, feed_aux, return_to, name, return_name, make_stereo, fe
     d.s201[end:end] = tpl
     struct.pack_into('<I', d.s201, d.gq + 0x70, number)
 
-    # 211: the live object
     rec = _live_record(entry, uname, _stamp(d))
     trailer = b'\x27\x00' + struct.pack('<H', cid) + _sstr31(uname) + struct.pack('<i', pi) + b'\x02'
     d.obj[cid] = bytearray(b'\xd5\x00\x01\x00\x01' + struct.pack('<I', 1) + rec + trailer)

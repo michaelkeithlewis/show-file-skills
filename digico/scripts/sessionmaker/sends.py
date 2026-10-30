@@ -37,10 +37,10 @@ import struct
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-from ses import Session, chrec_ok  # noqa: E402,F401  (Session re-exported for callers)
+from ses import Session, chrec_ok
 
 T_AUX, T_GROUP, T_RSIDE, T_MATRIX = 0x05, 0x06, 0x07, 0x10
 KINDS = {'aux': T_AUX, 'group': T_GROUP, 'matrix': T_MATRIX}
@@ -51,20 +51,17 @@ FADER, F_FADER, F_MUTE, F_LINKPANS = 0x0c, 0x21, 0x22, 0x0f
 OUT, O_ROUTE, O_WIDTH = 0x0e, 0xfe, 0xe8
 SOCKET, SK_SOURCE = 0x12, 0x00
 OUTPUT_SOCKET_TYPES = range(0x4d, 0x60)
-MASTER_ID_AT = 0x5c                     # header: tConsoleRec (0x24) + 56 = MasterGroupID (band of the master group)
-BUSSID_AT = 54                          # section 201 record: cb 00 hl 00 + tChannelRec.BussID @50
+MASTER_ID_AT = 0x5c
+BUSSID_AT = 54
 OFF_DB, MAX_DB = -150.0, 10.0
 
-# AuxSendPrePostButton caption in the editor: "Post-Fader|Pre-Fader|Pre-Mute|Mid-EQ/Dynamics|Pre-EQ/Dynamics|
-# Pre-Processing" = values 0..5 of (02, 04).
 PREPOST = {'post': 0, 'pre': 1, 'pre-mute': 2, 'mid-eq': 3, 'pre-eq': 4, 'pre-processing': 5}
 PREPOST_NAMES = {v: k for k, v in PREPOST.items()}
 LINK_PANS = {'off': 0, 'on': 1, 'reverse': 2}
 LINK_NAMES = {v: k for k, v in LINK_PANS.items()}
-NAME_MAX = 24                           # longest bus name in the 39 real sessions is 20; "<name> R" must fit 31
+NAME_MAX = 24
 
 
-# ---------------------------------------------------------------------------- object index
 class Obj:
     """One live channel object in section 211: id, name, width and {module: {(param, band): float offset}}."""
     __slots__ = ('id', 'name', 'width', 'trailer', 'recs', 'mods')
@@ -143,7 +140,6 @@ def _db(v):
     return max(OFF_DB, min(MAX_DB, float(v))) + 0.0
 
 
-# ---------------------------------------------------------------------------- buses
 def _chrec(ses, oid):
     """Section 201 record dict (off, id, number, name, width) for object id `oid`, or None."""
     for r in ses.groups201.get(oid >> 8, []):
@@ -205,7 +201,7 @@ def _rename_object(ses, oid, name):
     d, field, n = ses.d, _sstr31(name), 0
     want = struct.pack('<H', oid)
     run = []
-    for r in ses.records:                         # all module records in the file, in file order
+    for r in ses.records:
         if run and r.off != run[-1].end + 12:
             run = []
         run.append(r)
@@ -244,7 +240,7 @@ def name_bus(ses, kind, n, name, max_len=NAME_MAX):
     k = _rename_object(ses, b['id'], name)
     if b['rid']:
         k += _rename_object(ses, b['rid'], name + ' R')
-    for typ in (KINDS[kind], T_RSIDE):            # keep the parsed 201 view in step
+    for typ in (KINDS[kind], T_RSIDE):
         for r in ses.groups201.get(typ, []):
             if r['id'] == b['id']:
                 r['name'] = name
@@ -298,7 +294,6 @@ def _linked_pan(ses, idx, mode):
     return (1.0 if mode == 1 else -1.0) * ses.get(idx, 0x0d, 0x23, 0) + 0.0
 
 
-# ---------------------------------------------------------------------------- sends
 def set_send(ses, ch, aux_n, level_db=None, on=True, pre=None, pan=None):
     """Aux send from surface input channel `ch` to surface aux `aux_n`.
     level_db: dB (-150 = off .. +10), None keeps it. on: True / False / None (keep).
@@ -311,13 +306,12 @@ def set_send(ses, ch, aux_n, level_db=None, on=True, pre=None, pan=None):
         raise KeyError('no aux %d in this session (it has %d)' % (aux_n, len(ses.auxes)))
     band = ses.aux_band[aux_n]
     width = next(a['width'] for a in ses.auxes if a['number'] == aux_n)
-    if pan is not None and width != 2:                 # check everything before the first write
+    if pan is not None and width != 2:
         raise ValueError('aux %d is mono; a send pan needs a stereo aux' % aux_n)
     if pan is not None:
-        pan = max(-1.0, min(1.0, float(pan))) + 0.0     # + 0.0: no -0.0 (the editor saves +0)
+        pan = max(-1.0, min(1.0, float(pan))) + 0.0
     mode = link_pans(ses, aux_n) if width == 2 else 0
     if mode in (1, 2):
-        # a linked aux: the editor rewrites every send pan from the channel pan on load, so write that value
         want = _linked_pan(ses, idx, mode)
         if pan is not None and abs(pan - want) > 1e-6:
             raise ValueError('aux %d has link pans %s: the send pan follows the channel pan (%.3f here), not %.3f'
@@ -357,7 +351,7 @@ def set_bus_send(ses, group_n, aux_n, level_db=None, on=True, pre=None, pan=None
     width = next(a['width'] for a in ses.auxes if a['number'] == aux_n)
     sides = _sides(g)
     pans = None
-    if pan is not None:                                # check everything before the first write
+    if pan is not None:
         if width != 2:
             raise ValueError('aux %d is mono; a send pan needs a stereo aux' % aux_n)
         pans = list(pan) if isinstance(pan, (tuple, list)) else [pan]
@@ -397,7 +391,6 @@ def read_sends(ses, ch, active_only=True):
     return out
 
 
-# ---------------------------------------------------------------------------- group routing
 def route_to_groups(ses, ch, groups, exclusive=True):
     """Assign surface input channel `ch` to surface groups `groups` (numbers, or 'master' for the console master).
     exclusive=True clears every other group assign, the master included unless it is listed."""
@@ -438,7 +431,6 @@ def bus_routes(ses, n):
             and _getf(ses, b['obj'].slot(GROUPS, G_ASSIGN, g['band'])) > 0.5]
 
 
-# ---------------------------------------------------------------------------- output patch
 def output_sockets(ses):
     """[{id, type, idx, number, name, group}] of the output sockets (live objects of types 4d-5f)."""
     gname = {}
@@ -503,7 +495,7 @@ def _fix_bus_route(ses, src_oid):
             s['type'] == cur[3] and s['idx'] == cur[2] for s in feeding):
         return
     if cur != b'\0\0\0\0' and cur[3] not in OUTPUT_SOCKET_TYPES:
-        return                                    # routed to an FX unit or another destination: leave it
+        return
     ses.d[o.slot(OUT, O_ROUTE):o.slot(OUT, O_ROUTE) + 4] = (_route(feeding[0]['idx'], feeding[0]['type'])
                                                         if feeding else b'\0\0\0\0')
 
@@ -521,7 +513,7 @@ def patch_output(ses, kind, n, left, right=None, replace=True):
         sides.append((b['robj'], right))
     elif right is not None:
         raise ValueError('%s %d is mono; it takes one output socket' % (kind, n))
-    sides = [(o, find_socket(ses, spec)) for o, spec in sides]   # resolve every socket before the first write
+    sides = [(o, find_socket(ses, spec)) for o, spec in sides]
     if len(sides) == 2 and sides[0][1]['id'] == sides[1][1]['id']:
         raise ValueError('%s %d: left and right need two different sockets' % (kind, n))
     if replace:
@@ -537,7 +529,6 @@ def patch_output(ses, kind, n, left, right=None, replace=True):
             _fix_bus_route(ses, (old[3] << 8) | old[2])
         r = o.slot(OUT, O_ROUTE)
         cur = _raw(ses, r)
-        # the bus's own route names one of its sockets; when it feeds an FX unit (type 0e) that feed stays
         if cur == b'\0\0\0\0' or (replace and cur[3] in OUTPUT_SOCKET_TYPES):
             ses.d[r:r + 4] = _route(sock['idx'], sock['type'])
         done.append(sock['name'])
@@ -571,7 +562,7 @@ def route_errors(ses):
         src = _socket_source(ses, s)
         if src != b'\0\0\0\0' and ((src[3] << 8) | src[2]) not in objs:
             errs.append('socket %s is fed by %s, which is not in the session' % (s['name'], src.hex()))
-        elif src != b'\0\0\0\0' and src[:2] == b'\0\0':          # a main output (insert sends carry a tap byte)
+        elif src != b'\0\0\0\0' and src[:2] == b'\0\0':
             o = objs[(src[3] << 8) | src[2]]
             if o.has(OUT, O_ROUTE) and _raw(ses, o.slot(OUT, O_ROUTE)) == b'\0\0\0\0':
                 errs.append('socket %s is fed by %s, whose own output route is empty' % (s['name'], o.name))
@@ -596,7 +587,6 @@ def outputs_of(ses, kind, n):
     return out
 
 
-# ---------------------------------------------------------------------------- read back
 def read_buses(ses):
     """Plain-data view of every aux and group master: name, width, fader, mute, outputs, routing."""
     out = {'aux': [], 'group': [], 'master': master_group(ses)}
@@ -614,10 +604,6 @@ def read_buses(ses):
     return out
 
 
-# ---------------------------------------------------------------------------- monitor-mix example
-# Starting IEM send levels (dB) by template category (sessionmaker.taxonomy): the medians of 7,400 active sends
-# in the 192 stereo IEM-style mixes of 28 real sessions that have them (decode notes, not published), whole dB.
-# 69 % of those sends are pre-fader, 30 % post-fader (dedicated monitor desks with the input faders at 0 dB).
 MIX_BASE = {'kick_in': -7, 'kick_out': -2, 'kick_sub': -7, 'snare_top': -6, 'snare_bottom': -11, 'hihat': -19,
             'rack_tom': -7, 'floor_tom': -10, 'roto_tom': -5, 'overheads': -11, 'ride': -15, 'drum_crotch': -15,
             'drum_trigger': -17, 'sample_pad': -7, 'hand_perc': -12, 'bass_di': -10, 'bass_amp': -10,
@@ -628,8 +614,8 @@ MIX_BASE = {'kick_in': -7, 'kick_out': -2, 'kick_sub': -7, 'snare_top': -6, 'sna
             'cues_guide': -8, 'timecode': -150, 'media_playback': -8, 'audience': -19, 'measurement_ref': -150,
             'test_signal': -150, 'fx_reverb': -20, 'fx_delay': -19, 'fx_modulation': -18, 'fx_other': -20,
             'talkback': -4, 'comms_radio': -5, 'other': -15}
-ONLY_ON_REQUEST = {'click', 'cues_guide'}   # sent only to the mixes that ask for them (mix['click'])
-OWN_BOOST = 6.0                             # a player's own sources come up this much
+ONLY_ON_REQUEST = {'click', 'cues_guide'}
+OWN_BOOST = 6.0
 
 
 def monitor_mixes(ses, chans, mixes, pre='pre', fader_db=0.0):
@@ -658,7 +644,7 @@ def monitor_mixes(ses, chans, mixes, pre='pre', fader_db=0.0):
                 continue
             pan = None
             if stereo_aux and not linked and not c.get('stereo'):
-                pan = ses.get(ses.ch(c['n']), 0x0d, 0x23, 0)   # follow the channel's main pan (a linked aux derives it)
+                pan = ses.get(ses.ch(c['n']), 0x0d, 0x23, 0)
             set_send(ses, c['n'], a, level, on=True, pre=pre, pan=pan)
             lv[c['n']] = level
         out[a] = lv

@@ -37,15 +37,13 @@ from collections import Counter
 REC = b'\xda\x00\x3a\x00'
 SEC_TABLE, SEC_IDS, NSEC = 0x100, 0x1a0, 40
 BANK_SIZE = 0x169
-NO_POS = 0xffffffff                       # OverviewPosition x of a bank that is not on the overview grid
-GRID_W, GRID_H, GRID_COLS = 170, 250, 6   # overview grid: x = 1 + 170 * col, y = 2 + 250 * row
-# (module, param, band): (mono value, stereo value). (1d,3f,0) exists only on Quantum (Mustard).
+NO_POS = 0xffffffff
+GRID_W, GRID_H, GRID_COLS = 170, 250, 6
 STEREO_SLOTS = {(0x08, 0xe8, 0): (1.0, 2.0), (0x08, 0xe8, 1): (1.0, 2.0), (0x0e, 0xe8, 0): (1.0, 2.0),
                 (0x1d, 0x3f, 0): (0.0, 1.0)}
-MAX_INPUT_IDS = 0x100                     # the id low byte is idx - 1, so 256 inputs at most
+MAX_INPUT_IDS = 0x100
 
 
-# ---------------------------------------------------------------------------- container
 class Container:
     """The file as a header + an ordered list of [section id, bytearray]. build() rewrites the section table."""
 
@@ -54,7 +52,7 @@ class Container:
         self.head = bytearray(d[:SEC_TABLE])
         offs = struct.unpack_from('<%di' % NSEC, d, SEC_TABLE)
         ids = d[SEC_IDS:SEC_IDS + NSEC]
-        self.gap = d[SEC_IDS + NSEC:offs[0]]          # bytes between id table and the first section
+        self.gap = d[SEC_IDS + NSEC:offs[0]]
         n = next(i for i in range(1, NSEC) if offs[i] == len(d))
         self.sections = [[ids[i], bytearray(d[offs[i]:offs[i + 1]])] for i in range(n)]
 
@@ -79,7 +77,6 @@ class Container:
         return bytes(out)
 
 
-# ---------------------------------------------------------------------------- section 201
 def input_group(s201):
     """(group header offset, first record, end of records, [record bytes]) of the Input Channels group."""
     m = re.search(rb'\xca\x00\x6c\x00\x01\x0eInput Channels', bytes(s201))
@@ -102,25 +99,11 @@ def cb_has_engine(r):
     return len(r) >= 88
 
 
-# ---------------------------------------------------------------------------- engine channels
-# cb +84 EngineChannel numbers the DSP paths. Measured on all 91 editor-saved files (39 real sessions,
-# editor-made baselines, every default session and the editors' boot re-saves in:
-#   SD models   one pool for the inputs and the mix buses. Groups (06) sit at the bottom, then the inputs, then the
-#               Talkback Input (0c) at last input + 1. Aux (05) and Matrix (10) outputs sit at the top (SD9/SD11/
-#               SD12 end at 191, SD5/SD7/SD8/SD10 at 255); 07 (right side of a stereo aux or group) sits inside
-#               those ranges. No input ever shares an engine channel with 05/06/07/10 or 0c.
-#   Quantum     the inputs have a pool of their own from 0 (the buses reuse 0..). TB In sits at 254 on Q2/Q3/Q5/Q7
-#               and at last input + 1 on Q1/Q8. No engine number above 255 was seen.
-# After a relayout the editor moves TB In to last input + 1 wherever it sat there before, and leaves 254 alone
-# (boot re-saves: sd5 126->80, sd12 66->80, q112 48->59, q852 72->62; q225..q7 kept 254). relayout() does the same.
 GROUP_HDR = b'\xca\x00\x6c\x00'
 T_INPUT, T_TB = 0x01, 0x0c
-BUS_TYPES = (0x05, 0x06, 0x07, 0x10)     # aux, group, right side of stereo aux/group, matrix output
+BUS_TYPES = (0x05, 0x06, 0x07, 0x10)
 QUANTUM_FAMILIES = {'Q1', 'Q2', 'Q3', 'Q5', 'Q8', 'SDQ'}
-QUANTUM_POOL = 256                       # engine numbers 0..255 on a Quantum input pool
-# Channel record header lengths. 0x78 is the Quantum 112 and 852 at V1926-V2126; before 2026-10-13 groups201 left it
-# out, so engine_room() found no engine channels there and relayout() left TB In at the default's 72 (Q852) or 48
-# (Q112), which the editors then rewrote to last input + 1 on load (decode notes, not published).
+QUANTUM_POOL = 256
 CB_HL = (0x50, 0x58, 0x78, 0x79)
 
 
@@ -185,7 +168,6 @@ def engine_room(data):
             'room': limit - first - (1 if tb_follows else 0)}
 
 
-# ---------------------------------------------------------------------------- section 211
 def objects(s211):
     """([object bytes] sorted by id, tail bytes) of the live channel objects."""
     if s211[:2] != b'\xd3\x00':
@@ -267,9 +249,9 @@ def obj_set(o, idx, name=None, width=None):
 def _mask_obj(o):
     o = bytearray(o)
     for p, _, _ in obj_records(o):
-        o[p + 8:p + 48] = b'\0' * 40          # name + TDateTime
+        o[p + 8:p + 48] = b'\0' * 40
     t = len(o) - 41
-    o[t + 2:t + 36] = b'\0' * 34              # id + name
+    o[t + 2:t + 36] = b'\0' * 34
     return bytes(o)
 
 
@@ -292,7 +274,6 @@ def default_cb(cbs):
     return next(r for r in monos if m(r) == best)
 
 
-# ---------------------------------------------------------------------------- banks (243) and placement (212)
 def banks(s243):
     n = struct.unpack_from('<I', s243, 2)[0]
     return [bytearray(s243[6 + BANK_SIZE * k:6 + BANK_SIZE * (k + 1)]) for k in range(n)], \
@@ -300,7 +281,6 @@ def banks(s243):
 
 
 def is_input_bank(b):
-    # strip j: internal index - 1 at +0x23+2j, strip type at +0x24+2j (01 = input channel)
     return any(b[0x24 + 2 * j] == 0x01 for j in range(12))
 
 
@@ -358,7 +338,7 @@ def _tables(t212):
     return [[struct.unpack_from('<H', t212, 2 + 99 * u + 2 * j)[0] for j in range(42)] for u in range(8)]
 
 
-INPUT_LAYERS = 6   # positions 0-5 (layer 1) hold the input banks and 6-11 (layer 2) the output banks in every default
+INPUT_LAYERS = 6
 
 
 def remap_placement(t212, old_in, new_in):
@@ -392,7 +372,6 @@ def remap_placement(t212, old_in, new_in):
     return t
 
 
-# ---------------------------------------------------------------------------- session notes (section 0)
 def set_notes(c, text):
     """Session notes (section 0): 00 00 | u16 length | latin-1 text, as Files > Session Notes saves them."""
     b = text.encode('latin1', 'replace')[:255]
@@ -408,7 +387,6 @@ def notes(data):
     return bytes(s[4:4 + n]).decode('latin1')
 
 
-# ---------------------------------------------------------------------------- the operation
 def relayout(data, spec, session_notes=None):
     """Rebuild the input layout. spec: list in SURFACE order of dicts {name, width (1/2), src (optional existing
     internal index to copy processing from), idx (optional internal index to use)}. Returns new bytes.
@@ -441,7 +419,6 @@ def relayout(data, spec, session_notes=None):
     if len(used) != len(spec) or max(used) > MAX_INPUT_IDS:
         raise ValueError('input indices must be unique and at most %d' % MAX_INPUT_IDS)
 
-    # 211: one object per channel, cloned from its source (or the default mono object), sorted by id
     new_in = []
     for e in spec:
         src = in_objs.get(0x0100 | ((e.get('src') or e['idx']) - 1))
@@ -453,8 +430,6 @@ def relayout(data, spec, session_notes=None):
     struct.pack_into('<I', head, 2, len(new_in) + len(other))
     body = b''.join(new_in) + b''.join(other)
 
-    # 201: cb records in surface order, EngineChannel = first + running sum of widths. The inputs must fit below
-    # the first bus (SD) or the fixed TB In (Quantum); TB In that sat right after the inputs moves with them.
     room = engine_room(c)
     need = sum(e['width'] for e in spec)
     if room is not None and need > room['room']:
@@ -478,7 +453,6 @@ def relayout(data, spec, session_notes=None):
             struct.pack_into('<h', s201n, p + 84, acc)
     c.sec(201)[1] = s201n
 
-    # 243: input banks rebuilt in surface order, later banks renumbered
     s243 = c.sec(243)[1]
     bl, btail = banks(s243)
     old_in = sum(1 for b in bl if is_input_bank(b))
@@ -490,7 +464,6 @@ def relayout(data, spec, session_notes=None):
     place_banks(nbl, bl, old_in, len(ib))
     c.sec(243)[1] = bytearray(s243[:2]) + struct.pack('<I', len(nbl)) + b''.join(nbl) + btail
 
-    # 212 and its copy in the 211 tail
     t212 = c.sec(212)[1]
     t212n = remap_placement(t212, old_in, len(ib))
     c.sec(212)[1] = t212n

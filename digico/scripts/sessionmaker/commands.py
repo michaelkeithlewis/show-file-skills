@@ -74,16 +74,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from sessionmaker import taxonomy as T  # noqa: E402
+from sessionmaker import taxonomy as T
 
 JEV_ACCEPT = 0.6
-JEV_BUDGET_S = float(os.environ.get('SM_CMD_JEV_TIMEOUT', '1.5'))   # wall clock for the whole classifier step of a command
+JEV_BUDGET_S = float(os.environ.get('SM_CMD_JEV_TIMEOUT', '1.5'))
 MAX_TEXT = 2000
-STEP_DB = 3.0                                                       # "more" / "less" without a number
-MIX_START_DB, FX_START_DB = -10.0, -5.0                             # "more X in Y" when X is not in Y yet
+STEP_DB = 3.0
+MIX_START_DB, FX_START_DB = -10.0, -5.0
 
-# ------------------------------------------------------------------------------------------------ vocabulary
-# Command words a typo may hit. Channel-name words are never corrected (Index.name_words).
 VOCAB = sorted(set('''
 mustard compressor compressors compression compress comp comps gate gates gating threshold ratio attack release
 overheads overhead vocals vocal guitars guitar keyboards keys tracks talkback phantom polarity rename reverb verb
@@ -98,7 +96,6 @@ NUMW = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven':
         'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'twenty': 20,
         'twenty four': 24, 'thirty two': 32}
 
-# Text rewrites on the lower-case clause (never on names, which are cut out first).
 CANON = [(re.compile(p), r) for p, r in [
     (r'\bhigh[- ]?pass(?:ed|ing)?(?: filters?)?\b|\bhi[- ]?pass(?: filters?)?\b|\blow[- ]?cuts?\b|\blo[- ]?cuts?\b|'
      r'\broll[- ]?off\b|\bhp filters?\b|\bhpfs\b|\bhighpass\b|\bhi[- ]?pf\b', 'hpf'),
@@ -126,7 +123,6 @@ CANON = [(re.compile(p), r) for p, r in [
 ]]
 NUM_RX = re.compile(r'\b(%s)\b' % '|'.join(sorted(NUMW, key=len, reverse=True)))
 
-# A clause starts here when a comma or "and" is followed by one of these.
 ACTION_START = re.compile(
     r'^(?:then\s+|also\s+|and\s+)?(?:hpf|lpf|gate|comp|mustard|eq|boost|cut|notch|delay|flip|invert|polarity|mute|'
     r'unmute|rename|name|call|label|move|swap|add|insert|remove|delete|drop|kill|turn|set|put|use|make|give|send|'
@@ -134,7 +130,6 @@ ACTION_START = re.compile(
     r'split|apply|reset|more|less|take|bypass|engage|enable|disable|fet|vca|opto|optical|lose|ditch|get rid|'
     r'solo|throw|flatten|scoop|swap)\b')
 
-# ------------------------------------------------------------------------------------------------ groups of channels
 VOCAL = {'lead_vocal', 'vocal_generic', 'vocal_fx_mic', 'vocal_ear_split', 'choir'}
 DRUMS = {'kick_in', 'kick_out', 'kick_sub', 'snare_top', 'snare_bottom', 'hihat', 'rack_tom', 'floor_tom', 'roto_tom',
          'overheads', 'ride', 'drum_crotch', 'drum_trigger', 'sample_pad', 'hand_perc'}
@@ -143,7 +138,6 @@ TRACKS = {'tracks_music', 'tracks_drums_perc', 'tracks_bass', 'tracks_vocals'}
 FXRET = {'fx_reverb', 'fx_delay', 'fx_modulation', 'fx_other'}
 INSTR = DRUMS | {'bass_di', 'bass_amp', 'synth_bass', 'electric_guitar', 'acoustic_guitar', 'folk_strings', 'strings',
                  'horns'} | KEYS
-# (key, label, regex on a cleaned target part, categories or a callable on a Ch)
 GROUPS = [
     ('lead', 'lead vocal', r'(?:the )?(?:lead|main|front)(?: (?:vocals?|vox|vx|singer|vocalist|voc|mic))?|lv|ld vox|'
                            r'(?:lead )?singer|vocalist|artist(?: vocal| vox| mic)?', {'lead_vocal'}),
@@ -194,7 +188,6 @@ GROUPS = [(k, lab, re.compile(r'^(?:%s)$' % rx), sel) for k, lab, rx, sel in GRO
 ALL_RX = re.compile(r'^(?:everything|every ?(?:thing|ch|input|one)|all(?: the)?(?: ch| inputs?| of (?:them|it|the ch|'
                     r'the inputs))?|all inputs|whole (?:session|desk|console|show)|the whole thing|across the board|'
                     r'everywhere|the lot|everything else|all of them|all sources)$')
-# template category to use when a group word names a template ("use the snare template on 7")
 TEMPLATE_OF_GROUP = {'lead': 'lead_vocal', 'bgvs': 'vocal_generic', 'vocals': 'vocal_generic', 'kick': 'kick_in',
                      'snare': 'snare_top', 'toms': 'rack_tom', 'rack_tom': 'rack_tom', 'floor_tom': 'floor_tom',
                      'hihat': 'hihat', 'overheads': 'overheads', 'bass': 'bass_di', 'electric': 'electric_guitar',
@@ -203,7 +196,6 @@ TEMPLATE_OF_GROUP = {'lead': 'lead_vocal', 'bgvs': 'vocal_generic', 'vocals': 'v
                      'talkback': 'talkback', 'audience': 'audience', 'horns': 'horns', 'strings': 'strings',
                      'choir': 'choir', 'perc': 'hand_perc', 'speech': 'speech_mic', 'drums': None}
 
-# Who a monitor mix belongs to: words in a phrase -> words an aux name may carry.
 SEAT_WORDS = [
     (r'drummer|drums?|kit|drum mix', r'drum|kit|dr\b|dms'),
     (r'bass(?:ist| player)?|bass mix', r'bass|\bbs\b|\bbg\b'),
@@ -221,7 +213,6 @@ SEAT_WORDS = [
 SEAT_WORDS = [(re.compile(r'^(?:the )?(?:%s)$' % a), re.compile(b)) for a, b in SEAT_WORDS]
 MIXWORD = r'(?:mix(?:es)?|ears?|iems?|in ?ears?|wedges?|monitors?|mons?|aux)'
 
-# ------------------------------------------------------------------------------------------------ FX words
 FX_KIND_WORDS = [
     (r'vocal plate|vox plate|vocal verb', 'vocal plate'), (r'drum plate', 'drum plate'),
     (r'gated verb|gate verb|gated|non ?-?lin(?:ear)?', 'gated'), (r'drum verb|drum room|room verb|room', 'room'),
@@ -229,7 +220,7 @@ FX_KIND_WORDS = [
     (r'slap ?back|slap delay|slap', 'slap'),
     (r'tape delay|tap delay|quarter note delay|eighth note delay|delay|echo|dly', 'delay'),
     (r'chorus', 'chorus'), (r'thicken(?:er)?|doubler|double|adt|harmoni[sz]er', 'thicken'),
-    (r'verb', None),            # kind follows the channels it is for
+    (r'verb', None),
 ]
 FX_KIND_WORDS = [(re.compile(r'\b(?:%s)\b' % a), b) for a, b in FX_KIND_WORDS]
 FX_ANY = re.compile(r'\b(?:verb|plate|hall|room|slap ?back|slap|delay|echo|dly|chorus|thicken(?:er)?|doubler|adt|'
@@ -242,7 +233,6 @@ MUSTARD_MODELS = [(r'\bfet\b|\b1176\b|\bfet comp', 'fet'), (r'\bvca\b|\bssl\b|\b
                   (r'\blev ?amp\b|\blevell?ing amp(?:lifier)?\b|\blevamp\b', 'levamp'), (r'\bclassic\b', 'classic')]
 MUSTARD_MODELS = [(re.compile(a), b) for a, b in MUSTARD_MODELS]
 
-# Plain sound wishes -> one EQ move (a starting point, said as such in the summary). (regex, band freq, gain, type, q)
 RECIPES = [
     (r'boom(?:y|iness)|too much (?:low|bottom)(?: end)?|less (?:low|bottom)(?: end)?|less boom', 250, -3.0, 'bell', 1.4),
     (r'mudd?(?:y|iness)?|less mud|cloudy', 350, -3.0, 'bell', 1.4),
@@ -258,7 +248,7 @@ RECIPES = [
 ]
 RECIPES = [(re.compile(r'\b(?:%s)\b' % a), f, g, ty, q) for a, f, g, ty, q in RECIPES]
 
-INTENTS = {   # the classifier's options when the grammar read nothing in a clause
+INTENTS = {
     'hpf': 'Turn on, move or remove the high-pass filter (low cut) on channels',
     'lpf': 'Turn on, move or remove the low-pass filter (high cut) on channels',
     'eq': 'Change the EQ of channels (boost or cut a frequency, shelf, notch, less boomy, more air)',
@@ -304,7 +294,6 @@ ASK_FOR = {
     'template': 'Say it like "apply the templates to everything".',
 }
 
-# ------------------------------------------------------------------------------------------------ model index
 
 
 def _ascii(s):
@@ -328,7 +317,7 @@ def _category(display, stereo):
     try:
         cat, p, _ = T.rule_category(display, stereo=stereo)
         return cat, p
-    except Exception:          # noqa: BLE001 - a hostile name never breaks a parse
+    except Exception:
         return 'other', 0.0
 
 
@@ -403,7 +392,6 @@ class Index:
         self.name_words = set(w for c in self.chans for w in c.toks) | set(
             w for a in self.auxes for w in a['norm'].split()) | set(w for g in self.groups for w in g['norm'].split())
 
-    # ---- helpers
     def chan_list(self, ns):
         return [self.by_n[n] for n in ns if n in self.by_n]
 
@@ -442,7 +430,6 @@ def index(model):
     return ix
 
 
-# ------------------------------------------------------------------------------------------------ targets
 STOP_EDGE = re.compile(r'^(?:(?:the|a|an|on|to|at|for|in|into|of|my|our|your|his|her|their|just|also|with|from|'
                        r'across|onto|its|is|are|and|both|each|those|these|them|it|that|this|some|any|only|over|up|'
                        r'down|out|off|now|then|too|as well|please|by|via)\s+)+|(?:\s+(?:the|a|an|on|to|at|for|in|of|'
@@ -572,7 +559,6 @@ def resolve_target(phrase, ix, allow_all=True):
 
 
 def _resolve_parts(text, ix, tg):
-    # the whole phrase may be one channel name with "and" or "/" in it
     full, p = _name_match(text, ix)
     if full and p >= 1.0:
         tg.chans += full
@@ -674,7 +660,6 @@ def _names(ix, ns, limit=5):
     return '%d channels (%s)' % (len(ns), _numtext(ns))
 
 
-# ------------------------------------------------------------------------------------------------ numbers
 FREQ_UNIT = re.compile(r'(?<![\w.])(\d+(?:\.\d+)?)\s*(k|hz)(\d)?(?![a-z])')
 AT_NUM = re.compile(r'\b(?:at|@|to|around|about|near|=)\s*(\d+(?:\.\d+)?)(?![\d.]|\s*(?:db|ms|%|:|to 1|-))')
 DB_RX = re.compile(r'(?<![\w.])([+-]?\d+(?:\.\d+)?)\s*db\b')
@@ -731,14 +716,13 @@ def _w(p):
     return re.compile(p)
 
 
-# ------------------------------------------------------------------------------------------------ results
 class R:
     """What a recognizer read: ops (target filled later when it needs one), a question, a confidence."""
 
     def __init__(self, kind, ops=None, ask=None, conf=0.95, target=None, need_target=False, intent=None):
         self.kind, self.ops, self.ask, self.conf = kind, ops or [], ask, conf
         self.target, self.need_target, self.intent = target, need_target, intent
-        self.make = None            # callable(Target) -> (ops, ask) when ops depend on the resolved channels
+        self.make = None
         self.tphrase = ''
 
 
@@ -759,7 +743,6 @@ def _with_target(C, ix, make, kind='set', conf=0.95, allow_all=True):
     return r
 
 
-# ------------------------------------------------------------------------------------------------ on / off words
 OFF_RX = re.compile(r'\b(?:off|kill|killing|remove|removing|no|bypass|bypassed|disable|disabled|lose|ditch|drop|'
                     r'take (?:out|off|away)|get rid of|turn off|switch off|without|delete|clear|out|disengage|'
                     r'strip|nix|zap|scrap|pull)\b')
@@ -772,7 +755,6 @@ def _onoff(C, default=True):
     return default
 
 
-# ================================================================================================ recognizers
 def rec_rename(raw, C, ix, ctx):
     """'rename 12 to Keys L', 'name 14 Vox Gst', 'call aux 3 Jamie', 'rename Kick In to Kick', '12 is called X'."""
     s = raw.strip()
@@ -786,7 +768,6 @@ def rec_rename(raw, C, ix, ctx):
             return None
         return _rename_one(m2.group('n'), m2.group('name'), ix)
     rest = m.group('rest').strip()
-    # several: "9 Keys L and 10 Keys R", "9 to Keys L, 10 to Keys R"
     multi = re.findall(r'(?i)(?:^|,|\band\b)\s*(?:ch(?:annel)?\.?\s*)?(\d{1,3})\s+(?:to\s+|as\s+)?(.+?)\s*(?=(?:,|\band\b)'
                        r'\s*(?:ch(?:annel)?\.?\s*)?\d{1,3}\s|$)', rest)
     if len(multi) > 1:
@@ -809,7 +790,6 @@ def rec_rename(raw, C, ix, ctx):
         if not tm:
             return _ask('Say the new name, like "rename 12 to Keys L".', 'rename')
         tgt, name = tm.group('tgt'), tm.group('name')
-    # "rename the drums mix to Jamie", "rename the Hall aux to Plate"
     bus = _bus_by_phrase(tgt, ix)
     if bus:
         return _rename_bus(bus[0], bus[1], name, ix)
@@ -901,7 +881,6 @@ def _aux_by_who(who, ix, mixes_only=False):
     return []
 
 
-# ------------------------------------------------------------------------------------------------ mixes / buses
 N_ = r'(\d{1,2})'
 
 
@@ -911,7 +890,7 @@ def rec_mixes(raw, C, ix, ctx):
         return None
     if re.search(r'\b(?:in|into|to|from|out of)\s+(?:the\s+)?\S+(?:\'s)?\s+(?:mix|ears?|iem|wedge|monitor)', t) and \
             not re.search(r'\b\d+\s+(?:stereo\s+)?(?:iem|wedge)', t):
-        return None                  # "more click in the drums mix" is a send
+        return None
     more = re.search(r'\b(?:add|another|more|extra)\b', t)
     st = mo = None
     m = re.search(r'\b(?:iem|ear) ?(?:mix(?:es)?\s+)?for\s+(?:the\s+|all\s+|our\s+)?' + N_ + r'\b', t) or \
@@ -964,7 +943,6 @@ def rec_buses(raw, C, ix, ctx):
         n, kind = int(m.group(1)), (m.group(2) or '').strip()
         bus = 'aux' if m.group(3) == 'aux' else 'grp'
         if not kind:
-            # "16 aux and 8 stereo": the bare one is mono when the other kind is named, else ask
             if re.search(r'\bstereo\b', t[m.end():m.end() + 40]) or re.search(r'\bstereo\b', t[:m.start()]):
                 kind = 'mono'
             else:
@@ -976,7 +954,6 @@ def rec_buses(raw, C, ix, ctx):
     return _ok([op], 0.9, 'buses')
 
 
-# ------------------------------------------------------------------------------------------------ FX units
 def _fx_kind(t, target_cats=None):
     for rx, k in FX_KIND_WORDS:
         if rx.search(t):
@@ -1046,7 +1023,6 @@ def rec_fx(raw, C, ix, ctx):
         return _ok([{'op': 'remove_fx', 'fx': u} for u in units], 0.9, 'remove_fx')
     if not adding:
         return None
-    # "add some verb to the lead" with a reverb in the session = a send, not a new unit
     if re.search(r'^(?:add|put|give|throw|use)\s+(?:some|a bit of|a little|a touch of|more|a little bit of)\s+', t):
         return None
     counted = re.search(r'\b(\d)\s+(?:verb|delays?|plates?|halls?|rooms?|fx|effects?)\b|\b(?:verb|delays|fx|effects)\b'
@@ -1072,7 +1048,6 @@ def rec_fx(raw, C, ix, ctx):
     rm = C.take(_w(r'\breturn(?:ing|ed)?\s+(?:on|to|in)\s+(?:ch\s*)?(\d{1,3})\b'))
     if rm:
         ret = int(rm.group(1))
-    # the channels it is for
     kind_m = None
     for rx, k in FX_KIND_WORDS:
         mm = rx.search(C.w)
@@ -1090,7 +1065,7 @@ def rec_fx(raw, C, ix, ctx):
     if left and (tg.missing or tg.empty):
         if tg.notes:
             return _ask(' '.join(tg.notes), 'add_fx')
-        return R('pending', conf=0.6, intent='add_fx')       # the classifier may know the channels
+        return R('pending', conf=0.6, intent='add_fx')
     cats = {ix.by_n[n].cat for n in tg.ns(ix)} if not tg.empty else None
     kind = kind_m[1] or _fx_kind('verb', cats)
     explicit_new = re.search(r'\b(?:another|a new|new|second|extra|additional)\b', t)
@@ -1126,10 +1101,8 @@ def _send_on(tg, ix, aux, label, conf=0.9, new_word='another'):
     return _ok([{'op': 'send', 'target': {'channels': sorted(off)}, 'aux': aux, 'on': True}], conf, 'send')
 
 
-# ------------------------------------------------------------------------------------------------ channels
 def rec_add_channels(raw, C, ix, ctx):
     t = C.t
-    # "make channel 9 mono" / "make ch 12 stereo" name an existing channel: that is a stereo change, not an add
     if re.search(r'\b(?:ch|channels?|inputs?|lines?|strips?)\s*\d', t) and re.search(r'\b(?:mono|stereo)\b', t):
         return None
     m = re.match(r'^(?:add|insert|append|tack on|create|new|give me|i need|we need|need|make)\s+(?P<n>\d{1,3}|an?|'
@@ -1137,7 +1110,6 @@ def rec_add_channels(raw, C, ix, ctx):
                  r'lines?|strips?|channels?)\b(?P<rest>.*)$', t)
     names, at = [], None
     if not m:
-        # "add a sub kick after 2", "add a guest vocal"
         m2 = re.match(r'^(?:add|insert|i need|we need|need|give me)\s+(?:an?|another|one|a new|new)\s+'
                       r'(?P<st>stereo\s+|mono\s+)?(?P<what>[a-z][a-z0-9 ]{1,24}?)(?P<rest>\s+(?:after|before|at|'
                       r'on|called|named)\b.*)?$', t)
@@ -1328,7 +1300,6 @@ def rec_stereo(raw, C, ix, ctx):
     return _ask('Pair two channels at a time, like "make %d and %d a stereo pair".' % (ns[0], ns[0] + 1), 'stereo')
 
 
-# ------------------------------------------------------------------------------------------------ patch / preamp
 def rec_patch(raw, C, ix, ctx):
     t = C.t
     if not re.search(r'\b(?:un-?patch|re-?patch|patch(?:ed|ing)?)\b', t):
@@ -1458,10 +1429,8 @@ def _level_change(C, ix, op, field, current, lo, hi, what):
     return _with_target(C, ix, make, op)
 
 
-# ------------------------------------------------------------------------------------------------ sends / groups
 def rec_send(raw, C, ix, ctx):
     t = C.t
-    # ---- groups and the PA
     gm = re.search(r'\b(?:to|into|in|on|through|thru|via|out of|from|off)\s+(?:the\s+)?(?:group|grp|sub ?group|subgroup)\s*'
                    r'(\d{1,3})\b|\b(?:group|grp)\s*(\d{1,3})\b', t)
     pa = re.search(r'\b(?:out of|from|off|in|into|to)\s+(?:the\s+)?(?:pa|mains?|main mix|master|lr|l ?r|house|'
@@ -1492,7 +1461,6 @@ def rec_send(raw, C, ix, ctx):
                 r'all|and|to|into|out|of|from|off|no|not|in|it|them|make sure|is|are')
         return _with_target(C, ix, lambda tg: ([{'op': 'send', 'target': tg.selector(ix), 'group': g, 'on': on}], None),
                             'send')
-    # ---- explicit aux: "send the vocals to aux 3 at -10", "vox pre on aux 4", "kick to aux 7 -5"
     am = re.search(r'\b(?:aux|mix)\s*(\d{1,3})\b', t)
     if am and not re.search(r'\b(?:add|insert|new|create)\b.*\b(?:verb|plate|hall|room|delay|slap|chorus|fx)\b', t) \
             and not re.search(r'^(?:re-?name|name|call)\b', t):
@@ -1501,7 +1469,6 @@ def rec_send(raw, C, ix, ctx):
             return _ask('There is no aux %d (the session has %d).' % (a, len(ix.auxes)), 'send')
         C.take(_w(r'\b(?:to|into|in|on|from|out of|off)?\s*(?:the\s+)?(?:aux|mix)\s*\d{1,3}\b'))
         return _send_fields(C, ix, a, t, 'aux %d %s' % (a, ix.aux_by_n[a]['name']))
-    # ---- "more X in Y's mix", "the drummer wants more click", "more verb on the lead"
     return _send_relative(raw, C, ix, ctx)
 
 
@@ -1571,7 +1538,6 @@ DIR = (r'(?:(?:a (?:little|bit|touch|tad|lot|little bit|bunch|hair) |way |much |
 
 def _send_relative(raw, C, ix, ctx):
     t = C.t
-    # "the drummer wants more click (in his ears)"
     m = re.match(r'^(?P<who>.+?)\s+(?:wants|needs|asked for|asks for|is asking for|would like|could use|can(?:no|\')?t '
                  r'hear (?:enough(?: of)?)?|cannot hear(?: enough(?: of)?)?|hears too much|has too much)\s+'
                  r'(?P<rest>.+)$', t)
@@ -1591,7 +1557,6 @@ def _send_relative(raw, C, ix, ctx):
             return _fx_send(C, ix, rest, tw)
         if not auxes:
             return _ask('Whose mix is "%s"? This session has %s.' % (who, _mix_list(ix)), 'send_mix')
-    # "more X in Y's mix" / "X up in the drums mix"
     m = re.match(r'^(?P<pre>%s\s+)?(?P<what>.+?)\s+(?P<post>(?:%s)\s+)?(?:in|into|to|for|on)\s+(?P<who>(?:the\s+|my\s+|'
                  r'his\s+|her\s+|their\s+)?[\w\' ]+?(?:\'s)?)(?:\s+%s)?(?P<post2>\s+%s)?$' % (DIR, DIR, MIXWORD, DIR), t)
     if m and (m.group('pre') or m.group('post') or m.group('post2')):
@@ -1603,7 +1568,6 @@ def _send_relative(raw, C, ix, ctx):
         if auxes and not FX_ANY.search(what) and (mixword or not resolve_target(who, ix, False).chans or
                                                   _aux_by_who(who, ix, True)):
             return _mix_send(C, ix, auxes, dirw + ' ' + what, who)
-    # "more verb on the lead", "kill the verb on the click", "lead needs more verb"
     fx = re.match(r'^(?P<dir>%s)\s+(?:the\s+|of the\s+)?(?P<fx>.+?)\s+(?:on|for|to|in|from|off)\s+(?P<what>.+)$' % DIR, t)
     if fx and FX_ANY.search(fx.group('fx')) and not re.search(r'\b(?:aux|group)\b', fx.group('fx')):
         tg = resolve_target(fx.group('what'), ix)
@@ -1613,7 +1577,6 @@ def _send_relative(raw, C, ix, ctx):
     if fx2:
         tg = resolve_target(fx2.group('what'), ix)
         return _fx_send(C, ix, fx2.group('dir') + ' ' + fx2.group('fx'), tg, phrase=fx2.group('what'))
-    # "put the lead in the slap", "send the snare to the plate", "vox into the hall"
     fx3 = re.match(r'^(?:put|send|feed|add|throw|route)\s+(?P<what>.+?)\s+(?:in|into|to|through|on)\s+(?:the\s+)?'
                    r'(?P<fx>[\w ]+)$', t)
     if fx3 and FX_ANY.search(fx3.group('fx')):
@@ -1698,7 +1661,6 @@ def _fx_send(C, ix, fxphrase, tg, phrase=''):
         ns = tg_.ns(ix)
         cands = auxes
         if len(cands) > 1:
-            # the unit these channels already use, else the one made for them (vocal plate for vocals)
             used = [(a, u) for a, u in cands if any(a in ix.sends(n) for n in ns)]
             if len(used) == 1:
                 cands = used
@@ -1724,7 +1686,6 @@ def _fx_name(ix, u):
     return next((x['name'] for x in ix.fx if x['n'] == u), 'FX %d' % u)
 
 
-# ------------------------------------------------------------------------------------------------ templates
 def rec_template(raw, C, ix, ctx):
     t = C.t
     if not re.search(r'\btemplates?\b|\bstarting (?:point|processing)\b|\bdefault processing\b|'
@@ -1762,7 +1723,6 @@ def rec_template(raw, C, ix, ctx):
     return r
 
 
-# ------------------------------------------------------------------------------------------------ processing
 PROC_WORDS = _w(r'\b(?:mustard|fet|vca|opto|optical|la ?-?2 ?a|1176|lev ?amp|levelling amp|leveling amp|classic comp|'
                 r'comp|squash|squeeze|limit(?:er)?|ratio|makeup|make up|knee|gate|expander|duck(?:er)?|hpf|lpf|eq|'
                 r'shelf|notch|boost|bell|delay|polarity|phase|invert|flip|trim|view|threshold|thresh|thr|attack|'
@@ -1835,7 +1795,6 @@ def _dyn_params(C, mustard=False):
     elif re.search(r'\b(?:parallel|half wet|50/50)\b', C.w) and mustard:
         p['mix'] = 0.5
         C.blank(r'parallel|half wet|50/50')
-    # a bare negative number is the threshold ("comp the bass at -20")
     if 'thr' not in p:
         m = C.take(_w(r'(?:\bat|\bto|@)?\s*(?<![\w.])(-\d+(?:\.\d+)?)\s*(?:db)?(?![\w.])'))
         if m:
@@ -1884,7 +1843,6 @@ def _p_mustard(C, ix, t):
     bad = _check_dyn(p)
     if bad:
         return _ask(bad, 'mustard')
-    # "swap the SD comps for Mustard": the channels with an SD comp on
     swap = re.search(r'\b(?:swap|replace|change|convert|switch|turn)\b.*\b(?:sd )?comp\b|\b(?:sd )?comp\b.*\b(?:to|for|'
                      r'with|into)\b.*\bmustard\b', t)
     C.blank(DYN_BLANK + r'|sd|sds|swap|for|to|into|convert|replace|wherever|where|there is|there are|existing|current')
@@ -2005,7 +1963,6 @@ def _p_eq(C, ix, t):
         return None
     if C.has(_w(r'\beq\b')) and not C.has(FREQ_UNIT) and not re.search(r'\b(?:boost|cut|shelf|notch|band|scoop|dip|bell)'
                                                                           r'\b', C.w):
-        # eq on / off / flat
         C.take_all(_w(r'\beq\b|\bequali[sz]ers?\b|\bequali[sz]ation\b'))
         flat = C.take(_w(r'\b(?:flat|flatten|reset|zero|clear)\b'))
         on = _onoff(C, True) and not flat
@@ -2055,7 +2012,6 @@ def _p_eq(C, ix, t):
                 freq = float(mm.group(1))
                 C.w = C.w[:mm.start()] + ' ' * (mm.end() - mm.start()) + C.w[mm.end():]
     if gain is None and freq is not None:
-        # "cut 3 at 400": a small bare number next to the cut word is the gain
         mm = C.take(_w(r'\b(?:cut|boost|scoop|dip|pull|bump|lift|push|add|take out|remove)\s+(\d{1,2}(?:\.\d+)?)\b(?!\s*k)'))
         if mm:
             gain = float(mm.group(1))
@@ -2144,7 +2100,6 @@ def _p_trim(C, ix, t):
                          else 0.0, lo=-40.0, hi=40.0, what='trim')
 
 
-# ------------------------------------------------------------------------------------------------ faders / mutes
 def rec_fader_mute(raw, C, ix, ctx):
     t = C.t
     mm = re.match(r'^(?P<un>un-?)?mute\s+(?P<rest>.+)$', t) or re.match(r'^(?P<rest>.+?)\s+(?P<un>un-?)?muted?$', t) or \
@@ -2201,7 +2156,6 @@ RECOGNIZERS = [('rename', None), ('mixes', rec_mixes), ('buses', rec_buses), ('f
                ('processing', rec_processing), ('preamp', rec_preamp), ('fader', rec_fader_mute),
                ('recipe', rec_recipe)]
 
-# the classifier intent -> recognizers to retry the clause with (forced: a keyword the grammar needs is put in front)
 FORCE = {'hpf': ('hpf ', rec_processing), 'lpf': ('lpf ', rec_processing), 'gate': ('gate ', rec_processing),
          'comp': ('comp ', rec_processing), 'mustard': ('mustard ', rec_processing),
          'eq': ('', rec_recipe), 'fader': ('', rec_fader_mute), 'mute': ('mute ', rec_fader_mute),
@@ -2213,7 +2167,6 @@ FORCE = {'hpf': ('hpf ', rec_processing), 'lpf': ('lpf ', rec_processing), 'gate
          'move': ('', rec_move), 'patch': ('', rec_patch), 'delay_polarity': ('', rec_processing)}
 
 
-# ================================================================================================ text prep
 def _canon(t):
     t = ' ' + t + ' '
     for rx, rep in CANON:
@@ -2319,7 +2272,6 @@ def _split_clauses(text):
     return parts
 
 
-# ================================================================================================ parse
 def parse(text, model, use_jev=None):
     t0 = time.perf_counter()
     out = {'ops': [], 'summary': '', 'confidence': 0.0, 'unrecognized': [], 'examples': [], 'ask': [],
@@ -2327,14 +2279,14 @@ def parse(text, model, use_jev=None):
     try:
         ix = index(model)
         _parse(text, ix, out, use_jev)
-    except Exception as e:      # noqa: BLE001 - never crash on a command; ask instead
+    except Exception as e:
         out['ops'] = []
         out['unrecognized'] = [str(text)[:200]]
         out['ask'] = ['I could not read that. Try one change at a time, like "hpf the vocals at 120".']
         out['error'] = '%s: %s' % (type(e).__name__, str(e)[:200])
         try:
             out['examples'] = examples(index(model))
-        except Exception:        # noqa: BLE001
+        except Exception:
             out['examples'] = ['hpf the vocals at 120', 'gate the toms', 'rename 12 to Keys L']
     out['ms'] = round((time.perf_counter() - t0) * 1000, 1)
     return out
@@ -2346,7 +2298,6 @@ def _parse(text, ix, out, use_jev):
         out['examples'] = examples(ix)
         out['ask'].append('Tell it what to change, like "%s".' % out['examples'][0])
         return
-    # a rename carries a new name the typo fixer must not touch ("rename 3 to SnareT" is not a typo for snare)
     if re.match(r'(?i)^\s*(?:re-?name|name|call|label|title|retitle)\b|.*\b(?:called|named)\b', text):
         fixed, nfix = text, 0
     else:
@@ -2358,7 +2309,6 @@ def _parse(text, ix, out, use_jev):
         C.fixes = nfix
         r = _read_clause(raw, C, ix, {})
         results.append([raw, C, r])
-    # ---- the classifier: intents of unread clauses, channels of unresolved targets (one batch)
     want = _want_jev(use_jev)
     qs, plan = {}, []
     for i, (raw, C, r) in enumerate(results):
@@ -2409,7 +2359,6 @@ def _parse(text, ix, out, use_jev):
                 r.target.labels.append(_names(ix, got))
                 r.target.conf = min(r.target.conf, tt['p'])
                 r.conf = min(r.conf, tt['p'])
-    # ---- targets borrowed from the neighbouring clause, then ops
     for i, item in enumerate(results):
         raw, C, r = item
         if r is None or r.make is None or r.target is None:
@@ -2534,14 +2483,13 @@ def _target_from_option(choice, ix):
     return []
 
 
-# ------------------------------------------------------------------------------------------------ renumbering
 class _Sim:
     """Channel order while the ops of one command run, so each op names the surface numbers of its own moment.
     Ops are built against the model's numbers; renumber() maps them onto the order after the earlier ops (add,
     remove, move and stereo pairs change it) and turns a move's place ('_to') into the final position 'to'."""
 
     def __init__(self, ix):
-        self.order = [c.n for c in ix.chans]       # model numbers in surface order (None = a channel added here)
+        self.order = [c.n for c in ix.chans]
 
     def _pos(self, n):
         try:
@@ -2605,7 +2553,6 @@ class _Sim:
                 self.order[p:p] = [None]
 
 
-# ------------------------------------------------------------------------------------------------ plain sentences
 def _tgt(op, ix):
     tg = op.get('target') or {}
     if tg.get('all'):
@@ -2626,7 +2573,7 @@ def describe(op, ix=None):
     """One plain sentence for an op (no em dashes)."""
     ix = ix or Index({})
     k = op.get('op')
-    on = lambda d: d.get('on', True)            # noqa: E731
+    on = lambda d: d.get('on', True)
     try:
         if k == 'set':
             tg = _tgt(op, ix)
@@ -2760,7 +2707,7 @@ def describe(op, ix=None):
                 return 'Set the bus layout to automatic.'
             return 'Bus layout: %d mono and %d stereo auxes, %d mono and %d stereo groups.' % (
                 op['aux_mono'], op['aux_stereo'], op['grp_mono'], op['grp_stereo'])
-    except Exception:        # noqa: BLE001
+    except Exception:
         pass
     return 'Change: %s.' % json.dumps({x: y for x, y in op.items() if x != 'op'})[:120]
 
@@ -2785,7 +2732,6 @@ def examples(ix):
     return out[:3]
 
 
-# ------------------------------------------------------------------------------------------------ CLI
 def _load_model(path):
     if path.endswith('.json'):
         with open(path) as f:

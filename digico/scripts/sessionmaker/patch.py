@@ -40,18 +40,18 @@ import struct
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = ROOT  # ses.py and sesproc.py sit next to this package
+TOOLS = ROOT
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
-from ses import Session  # noqa: E402,F401  (re-exported for callers)
+from ses import Session
 
-try:                                    # package import (sessionmaker.patch) or a plain script next to sends.py
+try:
     from . import sends as _sends
-except ImportError:                     # pragma: no cover
+except ImportError:
     import sends as _sends
 
 SEC_IO, IO_HDR, IO_REC, IO_N = 246, 4, 0xd2, 50
-IN_BASE, OUT_BASE = 0x1c, 0x4e          # record k <-> input socket type 0x1c + k, output socket type 0x4e + k
+IN_BASE, OUT_BASE = 0x1c, 0x4e
 T_INTERNAL_IN, T_INTERNAL_OUT, T_FX = 0x1b, 0x4d, 0x0e
 INPUT_SOCKET_TYPES = range(0x1b, 0x30)
 
@@ -59,9 +59,8 @@ INPUT, P_ROUTE, P_MAINALT, P_TRIM, P_PHASE = 0x01, 0x00, 0x0e, 0x01, 0x02
 SOCKET = 0x11
 P_GAIN, P_LINEMIC, P_PHANTOM, P_SRC, P_PAD = 0x86, 0x81, 0x83, 0x84, 0x89
 P_LSAFE, P_AES42PAD, P_COPYTO, P_NAMEFLAG = 0x80, 0x8b, 0xfe, 0xff
-GAIN_MIN, GAIN_MAX, GAIN_STEP = -20.0, 60.0, 0.5   # IPAD_Q2.DOSC: analog gain -20..60; every real gain is a 0.5 step
+GAIN_MIN, GAIN_MAX, GAIN_STEP = -20.0, 60.0, 0.5
 
-# Device type byte (record +0) -> the editor's own name for it (V2242 switch; 0x1a is "Console" or "MADI Console").
 DEVICE_TYPES = {
     0x00: 'Local I/O', 0x01: 'DiGiRack', 0x02: 'SD Rack', 0x03: 'MiniRack', 0x04: 'D-Rack', 0x05: 'SD MiniRack',
     0x06: 'NanoRack', 0x07: 'D2-Rack', 0x08: 'OrangeBox', 0x09: 'OrangeBox2', 0x0a: '4rea4', 0x0b: 'MQ-Rack',
@@ -73,10 +72,9 @@ DEVICE_TYPES = {
     0x31: 'DMI Hydra', 0x32: 'DMI Mic', 0x33: 'DMI Dante64', 0x34: 'DMI A3232', 0x35: 'DMI AMM', 0x36: 'DMI ME',
     0x38: 'DMI KLANG', 0x39: 'DMI AVB', 0x4f: 'DMI Dante64b',
 }
-# Stage boxes with mic preamps (gain / 48V / pad do something on their "Mic" sockets).
 PREAMP_DEVICES = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x32}
-PLUS10_DEVICES, PLUS10_LOCAL_MODELS, PLUS10_MIN = {0x04, 0x07}, {'SD9'}, 10.0   # D-Rack, D2-Rack, SD9/SD11 local
-ROUTE_PARAMS = {0x00, 0xfe, 0xe2, 0x16}   # slots that hold a raw route: source, output/insert send, copy, key input
+PLUS10_DEVICES, PLUS10_LOCAL_MODELS, PLUS10_MIN = {0x04, 0x07}, {'SD9'}, 10.0
+ROUTE_PARAMS = {0x00, 0xfe, 0xe2, 0x16}
 LINK_CLASS = {1: 'local', 2: 'MADI port', 3: 'Waves', 4: 'USB', 5: 'DMI slot', 6: 'Optocore'}
 
 
@@ -99,7 +97,6 @@ def _setf(ses, off, v):
     struct.pack_into('<f', ses.d, off, float(v))
 
 
-# ---------------------------------------------------------------------------- devices (section 246)
 def _group_names(ses):
     """{socket type: (group name, record count)} from the section 201 group headers."""
     out = {}
@@ -179,7 +176,6 @@ def devices_summary(ses):
     return lines
 
 
-# ---------------------------------------------------------------------------- input sockets
 def input_sockets(ses, existing_only=True):
     """[{id, type, idx, number, name, group, port, device, gain_db, phantom, pad}] of the input sockets."""
     groups = _group_names(ses)
@@ -302,8 +298,6 @@ def set_preamp(ses, socket_ref, gain_db=None, phantom=None, pad=None, force=Fals
     s, o = _socket_obj(ses, socket_ref)
     if not force:
         dev = next((d for d in list_io(ses) if d['in_type'] == s['type']), None)
-        # editor-named sockets say what they are ("1:Mic 5", "2:Line in 3", "0:AES in 1"); a renamed socket on a
-        # preamp device ("kick in") is taken as a mic input
         mic = re.search(r'\bmic\b', s['name'], re.I) or not re.match(r'^\d+:', s['name'])
         if dev is None or dev['device_code'] not in PREAMP_DEVICES or not mic:
             raise ValueError('%s (%s) has no mic preamp; gain, 48V and pad do nothing there' % (
@@ -324,7 +318,6 @@ def set_preamp(ses, socket_ref, gain_db=None, phantom=None, pad=None, force=Fals
     return s['name'], g
 
 
-# ---------------------------------------------------------------------------- channel patch
 def _input_rec(ses, ch):
     idx = ses.ch(ch)
     c = ses.by_index.get(idx)
@@ -360,8 +353,6 @@ def patch_input(ses, ch, socket_ref, alt_ref=None, use_alt=False):
     right = right_socket(ses, main) if main is not None and _stereo(ses, ch) else None
     out['right'] = right['name'] if right else None
     if alt is not None and _stereo(ses, ch):
-        # the editor clears (00, 1) on a stereo channel when it loads the file (Q225 V2242 boot re-save,
-        # the decode notes (not published), and no stereo channel in the real sessions has one (567 of 567)
         raise ValueError('input %d is stereo; a stereo channel has no alt input on DiGiCo' % ch)
     for band, s in ((0, main), (1, alt)):
         q = rec.slots[(P_ROUTE, band)]
@@ -434,7 +425,6 @@ def patch_errors(ses, warnings=None):
                     warnings.append('input %d is stereo on %s, the last socket of its device, so its right side '
                                     'is silent' % (n, left))
                 elif re.match(r'^\d+:', left) and re.match(r'^\d+:', r.name) and kind(left) != kind(r.name):
-                    # e.g. Local I/O "0:Mic 8" + "0:AES in 1": the right side is the next socket whatever it is
                     warnings.append('input %d is stereo on %s, so its right side is %s' % (n, left, r.name))
             elif side == 'alt' and _stereo(ses, n):
                 errs.append('input %d is stereo and has an alt input; the editor drops it' % n)
@@ -480,8 +470,6 @@ def default_plan(ses, chans, device=None, start=1, skip_stereo_odd=True):
     socks = {d['in_type']: [x for x in input_sockets(ses) if x['type'] == d['in_type']
                             and re.search(r'\bmic\b', x['name'], re.I)] for d in devs}
     devs = [d for d in devs if socks[d['in_type']]]
-    # segments of (sockets, first, end): the first device from `start`, the others whole, then the first device's
-    # sockets below `start` (a later channel never lands on a socket an earlier one took)
     segs = []
     for i, d in enumerate(devs):
         lst = socks[d['in_type']]
@@ -521,23 +509,8 @@ def read_patch(ses):
                        for n in sorted(ses.display)]}
 
 
-# ---------------------------------------------------------------------------- devices: add
-# A device is declared in four places, all keyed by its port k (input socket type 0x1c + k, output 0x4e + k):
-#   section 246 record k (210 bytes, fixed size);
-#   section 201: an input socket group and an output socket group ('ca 00 6c 00 | type | name' + u32 count +
-#     one cb record per socket: id = type << 8 | idx, number idx + 1, name "k:Mic n", EngineChannel (+84) = idx);
-#     the u32 right after the two patch-bay page blocks counts the groups (on Quantum including the 'd1 00 6c 00'
-#     "Nodal Processing" group) and grows with them;
-#   section 211: one socket object per socket (module 0x11 inputs, 0x12 outputs), sorted by id with the rest,
-#     'd3 00 | u32 object count';
-#   the two patch-bay page blocks at the head of section 201 (u32 text length | "label\r\n" x n | n x u32
-#     page id (first socket idx, type, 0, 0)): one page per 8 sockets, label "Mic 1-8".
-# add_device() builds all four from a template device taken from any editor-written file (template_from()),
-# using the target file's own cb record and socket objects as the byte layout, so the build may differ.
-# MADI-port links each editor keeps a device on (proven by boot re-saves, the decode notes (not published). A device on a link
-# past these is kept with its sockets but marked not connected (id 0). Models not listed: unknown, not limited here.
 MADI_LINKS = {'SD9': range(0, 3), 'SDC': range(0, 2)}
-SEC_DEVICE_DONORS = {          # device -> (default console key, port) in baselines/<key>_v<build>.ses
+SEC_DEVICE_DONORS = {
     'SD Rack': ('q338', 1), 'MQ-Rack': ('q225', 1), 'D-Rack': ('sd9', 1), 'D2-Rack': ('sd12', 1),
     'Std MADI': ('q225', 2), 'MADI 64': ('sd12', 2), 'USB': ('sd12', 3), 'Local Dante': ('q112', 3),
 }
@@ -666,10 +639,8 @@ def add_device(data, template, port=None, dev_id=None, link_index=None, name=Non
                      bytes(template['in']['header'][6:6 + template['in']['header'][5]]).decode('latin1'))
 
     c = layout.Container(bytes(s.d))
-    # 246
     s246 = c.sec(SEC_IO)[1]
     s246[IO_HDR + port * IO_REC:IO_HDR + (port + 1) * IO_REC] = rec
-    # 201: page labels, groups, group count
     s201 = c.sec(201)[1]
     blocks, gend = _blocks(s201)
     for b, side, t in ((blocks[0], template['in'], tin), (blocks[1], template['out'], tout)):
@@ -684,7 +655,7 @@ def add_device(data, template, port=None, dev_id=None, link_index=None, name=Non
     io = [g for g in groups if _is_io(g[1])]
     if not io:
         raise ValueError('no I/O groups in section 201')
-    tmpl_in = next((g for g in io if 0x1c < g[1] <= 0x2f), None)       # an existing device's input socket group
+    tmpl_in = next((g for g in io if 0x1c < g[1] <= 0x2f), None)
     tmpl_out = next((g for g in io if 0x4e < g[1] <= 0x5f), None)
     if tmpl_in is None or tmpl_out is None:
         raise ValueError('add_device needs one stage device besides the Local I/O to copy the record layout from')
@@ -718,7 +689,6 @@ def add_device(data, template, port=None, dev_id=None, link_index=None, name=Non
     rest = body[old_head_len:]
     struct.pack_into('<I', rest, 0, struct.unpack_from('<I', rest, 0)[0] + 2)
     c.sec(201)[1] = bytearray(s201[:2]) + head + rest
-    # 211: socket objects
     s211 = c.sec(211)[1]
     objs, tail = layout.objects(s211)
     def tmpl_obj(lo, hi, mod):
@@ -736,7 +706,6 @@ def add_device(data, template, port=None, dev_id=None, link_index=None, name=Non
                     q = s0 + 8 * k
                     v = side['values'][i].get((o[q], o[q + 2]))
                     if o[q] in ROUTE_PARAMS:
-                        # never carry the template's routes: its output sockets may be fed by its own master
                         o[q + 4:q + 8] = b'\0\0\0\0'
                     elif v is not None:
                         o[q + 4:q + 8] = v
@@ -829,8 +798,6 @@ def replace_device(data, port, rack_type, name=None):
     return data3, info
 
 
-# Oldest build whose editor names the device type (Quantum2.exe device-name switch: V1455, V1619 and V2025 have no
-# case for 0x0f Local Dante, V2126 and V2242 do; the other template devices are named from V1455 on).
 DEVICE_MIN_BUILD = {'Local Dante': 2126}
 
 
@@ -843,7 +810,7 @@ def _template(rack_type, build):
             build, dev, DEVICE_MIN_BUILD[dev]))
     for path, port in _donor_paths(dev, build):
         t = template_from(open(path, 'rb').read(), port)
-        if t['device'] == dev:       # the Q225 defaults before V2126 carry a D2-Rack where later ones have the MQ-Rack
+        if t['device'] == dev:
             return t
     raise ValueError('no editor-written default carries a %s' % dev)
 
