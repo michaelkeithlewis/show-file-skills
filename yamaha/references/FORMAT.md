@@ -47,6 +47,7 @@ program, descriptor, template, preset, font or screenshot is copied here, and no
 | --- | --- | --- |
 | BB-CSV-1 | A CSV set (InName, StName, MixName, MtxName, StMonoName, DCAName) with a different name, colour word and icon word on every row, imported into a new CL5 session, saved, and compared with the new session | Only the name, icon and colour bytes of section 3 changed, plus the checksum. DCA colours and icons in the CSV changed nothing |
 | BB-CSV-2 | InPatch.csv rows naming every port kind on different channels: three imports in CL Editor, one in QL Editor | The patch codes of 3.4 |
+| BB-CSV-3 | A CSV set with one file holding rows and the other eight header only, imported onto an existing show in CL and QL Editor 5.8.1, saved, and compared with the show's own re-save | 0 error boxes. Only the rows in the set changed (156 bytes), plus the checksum. A seven-file set raised 2 error boxes and InName.csv alone raised 8, one per missing file |
 | BB-LOAD-F | CL Editor loaded files written by this code with 72 fader values, HPF index 4 to 63 on 60 channels, HPF on and channel on on 8 channels each, and gain and +48V on OMNI 1 to 8; seven more loads with fader values 0 to 503 | The Overview showed every value. The fader, HPF, on and head amp rules of section 3 |
 | BB-LOAD-G | CL Editor loaded a written file with DCA assigns on 7 channels, ST IN fader, on and HPF values, and 8 mute group names | The DCA Group window, the ST IN strips and the Mute Group window showed the values |
 | BB-SAVE-H | Three mute group assigns clicked in the Mute Group window, saved, compared | Exactly three bits changed |
@@ -217,6 +218,10 @@ Processor, Audience, Star1, Star2, Blank.
 
 The rack outputs (FX, PRFX, GEQ) exist only as the show's rack is set up: a written rack output came back as NONE
 (BB-RACK). This tool shows them on read and never writes them.
+
+### 3.4.1 CSV import needs all nine files (BB-CSV-3)
+
+A CL or QL CSV set has nine files: `InName`, `StName`, `MixName`, `MtxName`, `StMonoName`, `DCAName`, `InPatch`, `OutPatch` and `PortRackPatch`, each `.csv`. The editor shows one error box per missing file (`Document "OutPatch.csv" not loaded.`), although the import still works. Write all nine. A file with its header and no rows raises no box, and the editor leaves those settings as they are. Tested in CL and QL Editor 5.8.1. CL1 and CL3 sets were not imported: every CL import was a CL5 set.
 
 ### 3.5 Fader values (BB-LOAD-F, BB-LOAD-R)
 
