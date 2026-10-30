@@ -12,6 +12,10 @@ The files read were about 24 console and editor saves and ten RIVAGE PM Editor b
 
 Untested readings are in `../rivage-pm/README.md` under What we don't know.
 
+The sections that start "V7.10" come from controlled saves in PM Editor V7.10 on a PM3 project (CS-R3 surface, DSP-RX
+engine). Each was a single change in the editor, saved and diffed against the file before. (save) on those lines means
+that diff, or a written file the editor loaded with the expected value.
+
 ## Models, engines and files
 
 - One file family serves the PM10, PM7, PM5 and PM3: `.RIVAGEPM`, and the older `.PM10ALL` (R3.01k). Surfaces seen:
@@ -238,6 +242,145 @@ All (files). FORMAT.md 4.9 has the tested part.
   kinds, UsrSet. `EN00/stup:WordClock.Source` reads `INT96000` in blanks and `HCSLOT1` for HY slot 1. (files)
 - `Status_2` is run-time state (units found on TWINLANe and Dante, meters, lock PINs). An editor save lists no units.
   (files) `vl/ChannelLink/RelativeValue` and `cs/Cue/CueButtonRotate` are status copies of mix and setup values. (save)
+
+## V7.10: container and write rules
+
+- Header version `56 07 0A 00` is V7.10. Inner containers keep the version they were made with: a V7.10 project can
+  hold a V7.00 scene and a V6.71 preset. (files)
+- The file must end with `#END` and 32 zero bytes. Without it the editor shows the project as `TYPE ???` and refuses
+  it. (save)
+- The editor truncates a project file name longer than 16 characters when it saves. (save)
+- A minimal project can carry only `CurrentParam_2`, or a mix of `_1` and `_2` files. Write every `CurrentParam_*`
+  that is present. (files)
+- The save id at 0x38 is a random UUID4. Files written with a new id in each rewritten container (each `CurrentParam_*`,
+  each changed `.dms`, the outer file) load. Whether an unchanged id also loads is not tested. (save)
+
+## V7.10: values
+
+| Value | Path | Encoding | Proof |
+| --- | --- | --- | --- |
+| Name | `Label.Name` | 64-byte field; the console shows 8 characters. Write 8 or fewer | save |
+| Fader, send level | `Fader.Level`, `ToMix[m].Level` | as DM7; maximum +10.00 dB = 1000 | save |
+| Pan to stereo, send pan | `ToStereo.Pan`, `ToMix[m].Pan` | signed 8-bit, -63 L to +63 R | save |
+| Send pre or post | `ToMix[m].Pre` | bit, 1 = pre | save |
+| Input A or B | `InPatch.Select` | bit, 0 = A, 1 = B | save |
+| Input pair | `Signal[0].Relation` | 0x80 left (odd channel), 0x01 right (even), 0 mono. A pair differs from two mono channels only here; `GainGang` and the pan type are separate choices | save |
+| Mute group member | `MuteGroup.Assign[g]` | bit g = group g+1 | save |
+| EQ band bypass | `PEQ/Bank[b]/Band[k].Bypass` | 1 = bypassed. Inputs have 4 bands; mixes, matrices and stereo have 8 | save |
+| Shelves | `LowShelving.On` makes band 1 a shelf, `HighShelving.On` makes band 4 (input) a shelf; slope in `.Q` | Q x1000 | save |
+
+Mix pair: these three changes on both mixes match the editor's own save byte for byte (save):
+
+1. `Signal[0].Relation` = 0x80 on the odd mix and 0x01 on the even mix.
+2. `DelayGang` = 1.
+3. `ToStereo.PanType` = `BALANCE` (unpaired: `PAN`).
+
+`Signal[0].PanLink` does not change when you pair mixes. (save)
+
+Default names, read as "no name": `ch1` to `ch288`, `MX 1` to `MX72` (right-aligned in 4 characters), `MT 1` to
+`MT36`, `ST A`, `ST B`, `DCA 1` and up, `Mute 1` to `Mute12`. Default colour: inputs `Blue`, buses `Orange`. Default
+icon: inputs `DynamicMic`, buses `Blank`. `""` and `OFF` both mean no colour; the editor writes either. (files)
+
+Icon words in the file: `Kick` `Snare` `Hi-Hat` `TomTom` `FloorTom` `Cymbal` `DrumKit` `Perc.` `E.Bass` `A.Guitar`
+`E.Guitar` `BassAmp` `GuitarAmp` `A.Bass` `Strings` `DirectBox` `Trumpet` `Trombone` `Saxophone` `Flute` `Piano`
+`Organ` `Keyboard` `Mallets` `Male` `Female` `Choir` `DynamicMic` `CondenserMic` `InstMic` `WirelessMic` `Headset`
+`SpeechMic` `Foh` `Speaker` `Subwoofer` `Wedge` `Video` `In-Ear` `Monitor` `Effector` `Media1` `Media2` `Media3`
+`Mixer` `PC` `Processor` `Audience` `ArrowLeft` `ArrowRight` `Exclamation` `Smile` `Money` `Star1` `Star2` `Blank`.
+(save)
+
+## V7.10: dynamics
+
+Write `Type` and `TypeNo` together. If you change only `Type`, the editor still shows the old processor. (save)
+
+| `TypeNo` | Editor name | `Type` text | Table |
+| --- | --- | --- | --- |
+| 0 | PM Comp | `PM Comp` | `PM_Comp` |
+| 1 | COMP260 | `Classic Comp` | `Classic_Comp` |
+| 2 | GATE | `GATE` | `Gate` |
+| 3 | DE-ESSER | `DE-ESSER` | `DeEsser` |
+| 4 | EXPANDER | `EXPANDER` | `Expander` |
+| 5 | DUCKING | `DUCKING` | `Ducking` |
+
+All (save). The V7.2 DYN2 menu above names the `TypeNo` 0 entry LEGACY COMP; the two names were not compared on one
+editor.
+
+| Table | Field | Encoding | Proof |
+| --- | --- | --- | --- |
+| `Classic_Comp` | `Threshold`, `Gain` | signed 16-bit, 0.01 dB | save |
+| | `Attack` | unsigned 32-bit, µs | save |
+| | `Release` | unsigned 16-bit, 0.1 ms | save |
+| | `Ratio` | unsigned 16-bit, ratio x100 (4:1 = 400) | save |
+| | `Knee` | text: `HARD`, `SOFT-1` to `SOFT-5` | save |
+| `Gate`, `Ducking` | `Threshold`, `Range` | signed 16-bit, 0.01 dB; `Range` -32768 = -inf | save |
+| | `Attack` | signed 8-bit, ms | save |
+| | `Hold`, `Decay` | unsigned 32-bit, µs | save |
+
+## V7.10: input patch codes (save)
+
+| Source | Code |
+| --- | --- |
+| `NONE` | 0x00000000 |
+| `CS1 OMNI n` | 0x01401000 + (n - 1) |
+| `DSP HY SLOT2 n` | 0x02A08000 + (n - 1) |
+| `M1 RY SLOTk n` (k 1 to 6, n 1 to 16) | 0x40201010 + 0x10 x k + (n - 1) |
+
+The rack code gives index 32 + (k - 1) x 16 + port for slot 1 and up, which matches the `402` reading in
+`../rivage-pm/README.md`.
+
+## V7.10: surface output patch (save)
+
+Each output port is `.../OutputPort[p]/Patch[0].Source`, unsigned 32-bit, holding the source code from "Output patch"
+above; 0 is no source. All in `EN00/proc`, `cs` 0 or 1 for surface 1 or 2.
+
+| Port | Path | Ports |
+| --- | --- | --- |
+| OMNI out | `LocalIO[cs]/DA[0]/OutputPort[p]` | 0 to 7 |
+| AES/EBU out | `LocalIO[cs]/AES[0]/OutputPort[p]` | 0 to 7 |
+| MY card out | `LocalIO[cs]/MY[k]/OutputPort[p]` | k 0 to 1, p 0 to 15 |
+| USB 2-track | `LocalIO[cs]/2TrRec[0]/OutputPort[p]` | 0 L, 1 R |
+
+## V7.10: PM Editor CSV set (save)
+
+The editor's CSV export and import carries names, colours, icons and patching, with no levels or processing. An
+export imported back gives the same bytes.
+
+- ASCII with CRLF line ends, one file per section.
+- Every file starts with `[Information]`, then the surface model (`CS-R3`), the engine (`DSP-RX`) and the firmware
+  (`V7.10`) on their own lines, then `[<Section>]` and the header row.
+- Data rows end with a comma. Header rows end with a comma too, except the three patch files marked "no comma" below.
+
+| File | Header row | Row keys | Columns |
+| --- | --- | --- | --- |
+| `InName` | `IN,NAME,COLOR,ICON,` | `_001` to `_288` | name, colour, icon |
+| `MixName` | `MIX,NAME,COLOR,ICON,` | `_01` to `_72` | name, colour, icon |
+| `MtxName` | `MATRIX,NAME,COLOR,ICON,` | `_01` to `_36` | name, colour, icon |
+| `StName` | `STEREO,NAME,COLOR,ICON,` | `_AL` `_AR` `_BL` `_BR` | name, colour, icon |
+| `MuteDCAName` | `DCA,NAME,COLOR,ICON,` | `DCA 1` to `DCA 24`, then `Mute 1` to `Mute 12` | name, colour, icon (empty on mute rows) |
+| `InPatch` | `IN PATCH,SOURCE,COMMENT` (no comma) | `CH n A`, `CH n B` | source, `# comment` |
+| `InInsPatch` | `IN INS PATCH,->A,A->,->B,B->,->C,C->,->D,D->,` | `CH n INS1 `, `CH n INS2 ` (key ends in a space) | 8 insert sources |
+| `OutInsPatch` | `OUT INS PATCH,->A,A->,->B,B->,->C,C->,->D,D->,` | `MIX n INS1 ` to `STEREO B R INS2 ` | 8 insert sources |
+| `PortRackPatch` | `PortRack PATCH,SOURCE,COMMENT` (no comma) | output port names, `CS1 OMNI 1` to `GEQ Rack 48 B` | source, `# comment` |
+| `RecordingPatch` | `Recording PATCH,SOURCE,` | `PLAYBACK CH n`, `REC OUT SLOT n` | source |
+| `SubInPatch` | `SubIn PATCH,SOURCE,COMMENT` (no comma) | `MIX n` to `SURR CUE RS` | source, `# comment` |
+
+The editor writes the comments again on export (`# Blank`, `# Main1 RY Slot1 Input Channel 1`, `# Matrix Channel 18`).
+
+Source words the CSV accepts: `NONE`, `M[1-8] {RY|MY|HY} SLOTk n`, `S[1-8] {RY|MY|HY} SLOTk n`, `DSP {HY|MY} SLOTk n`,
+`CS[12] {OMNI|AES/EBU|MY SLOTk} n`, `CS[12] PB {L|R}`, `TWINLANE ({MAIN|SUB}) n`, `MIX n`, `MATRIX n`, `DIR OUT n`,
+`STEREO {A|B} {L|R}`, `CUE {A|B} {L|R}`, `MONITOR {A|B} {L|R|C}`, `TB n`, `OSC {L|R}`, `PB {L|R}`,
+`PLUGIN <rack><n> {L|R}`, `GEQ n {A|B}`, `INS{1|2}{A-D} [MIX |MATRIX ]n`, `MONITOR DIR IN n`.
+
+Colour and icon words differ between the CSV and the show file. Words not listed are the same in both.
+
+| Show file | CSV |
+| --- | --- |
+| `LtGreen` | `LightGreen` |
+| `OFF` or empty | `Off` |
+| `DynamicMic`, `CondenserMic`, `WirelessMic`, `SpeechMic` | `Dynamic`, `Condenser`, `Wireless`, `Podium` |
+| `TomTom`, `FloorTom`, `DrumKit` | `Tom`, `F.Tom`, `Drumkit` |
+| `DirectBox`, `Mallets`, `Foh`, `Subwoofer` | `DI`, `Mallet`, `FoH`, `Sub` |
+| `In-Ear`, `Effector` | `In-Ears`, `Fx` |
+| `ArrowLeft`, `ArrowRight` | `L.Arrow`, `R.Arrow` |
 
 ## What RIVAGE PM Editor does (save)
 
