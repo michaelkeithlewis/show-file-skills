@@ -171,9 +171,17 @@
   "band": 0,
   "default": 0.0,
   "flags": 0,
-  "module": 0,
-  "noise1_off": "0x14491",
-  "param": 0
+  "module": 5,
+  "noise1_off": "0x144df",
+  "param": 22
+ },
+ "dyn2_key_on": {
+  "band": 0,
+  "default": 0.0,
+  "flags": 0,
+  "module": 5,
+  "noise1_off": "0x144e7",
+  "param": 55
  },
  "dyn2_mode": {
   "band": 3,
@@ -704,43 +712,43 @@
   "param": 3
  },
  "mb1_attack": {
-  "band": 1,
-  "default": 0.005,
+  "band": 0,
+  "default": 0.01,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x1440f",
+  "noise1_off": "0x143cf",
   "param": 17
  },
  "mb1_on": {
-  "band": 1,
+  "band": 0,
   "default": 1.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143f7",
+  "noise1_off": "0x143b7",
   "param": 3
  },
  "mb1_ratio": {
-  "band": 1,
-  "default": 2.0,
+  "band": 0,
+  "default": 3.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x1441f",
+  "noise1_off": "0x143df",
   "param": 16
  },
  "mb1_release": {
-  "band": 1,
-  "default": 0.2,
+  "band": 0,
+  "default": 0.5,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x14417",
+  "noise1_off": "0x143d7",
   "param": 18
  },
  "mb1_thresh": {
-  "band": 1,
+  "band": 0,
   "default": -20.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143ff",
+  "noise1_off": "0x143bf",
   "param": 14
  },
  "mb2_attack": {
@@ -784,43 +792,43 @@
   "param": 14
  },
  "mb3_attack": {
-  "band": 0,
-  "default": 0.01,
+  "band": 1,
+  "default": 0.005,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143cf",
+  "noise1_off": "0x1440f",
   "param": 17
  },
  "mb3_on": {
-  "band": 0,
+  "band": 1,
   "default": 1.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143b7",
+  "noise1_off": "0x143f7",
   "param": 3
  },
  "mb3_ratio": {
-  "band": 0,
-  "default": 3.0,
+  "band": 1,
+  "default": 2.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143df",
+  "noise1_off": "0x1441f",
   "param": 16
  },
  "mb3_release": {
-  "band": 0,
-  "default": 0.5,
+  "band": 1,
+  "default": 0.2,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143d7",
+  "noise1_off": "0x14417",
   "param": 18
  },
  "mb3_thresh": {
-  "band": 0,
+  "band": 1,
   "default": -20.0,
   "flags": 0,
   "module": 5,
-  "noise1_off": "0x143bf",
+  "noise1_off": "0x143ff",
   "param": 14
  },
  "mb_xover_hi": {

@@ -68,12 +68,13 @@ Dynamic-EQ sub-params (threshold/ratio/etc.) when enabled: NOT yet mapped.
 
 Both Dyn slots share a unified processor: the mode selector is the slot immediately
 before the In bit. Switching mode also rewrites that mode's default param values.
-**Sidechain link** (link a channel's key to another channel) NOT mapped: needs a clean
-capture without channel renames (renames confound the per-channel diff).
+**Sidechain link** (a channel's key from another channel): (05, 16, 0) = the source as a route, (05, 37, 0) = key
+on. Console sample and details: `CHANNEL_MODEL.md`, Dyn2.
 
 ## Multiband / pan / aux / Mustard Comp (2026-07-09)
 - **Dyn1 multiband**: 3 band records @0x143bf/0x143ff/0x1443f = [on@-8][thresh][?+8][atk+0x10 s][rel+0x18 s][ratio+0x20].
-  UI band->record permuted: b1->rec2, b2->rec3, b3->rec1. Crossovers: lo @0x1447f (def 130Hz), hi @0x14477 (def 1000Hz).
+  UI band->record: b1 (lo)->rec1, b2 (mid)->rec3, b3 (hi)->rec2, i.e. band bytes 0 / 2 / 1 (console-confirmed).
+  Crossovers: lo @0x1447f (def 130Hz), hi @0x14477 (def 1000Hz).
 - **SD EQ per-band on** @ band freq+0x18 (gain+8), 1.0=on.
 - **Pan** @0x14b55: -1.0=hard left, 0=center (marker-0d sends section).
 - **Aux1**: level @0x1468b (dB, -150=off), on @0x14693. Further auxes likely follow in same section.
