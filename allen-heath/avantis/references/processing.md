@@ -203,12 +203,12 @@ All save-proven on Bridge-4. High and low pass in: 12 dB/oct each, under one swi
 | band k gain | [1 + 22k] | [1 + 2k] |
 | band k biquad | [3 + 22k] | none |
 | GEQ out (1) | [617] | [57] |
-| slot: 0 GEQ, 4 NEQ12 (1-3 also seen) | [618] | [58] |
+| slot: 0 Constant-Q, 1 Proportional-Q, 2 Dig-GEQ, 3 Hybrid, 4 NEQ12 | [618] | [58] |
 | NEQ12, 12 bands x 9 | [619] | [59] |
 | NEQ12 biquads, 18 x 20 | [727] | none |
 | NEQ12 high and low pass slope codes | [1087], [1088] | [167], [168] |
 
-Centres and gain law proven by the biquads; switch and slot seen in every file, not moved alone. A Bridge-3
+Centres and gain law proven by the biquads; switch seen in every file, not moved alone. Slot codes 0-3 are the graphic's type, in the order of dLive Director's "NEQ Type" list, with the same 28 band gains on the same law (proven: four stored shows, one group set to each type in turn, each read back as its code). A Bridge-3
 GEQ is 619 bytes (v1) with the Bridge-4 gain, biquad, switch and slot offsets and no NEQ12.
 
 - **NEQ12** (a mix's second parametric EQ, in its graphic slot): band k's nine bytes are a PEQ band's fields
