@@ -211,6 +211,38 @@ Done this way, a delete matched the console's own delete byte for byte. There th
 
 Written by bytes and loaded: notes (text with CRLF line ends), lock (misc bit 13), skip (+0x344) and a MIDI program change (program number minus 1, misc bit 0).
 
+### Clear all snapshots (2026-10-31, editor-verified)
+
+The editor's own Files > Session Structure > clear snapshots > Restructure was captured six times in five editors: Quantum 225 at V2242, V2025 and V1619, SD9 at V2242 (twice) and SD12 at V1619. The Quantum 225 and SD9 sessions are real shows. The two SD9 captures are a show with a snapshot group and the same show with 2 setlists written by bytes. The SD12 session is a sample with 3 snapshots stored in the editor.
+
+Each capture saved the session twice in one boot: after a Restructure alone, then after clear snapshots and Restructure. A Restructure alone also writes other things (it can add I/O rack records and reset some live values). So the second save, compared with the first, shows what the clear writes. Two saves of one session also differ in save-time bytes (the module times, the heap words of the bank records). Those were masked.
+
+What the clear writes:
+
+- Section 210 loses the pool, the groups and the snapshots. It is `d2 00 d2 00`, four u32 counts of 0 (the pool, the `u32 0`, the groups, the snapshots) and the trailer.
+- Trailer: current, previous and selected (+2, +6, +10) become -1. The u32 at +14 and the u32 at +33 become 0. The byte at +23 becomes 0 in the V2242 editor only. The V1619 and V2025 editors keep it. The rest of the trailer stays.
+- Section 115 (V2232 and V2242 files) becomes the empty setlist section `73 00 00 00 00 00 ff ff ff ff`. Older builds have none.
+- Section 201: every section's Global Scope goes back to its default ([`scope-and-recall.md`](scope-and-recall.md), "Global Scope defaults and the clear"). A Restructure alone keeps Global Scope.
+- Nothing else changes. The live settings in section 211 stay as they are.
+
+The trailer offsets count from its length word, as in "Trailer" above. Counted from after the length word they are 0, 4, 8, 12, 21 and 31.
+
+Proof: a file made from the first save by writing only the changes above equals the editor's second save in all six captures, after the masks.
+
+Load proof: files cleared this way by bytes, from the real Quantum 225 and SD9 shows, loaded in the Quantum 225 V2242, SD9 V2242 and Quantum 225 V1619 editors. The Snapshots screen was empty. The editor's re-save held no snapshots and no setlists. The re-save equals the written file except two things the editor does on any load of a session without snapshots. Its own cleared file gets the same two:
+
+- The trailer gets one more 0 byte at its end. Its length word goes from 236 to 237, so 794 to 795 bytes in all, as under "Trailer" above.
+- The u32 at +0x4c of the section 201 channel records of auxes and control groups becomes -1 (counted from the `cb` tag).
+
+Not load-proven: the cleared Quantum 225 V2025 and SD12 V1619 files (their captures match, but no file written by bytes was loaded), SD12-96 files (a plain SD12 editor opens its own session for them) and Pulse files (no Pulse editor was run).
+
+Not known:
+
+- What the trailer bytes at +14, +23 and +33 mean. The clear sets them to 0.
+- Header byte 0x5f = 3. Some real shows hold it. Which frame rate it is stays open.
+- The clear on V1455, V1528, V1742, V1926, V2126 and V2232: not captured.
+- The clear on any console other than the Quantum 225, SD9 and SD12 above: not captured.
+
 ## For tools
 
 - Keep every reference count equal to the number of snapshot strips that point at the state.

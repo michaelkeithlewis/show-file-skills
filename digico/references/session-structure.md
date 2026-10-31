@@ -138,6 +138,7 @@ Proven by restructures in the editors, saved and compared:
 - An added strip's module headers carry its own name.
 - Making an input stereo sets: width 2 in the trailer and the label (byte 41), (08, e8) on both bands and (0e, e8) to 2, (05, 14) on, and the label's processing number (byte 84) to the next free one.
 - The LR main is a stereo group named "Master" (any case).
+- Global Scope (2026-10-31): a Restructure alone keeps every section's Global Scope. With clear snapshots switched on, the Restructure also empties sections 210 and 115 and puts every section's Global Scope back to its type default ([`snapshots.md`](snapshots.md), "Clear all snapshots"; [`scope-and-recall.md`](scope-and-recall.md), "Global Scope defaults and the clear"). The session was saved after a Restructure alone and after clear snapshots plus a Restructure, in five editors, and the two saves were compared.
 
 ## Ports, sockets and patch
 

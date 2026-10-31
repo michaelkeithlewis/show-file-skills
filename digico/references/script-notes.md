@@ -299,6 +299,7 @@ Facts that used to sit in code comments, by script. The scripts in this repo car
 - strip j: internal index - 1 at +0x23+2j, strip type at +0x24+2j (01 = input channel)
 - positions 0-5 (layer 1) hold the input banks and 6-11 (layer 2) the output banks in every default
 - ---------------------------------------------------------------------------- session notes (section 0)
+- Section 0 is the session's name (the editor's Session line), not the Session Notes text. `set_notes` writes it and `notes` reads it. See `FORMAT.md`, "Session name".
 - ---------------------------------------------------------------------------- the operation
 - 211: one object per channel, cloned from its source (or the default mono object), sorted by id
 - 201: cb records in surface order, EngineChannel = first + running sum of widths. The inputs must fit below the first bus (SD) or the fixed TB In (Quantum); TB In that sat right after the inputs moves with them.

@@ -132,6 +132,21 @@ Not tested:
 - A swap inside one family. The rule keeps the banks, section 212 and its tail copy as the source has them. This was byte-checked on default sessions of each family. No such file was booted in an editor. The model READMEs list the pairs.
 - Strips. The runs compared bank names, second lines, colours and positions after the re-save, not the strips. The strip match comes from the site engine's own reading of the section 201 ids.
 
+## Clearing snapshots
+
+The site engine can remove every snapshot, snapshot group and setlist from a session. The bytes are in [`snapshots.md`](snapshots.md), "Clear all snapshots". Its rules:
+
+- Run only on a console and build whose own editor did the clear and whose save matched: Quantum 225 at V1619, V2025 and V2242, SD9 at V2242, SD12 at V1619. Refuse any other pair, and name these.
+- Judge the console by what the file was made for. An SD12-96 file and a Pulse file carry their own bit (header 0x25, bit 0x10), so they are not the plain console. Neither is load-proven.
+- Refuse a session with no snapshots. Refuse one whose snapshot list or channel list cannot be read.
+- Refuse a session with a section type whose default Global Scope is not known (type `12` so far).
+- Change sections 210 and 115 and the Global Scope words of section 201, and nothing else. The live settings stay.
+- After the clear, snapshots stop blocking the edits that refuse while a session has them: adding, removing, moving and pairing channels, a console swap, and a bank move when a snapshot recalls Layout. Other limits still apply to those edits.
+
+## Session name
+
+The site engine renames a session by changing section 0 only ([`FORMAT.md`](FORMAT.md), "Session name"). It refuses a name over 64 characters, a name with a character outside printable latin-1 (32 to 126 and 160 to 255), a name equal to the old one, and a file whose section 0 does not start with `00 00`. A 64-character name is proven in two editors. Nothing longer was tested.
+
 ## Guards this folder does not have yet
 
 These stop a bad file in the web engine. The scripts here do not do them.
@@ -148,3 +163,5 @@ These stop a bad file in the web engine. The scripts here do not do them.
 10. Bank bays: `busside.py` reads bays for `Q2` and `SDC` only, as 3 layers of 4 buttons. The site engine reads ten families, each with its own layers and buttons (model READMEs).
 11. Bank moves: no op moves a bank here. Follow the rules under "Fader banks". Keep the 211 tail copy equal and each layer's shown button on a bank.
 12. Bank carry: no console swap exists here. The rules are under "Fader banks on a console swap".
+13. Snapshots: the tools refuse structural edits on a session with snapshots and cannot clear them. Follow the rules under "Clearing snapshots". Do not clear on a console and build that has no capture.
+14. Session name: `set_notes` writes up to 255 bytes, and only 64 characters are proven to show in full. Cap the name at 64 and change nothing but section 0.

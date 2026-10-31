@@ -85,6 +85,35 @@ Global Scope is per section and holds for every snapshot. It lives in section 20
 - A default session sets every module the section has (inputs `0x7c4873be`; matrix inputs `0x42`, modules `01` and `06`). Shows narrow it.
 - FX units (strip type `0e`) and Spice Rack slots (`18`) have group records of their own, with the bit of module `15` and of module `1f`. Many shows recall neither.
 
+## Global Scope defaults and the clear (2026-10-31, editor-verified)
+
+Files > Session Structure > clear snapshots > Restructure puts every section's Global Scope back to its default. A Restructure alone keeps Global Scope as the show has it. The offsets are the ones in the Global Scope table above.
+
+- The recall word (+0x25) and the auto update word (+0x29) both take the default word of the section's type.
+- The two 32-byte per-parameter sets (+0x2d and +0x4d) become all `ff`: every parameter on.
+- The default depends only on the section type. Every group record of the 128 editor-saved default sessions (V1455 to V2242, every console) holds the default word of its type in both words, with both per-parameter sets all `ff`.
+- A default word is the module types the section has, by the bit rule above. FX is bit 21 (module `15`), Spice Rack bit 31 (module `1f`), Graphic EQ bit 15 (module `0f`), Nodal Processing bits 4 and 5 (modules `04` and `05`), Control Groups bit 16 (module `10`) and output ports bit 18 (module `12`). Input ports hold none.
+
+| Section (type) | Default word |
+| --- | --- |
+| Input Channels (`01`) | `7c4873be` |
+| Aux Outputs (`05`), Matrix Outputs (`10`) | `7c405bb0` |
+| Group Outputs (`06`), Busses (`07`) | `7c485bbc` |
+| Control Groups (`0a`) | `00010000` |
+| FX (`0e`) | `00200000` |
+| Matrix Inputs (`0f`) | `00000042` |
+| Graphic EQ (`11`) | `00008000` |
+| Nodal Processing (`14`) | `00000030` |
+| Spice Rack (`18`) | `80000000` |
+| Output ports (`4d` to `5f`) | `00040000` |
+| Input ports (`1b` to `2f`) | `00000000` |
+| Monitoring (`08`), Talkback Outputs (`09`), Solo (`0b`), Talkback Input (`0c`), Video Link (`13`) | `00000000` |
+
+- The default sessions hold input ports `1b` to `20` and output ports `4d` to `52`. The site engine takes the wider ranges in the table alike. The rest were not seen.
+- Multis (`12`) is in no default session. Its default is not known.
+- Proven by six captures of the clear ([`snapshots.md`](snapshots.md), "Clear all snapshots"). The words above, written into the save after a Restructure alone, give the editor's save after the clear.
+- Two of the captures are SD files (SD9 V2242 and SD12 V1619). So the Global Scope layout and these defaults hold on SD files. The recall flags on pool states are still untested there.
+
 ## Misc scope
 
 The snapshot's other recall switches are one u16 in the snapshot record. Right after the 992-byte block (below) come `u16 2`, then this u16.

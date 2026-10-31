@@ -274,3 +274,12 @@ Label and colour:
 - The SD5 and SD12 editors drew the set A aux, matrix, control group and talkback colours as grey buttons. They drew an orange and a green as grey buttons too. Fader Banks screen.
 - The Quantum 225 editor drew the set B matrix and talkback colours as the input colour. It drew a yellow and a pink as they are. Fader Banks screen.
 - Seven colours are seen on SD banks: the six of set B, and mint `#aeffd2`. The full palette of each editor is not known.
+
+## Session name (2026-10-31, editor-verified)
+
+Section 0 is the session's name: `00 00`, a u16 length, then latin-1 text. The `layout.py` and `inspect.py` docstrings, `set_notes` and the `script-notes.md` heading call it "session notes". That is wrong. It is the name.
+
+- The editors show it as Session on the master screen, as the session title in Session Structure and at the top of the Session Notes dialog, and as the Description in the Load Session and Save Session lists. Editor screens: SD9 V2242, Quantum 225 V2242 and SD12 V1619.
+- The text area of the Session Notes dialog stayed empty, so the notes are not in section 0. Where the editor saves them is not known.
+- A 64-character name written into section 0 alone showed in full on the master screen and in Session Structure. The editor's re-save kept it. With section 0 put back, the re-save equals the editor's re-save of the original. Editor load: SD12 V1619 and Quantum 225 V2242. Longer names were not tested.
+- The site engine caps a name at 64 printable latin-1 characters and changes nothing but section 0.
