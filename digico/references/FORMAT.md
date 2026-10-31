@@ -98,6 +98,7 @@ on. Console sample and details: `CHANNEL_MODEL.md`, Dyn2.
 - The tools here cut channel names to 8 characters by choice (short console names); `ses.rename()` writes
   up to 31 with `max_len=31`.
 - Bus names: separate region (~0x4cd00), ~15 copies.
+- Confirmed 2026-10-31 in the Quantum 225 V2242 and Quantum 112 V2242 editors: names of 13 and 31 characters, spaces and punctuation included, held in all 20 copies through load and re-save. No other console and build pair is proven: [`../quantum/README.md`](../quantum/README.md) and [`../sd/README.md`](../sd/README.md).
 
 ## Console-confirmed
 HPF, fader, mute, and a name+HPF+fader combo all loaded & displayed correctly on a real
@@ -231,6 +232,21 @@ behind them are not published.
   (only the aux send modules, up to 74 strips). Every one of 189 console-saved sessions parses to the last byte with
   this layout. `fx.library()` reads one strip and no notes per entry, so presets with several strips or with notes
   read wrong there.
+- **Preset library, confirmed 2026-10-31.** A reader that walks the layout above and requires the last entry to end
+  where section 219 ends parsed 175 files to the last byte with no failure: the 132 editor default sessions, the
+  samples and fixtures, and 42 real shows. An FX unit stores the index of its preset in this list (+42 of its section
+  201 record, -1 for none). A reader that finds the next entry by pattern and takes one strip and no note per entry,
+  as `fx.library()` here does, puts every later entry at the wrong index. On three real Quantum 326/338 shows it
+  misread 1,889 entries and gave the user FX presets an index 21 below the real one.
+- Editor load, Quantum 225 V2242 (2026-10-31): a default session with an entry of two strips and a note placed ahead of
+  the FX presets, then two FX units added from presets behind that entry. Both units were kept, their presets read back
+  by name and values from the re-save's own library, and the library held 43 entries before and after. A real Quantum
+  225 show saved at V1619, with 22 user channel presets of several strips and 21 user FX presets, plus three FX units
+  added from user FX presets (the first, a middle one and the last): the three units were kept with the preset's values,
+  and the library held 143 entries before and after. The editor stores index -1 for a unit made from a user preset.
+- Not proven: an entry with a note in a real show. A real Quantum 326/338 V2025 show with 1,889 entries and 7 notes did
+  not load in the Quantum 326/338 V2242 editor, the unchanged show included (by startup file or by Load Session; the
+  editor kept its default session). A note is proven on a written entry only.
 
 ## Session structure (contributed notes, 2026-10-30)
 Header fields, versions, the section list, object framing, strip kinds, labels, restructure rules, ports, macros,

@@ -60,6 +60,7 @@ Proven:
   change, IEM sends, patch, scene safes, SoftKeys, layout, no-op round trips).
 - Script-written shows have loaded in Director and been edited there.
 - `dlive_lint.py` passes Director-saved shows with 0 errors and caught 18 of 18 deliberately corrupted files.
+- Dropping stored scenes: a real show with 9 stored scenes, written again without them, recalled in Director 2.12 with no error, no scenes listed, and the same I/O page, DCA names and mix names (2026-10-31, `references/field-notes.md`).
 
 Verified for this release:
 - Every `.py` file compiles (`python3 -m py_compile`).
@@ -103,6 +104,8 @@ with a save-proven fact here, the repo fact stands until a save settles it:
 2026-10-30, Director 2.12 and console saves, 42 real shows: 39 file names fit 16 characters, 13 sit at exactly 16, and some are cut mid-word at 16. The 3 over 16 are 2 tars from a Mac user and 1 console tar, and none of the 42 stores the name inside, so `dlive_lint.py` warns and does not fail.
 
 2026-10-30, Director V1.9x to V2.11: version 11-14 field notes contributed by markcarlberg (pull request #2), in `references/format-versions.md`.
+
+2026-10-31, Director 2.12 (Windows 11): show files named with 9, 14 and 16 characters recalled, and one named with 28 characters failed with "Show not found". A real show with 9 stored scenes, written again without them, recalled with no error and listed no scenes. Ported to `references/field-notes.md`.
 
 ## Built on tour
 

@@ -20,6 +20,8 @@ Covers DM3 and DM3 Standard. File extension: `.dm3f`.
 - DM3 Editor 3.1 controlled saves placed the input patch codes (IN, DANTE, USB), the head amp at `Process/BuiltIn/InputPort[16]/HeadAmp`, the bus-owned send pre point, the insert point and insert codes, and the output patch codes for MIX, MATRIX, ST L, CUE L, MONI L, OSC and insert sends (`references/dm3-fields.md`).
 - The comp ratio is u8 x10 with 255 = infinity (controlled save).
 - A new show carries 14 protected factory scenes, an unprotected `Initial Data` scene and 262 protected factory presets (saves).
+- Confirmed 2026-10-31 in DM3 Editor 3.1: the +48V master is `Setup/PhantomMaster.On` in the current backup. Setup > "+48V Active" off and on, each saved with Save As, read 1, 0, 1 (BB-DM-MASTER (DM3)).
+- Confirmed 2026-10-31 in DM3 Editor 3.1: a written file showed the input patch (IN, DANTE, USB and none), head amp gain and 48V, and HPF on and frequency as written (BB-DM3-READ). The patch picker lists IN 1 to 16, DANTE 1 to 16 and USB 1 to 18. The editor shows 0 for a stored head amp gain outside 0 to +64 dB.
 
 ## What we don't know
 
@@ -51,3 +53,4 @@ Covers DM3 and DM3 Standard. File extension: `.dm3f`.
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-10-29, DM3 Editor 3.1, markcarlberg's blanks of both models and controlled saves mapped identity, patch, head amp, send, insert and output patch fields (`references/dm3-fields.md`).
+- 2026-10-31, DM3 Editor 3.1, a new session and files written for the test: the +48V master, the input patch, head amp gain and 48V, and the HPF each showed as read. Ported to `references/dm3-fields.md` and `references/FORMAT.md` (section 1.5).

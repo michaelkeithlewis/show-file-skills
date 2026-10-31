@@ -28,6 +28,7 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - Each `.bup.old` holds the same data as its `.bup` from byte 72 on after a DM Editor 2.0 save, under its own save id (controlled saves).
 - A file that keeps the template's save ids loads and re-saves in DM Editor 2.0 (load test).
 - U76 and Opt-2A parameter words were pinned by controlled saves; MBC4 by four controlled saves and a load (`references/premium-rack.md`).
+- Confirmed 2026-10-31 in DM Editor 2.0.1 (DM7 V2.01): the +48V master is `Unit.48VMaster` in the Setup entry (`SetupBackupFile.bup`). Setup > General "+48V Active" off and on, each saved with Save As, read 1, 0, 1. DM Editor loads the Setup entry only with "Load with System Setting". A file with the master off and 48V on OMNI 1 and 2 showed General +48V Active off and +48V lit on the CH 1 channel bar (BB-DM-MASTER).
 
 ## What we don't know
 
@@ -62,6 +63,7 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - Portico 5033 word order: an earlier reading of DM7 files put word 0 as ALL BYPASS and each band switch before its band; the RIVAGE PM Editor reading in `references/premium-rack.md` puts word 0 as TRIM and each switch after its band. Both agree on the switch and gain words. Needs a controlled save.
 - Rupert EQ810 words 6 and 7 (one reading: word 7 at 4 is the 185 Hz high pass, word 6 at 1 the 16 kHz low pass).
 - DynamicEQ4 RATIO above 50 (a boost): assumed symmetric with the cut law, unconfirmed. DynamicEQ6 shelf Q law, and the A/R preset slots of bands 2 and 3.
+- The +48V master on DM7 firmware 1.x: read by the path of the V2.01 test, not tested in DM7 Editor 1.7.5.
 
 ## Session notes
 
@@ -69,3 +71,4 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 
 - 2026-10-29, DM Editor 2.0, markcarlberg's controlled saves mapped patch codes, dynamics words, tap points and bus fields (`references/dm7-fields.md`).
 - 2026-10-30, DM Editor 2.0 and RIVAGE PM Editor 7.2, DynamicEQ4 Q law corrected against a DM Editor reading (0.91 at 61); MBC4 words proven on both desks.
+- 2026-10-31, DM Editor 2.0.1, DM7 V2.01: the +48V master flipped in the editor and read at `Unit.48VMaster`; a file with the master off loaded with System Setting showed the master off and the channel 48V lamp lit. Ported to `references/dm7-fields.md` and `references/FORMAT.md` (BB-DM-MASTER).

@@ -165,3 +165,5 @@ These stop a bad file in the web engine. The scripts here do not do them.
 12. Bank carry: no console swap exists here. The rules are under "Fader banks on a console swap".
 13. Snapshots: the tools refuse structural edits on a session with snapshots and cannot clear them. Follow the rules under "Clearing snapshots". Do not clear on a console and build that has no capture.
 14. Session name: `set_notes` writes up to 255 bytes, and only 64 characters are proven to show in full. Cap the name at 64 and change nothing but section 0.
+15. Name length: `ses.rename` takes any `max_len` up to 31 for any console and build. Allow more than 8 characters only on the Quantum 112 and Quantum 225 at V2242, the two pairs whose editors loaded names of 31 characters on 2026-10-31 ([`quantum/README.md`](../quantum/README.md)).
+16. Preset library: `fx.library()` finds the next entry by pattern and takes one strip and no note per entry. Walk the layout in [`FORMAT.md`](FORMAT.md) ("FX units, sends, buses and patch") and require the last entry to end where section 219 ends. A unit stores its preset's index in that list, so a missed strip moves every later preset.

@@ -85,12 +85,18 @@ DM3's own. (save)
 | DANTE n | 0x01800000 + n - 1 | 0x01A00000 + port |
 | USB n | 0x01600000 + n - 1 | not a channel patch |
 
+Confirmed 2026-10-31 in DM3 Editor 3.1: a file with CH 1 to 8 patched to IN 1, IN 9, DANTE 4, USB 2, none, IN 6, IN 7
+and IN 8 loaded, and the Patch page showed each source (none is a blank). The patch picker lists IN 1 to 16, DANTE 1
+to 16 and USB 1 to 18. (load) Other sources, such as playback and FX returns, have no proven name.
+
 ## Head amps, digital gain, polarity
 
 - `Process/BuiltIn/InputPort[16]/HeadAmp`: `Gain` signed 16-bit 0.01 dB, `48V` byte. An untouched port reads 0, against
   -600 on the DM7. (save)
 - `<strip>/Input.Gain` (digital gain) and `Input.Phase` (a byte) as DM7. The ports have no polarity of their own. (save)
 - `Setup/PhantomMaster.On` is the +48V master (the DM7's `Unit.48VMaster`), 1 on the blank. (save)
+- Confirmed 2026-10-31 in DM3 Editor 3.1: Setup > "+48V Active" switched off (the editor asks to confirm) and on, each saved with Save As, read 1, 0, 1 at `Setup/PhantomMaster.On` in the current backup. (save)
+- Confirmed 2026-10-31 in DM3 Editor 3.1: files written with head amp gains of +5, +12, +30, +45, +55, +60, +63 and +64 dB, some with 48V, showed each gain and each 48V lamp on the channel bar as written. A DANTE or USB source has no head amp and no +48V button. The editor shows 0 for a stored gain outside 0 to +64 dB (-3, -6, +65 and +66 were written). (load)
 
 ## HPF and EQ
 
@@ -98,6 +104,8 @@ DM3's own. (save)
 - `PEQ/Bank.Type` is `BOLD` on every strip. (files)
 - `PEQ/Bank/HPF` `On`, `Frequency` (800 = 80 Hz), `Slope` 12, on CH 1 to 16 only. Other strips have no `HPF` block, and
   CH 1 to 16 have no `BandL.HPFOn`. (save for which strips carry it; values files)
+- Confirmed 2026-10-31 in DM3 Editor 3.1: HPF on at 120, 20 and 63 Hz on CH 1, 6 and 7, and off at 100 Hz on CH 8, showed
+  on the HPF tab as on (green) at the same frequencies and off (grey) at 100 Hz. (load)
 - `BandL`, `Band[2]`, `BandH`: four bands, defaults 125 Hz, 1 kHz, 4 kHz, 10 kHz, Q 0.7. (files)
 - `BandL.Type`, `BandH.Type`: 0 bell, 1 shelf. (save) The middle bands' `Type` is always 0. (files)
 - There is no LPF block and no per-band bypass. (files)

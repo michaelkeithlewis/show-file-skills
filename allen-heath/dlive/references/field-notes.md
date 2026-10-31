@@ -94,6 +94,14 @@ Colours: 0 off, 1 red, 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan, 7 white.
 - Keep a show file name to 16 characters or fewer, not counting `.tar.gz`. Director cuts a longer name in the
   USB Shows list, and Recall fails with "Show not found". Of 42 real shows, 39 fit and 13 sit at exactly 16.
   `dlive_lint.py` warns on a longer name.
+- Confirmed 2026-10-31 in dLive Director 2.12 (Windows 11), Recall from the USB Shows list: show files named with 9, 14
+  and 16 characters recalled with "Recalling Show: <name>" and no error. A show file named with 28 characters failed with
+  "Error Recalling: Show not found" and three Internal Errors in History. The names that recalled held letters, spaces
+  and hyphens. The name that failed held letters and underscores. Digits and other special characters were not tested.
+- Confirmed 2026-10-31 in dLive Director 2.12 (Windows 11): dropping stored scenes (the site engine removes the same two
+  files per scene number that `dlive_scenes.py drop` removes). A real show with 9 stored scenes listed all 9 on the
+  Scenes page. The same show with its stored scenes removed recalled with no error and listed none, and its I/O page,
+  DCA names and mix names matched the original. A byte compare showed the live scene files identical before and after the drop.
 
 ## Starting from a factory show
 

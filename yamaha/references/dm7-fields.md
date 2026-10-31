@@ -148,6 +148,7 @@ Insert slot codes (`Insert/Module[0..3]/Patch.Source`):
 - Virtual Soundcheck: Playback In per channel is `IC/VirtualSC.Source` (an input port code). The recording out is an
   output port playing 0x03C28000 + ch. (files)
 - +48V master: `SET/Unit[0].48VMaster`, 1 on, 0 off. (save)
+- Confirmed 2026-10-31 in DM Editor 2.0.1 (DM7 V2.01): Setup > General "+48V Active" switched off and on, each saved with Save As, read 1, 0, 1 at this path (BB-DM-MASTER). (save) The master is in the Setup entry (`Setup/SetupBackupFile.bup`), and DM Editor loads that entry only with "Load with System Setting". A file with the master 0 and 48V on OMNI 1 and 2, loaded with System Setting, showed General +48V Active off and +48V lit on the CH 1 channel bar. (load)
 - Factory input state, read from untouched strips: named `chN`, Blue, icon Blank, unpatched, polarity off, digital gain
   0; insert off at Pre DYN1; direct out off, 0 dB, Pre Filter; HPF off 80 Hz 12 dB/oct; LPF off 16 kHz 12 dB/oct; PEQ on,
   PRECISE, 125 Hz, 355 Hz, 3.55 kHz, 6.3 kHz flat, Q 1.4, shelves on at Q 4.0; DYN1 Gate off; DYN2 Comp 260 off; delay

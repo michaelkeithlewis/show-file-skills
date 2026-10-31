@@ -68,6 +68,8 @@ program, descriptor, template, preset, font or screenshot is copied here, and no
 | BB-DM-ORDER | In one pass: CH 9 repatched from OMNI 9 to OMNI 13, then +40 dB and +48V; CH 40 repatched from DANTE 8 to OMNI 14, then +51 dB and +48V | The editor showed CH 9 on OMNI 13 at +40 dB with +48V lit. The head amp change reached the port the channel was patched to at that point |
 | BB-DM-MODEL | New sessions saved as DM7, DM7 Compact, DM5 and DM5 Compact | The header model is `DM7` in all four. `ProjectInfo` tells them apart (4.4) |
 | BB-DM-SHAPE | The schema of every generation-2 file at hand, read for each parameter this tool uses | The same type, size and count in every file (4.6) |
+| BB-DM-MASTER (DM7) | 2026-10-31. In a new DM7 session, Setup > General "+48V Active" switched off and saved with Save As, then switched on and saved again. The +48V master read from the base file and from both saves | On, off, on (1, 0, 1). The master is `Unit.48VMaster` in the Setup entry (`SetupBackupFile.bup`). DM Editor loads that entry only with "Load with System Setting" |
+| BB-DM-MASTER (file to editor) | 2026-10-31. A DM7 file written for the test with the master off and 48V on OMNI 1 and 2, loaded in DM Editor with System Setting | General showed +48V Active off, and the CH 1 channel bar showed +48V lit. A channel's 48V switch can be on while the master is off |
 
 ### 1.4 RIVAGE PM tests (RIVAGE PM Editor 7.2.0)
 
@@ -85,6 +87,17 @@ written from them. The write tests loaded each file in RIVAGE PM Editor 7.2.0 on
 | BB-RV-UDK | A User Defined Key LINE 1 label typed in PM Editor, saved, and found by schema path | The path of 4.8. A write of these labels is not load-tested |
 | BB-RV-MACRO | Both macro list copies and a macro library preset inflated and decoded as in 4.10, in both shows | Valid JSON in every case. The macro channel, mix and DCA numbers match the editor's CSV export of the same show |
 | BB-RV-SELLOAD | In PM Editor, scenes from one file loaded into another with the selective load (several source scenes, one destination start) | The scenes outside the load stayed in place |
+
+### 1.5 DM3 read tests (DM3 Editor 3.1.0)
+
+These tests ran on 2026-10-31 on a session the editor saved and on files written for the test from it. They test reads only: no DM3 write is open.
+
+| Id | Test | Result |
+| --- | --- | --- |
+| BB-DM-MASTER (DM3) | In a new DM3 session, Setup > "+48V Active" switched off (the editor asks to confirm; OK) and saved with Save As, then switched on and saved again. The +48V master read from the base file and from both saves | On, off, on (1, 0, 1). The master is `Setup/PhantomMaster.On` in the current backup |
+| BB-DM3-READ patch | A DM3 file written for the test with CH 1 to 8 patched to IN 1, IN 9, DANTE 4, USB 2, none, IN 6, IN 7 and IN 8, loaded | The Patch page showed IN 1, IN 9, DANTE 4, USB 2, a blank (none), IN 6, IN 7 and IN 8. The patch picker lists IN 1 to 16, DANTE 1 to 16 and USB 1 to 18 |
+| BB-DM3-READ head amp | The same file with head amp gain and 48V written on IN 1 (+30 dB, 48V), IN 9 (+45 dB, 48V) and IN 7 (+12 dB, 48V). A second file with gains of +5, +55, +60, +63 and +64 dB. Gains of -3, -6, +65 and +66 dB were written too | The channel bar showed each gain and each 48V lamp as written. The editor shows 0 for a stored gain outside 0 to +64 dB. A DANTE or USB source has no head amp and no +48V button |
+| BB-DM3-READ HPF | HPF on at 120, 20 and 63 Hz on CH 1, 6 and 7, and off at 100 Hz on CH 8, loaded | The HPF tab showed on (green) at the same frequencies, and off (grey) at 100 Hz |
 
 ## 2. Generation 1 container: CL and QL `.CLF`
 
@@ -517,6 +530,8 @@ there, and load that save.
 | RIVAGE PM | refused | a reader for its sections |
 | User keys (`.CLU`, `.dm7u`), scene-only and library files | refused by design | none: they hold passwords or are not a show |
 | A console load of a written file | not tested | one written CL or QL file and one DM7 file loaded on a console at prep |
+| +48V master on the DM5 and on DM7 firmware 1.x | read by the path of the DM7 V2.01 test, not tested on those files | the BB-DM-MASTER (DM7) test on a DM5 session and in DM7 Editor 1.7.5 |
+| +48V master on CL, QL and TF | where the file keeps it is not known | switch the master in the editor, save, compare |
 
 ## 7. Contributed field maps
 

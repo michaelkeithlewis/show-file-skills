@@ -20,6 +20,7 @@ Covers DM5 and DM5 Compact. File extensions: `.dm7f` and `.dmxf`.
 - A console load: not tested.
 - Sends, EQ, dynamics, delay, inserts and the output patch: not read.
 - Mix, matrix and stereo faders, ON keys and bus types: not read.
+- The +48V master: read by the path of the DM7 V2.01 test (`Unit.48VMaster` in the Setup entry), not tested on a DM5 or DM5 Compact session.
 
 ## Session notes
 

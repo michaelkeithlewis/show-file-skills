@@ -24,6 +24,7 @@ Covers TF1, TF3, TF5 and TF-RACK. File extension: `.tff`.
 - Real TF shows: the docs name only a new editor session.
 - A console load: not tested.
 - Sends, EQ, dynamics, delay, inserts and the output patch: not read.
+- The +48V master: where a TF file keeps it is not known (2026-10-31).
 
 ## Session notes
 

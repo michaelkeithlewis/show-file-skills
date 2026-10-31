@@ -101,6 +101,7 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 | `SD8` | SD8, SD10 | Left: 3, 3 x 4. Centre: 4, 3 x 4. Right: 2, 3 x 4 | unproven |
 | `SD9` | SD9, SD11 | Left: 3, 3 x 4. Right: 2, 3 x 4 | unproven |
 | `SDC` | SD12, SD12-96 | Left: 3, 3 x 4. Right: 2, 3 x 4 | proven at V2242 and V1619 |
+| `SD11` | SD11 | Main: 2, 3 x 4 | unproven |
 
 - A bank move is proven when a file with banks moved by bytes loaded in the editor, the Fader Banks screen showed every moved bank, and the re-save kept section 212 byte for byte and added no bank ([`engine-findings.md`](../references/engine-findings.md), "Fader banks"). The runs used the SD12 (V2242 and V1619) and SD5 (V2242) editors.
 - The SD5 CS and SD12-96 editors were not part of the runs. The SD5 CS default holds the same section 212 as the SD5's.
@@ -108,6 +109,7 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - Record numbers differ by family. The Left bay is record 3 on the SD8, SD9 and SD12, and record 2 on the SD5 and SD7.
 - Colours: every SD default holds colour set B ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement").
 - The scripts in this folder read bays for the `SDC` family only and move no bank.
+- SD11, read 2026-10-31 in the SD11 V2242 editor on its default session. The file carries the SD9 family code, so the `SD9` row above lists the SD11 too. An SD11 file has 8 control groups (header 0x94) and 12 graphic EQs (header 0x97), which tell it from an SD9. The SD11 has one bay: section 212 record 2, 3 layers of 4 buttons. The Fader Banks screen (Master screen > Layout > Fader Banks) shows Ch 1-12, Ch 13-24 and Ch 25-32 on layer 1, Grp 1-6, Aux 1-6, Matrix 1-8 and CGs/Mast on layer 2, and nothing on layer 3. That is the placement in the file. The screen gives the bay no name; the site calls it Main. The map is read only: no bank move was written on an SD11, and no SD11i editor was run.
 
 ## What we don't know
 
@@ -127,6 +129,7 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - A console swap inside one family (SD12 V1619 to SD12 V2242, SD5 to SD5 CS, SD12 to SD12-96): the swap keeps every bank, record, layer and button as the source has them. This was byte-checked on default sessions of each family. No such file was booted in an editor.
 - Bank colours in the SD editors: seven colours are seen on SD banks ([`FORMAT.md`](../references/FORMAT.md)). The SD5 and SD12 editors drew the set A colours and an orange and a green as grey buttons. The full palette is not known.
 - The clear snapshots + Restructure on the SD9 at any build but V2242, on the SD12 at any build but V1619, and on the SD5, SD7, SD8, SD10 and SD11: not captured. The cleared SD12 V1619 file was not loaded. SD12-96 files: not load-proven, because a plain SD12 editor opens its own session for them.
+- Names over 8 characters on every SD family: no SD editor was booted with long names (2026-10-31), so the site engine keeps SD names at 8. Real console-saved sessions hold names of up to 16 characters on the SD9 and SD8 and up to 15 on the SD12. That is a reading of the files, not an editor load.
 
 ## Session notes
 
@@ -139,3 +142,4 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - 2026-10-31, SD9 V2242 and SD12 V1619: the editor's own Session Structure > clear snapshots > Restructure was captured on a real SD9 show with a snapshot group, on the same show with 2 setlists written by bytes, and on an SD12 sample with 3 snapshots stored in the editor. A file made by writing only the changes of the clear equals the editor's save, with save-time bytes masked, Global Scope included. A cleared SD9 file loaded in the SD9 V2242 editor: the Snapshots screen was empty and the re-save held no snapshots and no setlists. The SD12 V1619 file was not loaded. Ported to `references/snapshots.md`, `references/scope-and-recall.md` and `references/session-structure.md`.
 - 2026-10-31, a real SD9 show saved at V1619 (one snapshot group) and the SD12 V1619 sample above: section 210 read with the layout in `references/snapshots.md` and matched the Snapshots screens of the SD9 V2242 and SD12 V1619 editors (names, numbers, group, current snapshot and, on the SD9 show, the recall time and note). Two setlists written by bytes into an SD9 V2242 file showed in order. The lines above, `references/snapshots.md` and `references/scope-and-recall.md` say SD files are not tested. That no longer holds for the snapshot list, the trailer, section 115 and Global Scope. Those notes stand.
 - 2026-10-31, SD9 V2242 and SD12 V1619: section 0 is the session name. The editor shows it as Session on the master screen, as the session title in Session Structure and the Session Notes dialog, and as the Description in the Load and Save Session lists. A 64-character name written into section 0 alone showed in full in the SD12 V1619 editor and the re-save kept it. Ported to `references/FORMAT.md`. The `layout.py` and `inspect.py` docstrings and `set_notes` still call it notes.
+- 2026-10-31, SD11 V2242, default session: the Fader Banks screen was read. The SD11 has one bay, built from section 212 record 2, with 3 layers of 4 buttons. The banks on each layer are listed under Fader banks above. This reading settles the SD11 map for the default session. The line under What we don't know that calls the SD11 bay map unverified stands, and bank moves on an SD11 are still not run.

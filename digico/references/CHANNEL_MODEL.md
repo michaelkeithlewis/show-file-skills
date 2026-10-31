@@ -107,6 +107,11 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
   - Gate 1e: mode 0b (0 gate, 1 ducker, 2 **MSE**, Mustard Source Expander), on 02, threshold 0e, range 0a (positive
     dB), attack 11, hold 13, release 12, MSE release button 4c, side-chain filter on 03 / low (05, 1) / high (05, 0),
     key input 16 and key on 37 as the SD gate. MSE shows threshold, depth (range) and the release button.
+  - Confirmed 2026-10-31 in the Quantum 225 V2242 and Quantum 112 V2242 editors: Leveling amp gain 51 and peak
+    reduction 52 take 0 to 100 and showed on the strip as written (defaults 25 and 20). Gate 1e mode 0b at 0, 1 and 2
+    (gate, ducker, MSE) with threshold 0e, range 0a and MSE release 4c loaded and re-saved as written. So 51 and 52
+    are no longer untested; mode 50 and emphasis 53 still are. Details and the Quantum 5 V2025 limit:
+    [`../quantum/README.md`](../quantum/README.md).
 
 ## Name  [done](≤31)
 - length-prefixed name in a fixed 32-byte slot (≤31 chars, ~20 copies); a longer name moves nothing. [done] (`FORMAT.md` "Names")
