@@ -31,6 +31,10 @@ browser: [DiGiCo sessions](https://idontownapc.com), [dLive shows](https://idont
 [DiGiCo Session Converter](https://idontownapc.com/digico-session-converter) writes a session for older DiGiCo
 software, which DiGiCo's SD & Q Convert can't do.
 
+## Real show files
+
+[michaelkeithlewis.com/showfiles](https://michaelkeithlewis.com/showfiles) is a free library of the shows these tools were built on: DiGiCo, dLive, Avantis, VENUE, Yamaha and Midas shows, SuperRack and LiveProfessor racks, LiveTrax and Pro Tools templates, sorted by artist and year. Use one as a starting point or as a test file. Patch and gain need your own pass on a new rig.
+
 ## How the repo is organized
 
 Folders go manufacturer, then product. A model folder such as [`yamaha/cl/`](yamaha/cl/) lists what we know and do not know about that model line. The tooling sits in the skill folder because one engine serves every model that shares a file format. Agents read [`AGENTS.md`](AGENTS.md) first.

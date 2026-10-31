@@ -14,7 +14,7 @@ files() { git ls-files -co --exclude-standard -z -- . ':!.github/scrub-check.sh'
 
 # Public patterns: PCRE, case-insensitive.
 PUBLIC=(
-  '(?<!instagram\.com/)(?<!github\.com/)michaelkeithlewis(?!/show-file-skills)'
+  '(?<!instagram\.com/)(?<!github\.com/)michaelkeithlewis(?!/show-file-skills|\.com/showfiles)'
   '/home/[a-z]'
   '/Users/[A-Za-z]'
   '\b100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}\b'
