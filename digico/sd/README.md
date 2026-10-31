@@ -90,6 +90,25 @@ Each is from a one-change save or a Session Structure reading. The format side i
 - Macro keys per bank: SD12 five, SD9 eight.
 - Snapshot number in SD12 files: 47 bytes from the end of its metadata at V1742, 51 at V2242.
 
+### Fader banks
+
+Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement"). The bay map below was read off the V2242 editors' Fader Banks screens on each console's default session. The record is the section 212 record of the bay. Layers x buttons is the grid the screen shows.
+
+| Family | Models | Bays: record, layers x buttons | Bank moves |
+| --- | --- | --- | --- |
+| `SD5` | SD5, SD5 CS | Left: 2, 3 x 5. Centre: 4, 3 x 4. Right: 3, 3 x 5 | proven at V2242 |
+| `SD7` | SD7 | Left: 2, 3 x 6. Master 1: 1, 1 x 4. Master 2: 0, 1 x 4. Right: 3, 3 x 6 | unproven |
+| `SD8` | SD8, SD10 | Left: 3, 3 x 4. Centre: 4, 3 x 4. Right: 2, 3 x 4 | unproven |
+| `SD9` | SD9, SD11 | Left: 3, 3 x 4. Right: 2, 3 x 4 | unproven |
+| `SDC` | SD12, SD12-96 | Left: 3, 3 x 4. Right: 2, 3 x 4 | proven at V2242 and V1619 |
+
+- A bank move is proven when a file with banks moved by bytes loaded in the editor, the Fader Banks screen showed every moved bank, and the re-save kept section 212 byte for byte and added no bank ([`engine-findings.md`](../references/engine-findings.md), "Fader banks"). The runs used the SD12 (V2242 and V1619) and SD5 (V2242) editors.
+- The SD5 CS and SD12-96 editors were not part of the runs. The SD5 CS default holds the same section 212 as the SD5's.
+- More than two bays: the SD5, SD8 and SD10 have three. The SD7 has four, with two Master columns of one layer between Left and Right.
+- Record numbers differ by family. The Left bay is record 3 on the SD8, SD9 and SD12, and record 2 on the SD5 and SD7.
+- Colours: every SD default holds colour set B ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement").
+- The scripts in this folder read bays for the `SDC` family only and move no bank.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -103,8 +122,16 @@ Each is from a one-change save or a Session Structure reading. The format side i
 - Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
 - SD7 pool: a contributor reading of the dialog gives one pool of 249 with buses to 122. The table above reads 255 for paths + matrix outputs + bus slots. Needs a reading that settles it.
 - Thresholds above 0 dBFS: a contributor reading says SD production sessions hold compressor thresholds up to +14.3. The repo says thresholds stop at 0 ([`filters-and-thresholds.md`](../references/filters-and-thresholds.md)). Needs a save that settles it.
+- Bank moves on the SD7, SD8, SD9, SD10 and SD11: not run in their editors. The SD5 CS and SD12-96 editors: not run either.
+- SD11: the default session fills record 2 only, which the SD9 map calls the Right bay. The SD11 bay map is unverified.
+- A console swap inside one family (SD12 V1619 to SD12 V2242, SD5 to SD5 CS, SD12 to SD12-96): the swap keeps every bank, record, layer and button as the source has them. This was byte-checked on default sessions of each family. No such file was booted in an editor.
+- Bank colours in the SD editors: seven colours are seen on SD banks ([`FORMAT.md`](../references/FORMAT.md)). The SD5 and SD12 editors drew the set A colours and an orange and a green as grey buttons. The full palette is not known.
 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 - 2026-10-30, SD12 V2242, contributed one-change saves on the header, sections, ports, macros, banks and snapshots ported to `references/session-structure.md`.
+- 2026-10-31, SD12 V2242 and V1619, SD5 V2242: bank moves loaded in the editors, the Fader Banks screen showed every moved bank, and the re-save kept section 212 byte for byte. The bay map of each family above was read off the V2242 editors' Fader Banks screens. Ported to `references/FORMAT.md` and `references/engine-findings.md`.
+- 2026-10-31, SD5 and SD12 V2242 as console swap targets: banks carried from the Quantum 326/338 loaded, showed on the Fader Banks screen and re-saved with section 212 byte for byte. An SD12 with 34 banks, 10 of them on no button, kept all 34. Ported to `references/engine-findings.md`.
+- 2026-10-31, SD5 and SD12 default sessions (V1619 and V2242), read from the files: a 99-byte record of section 212 is 84 bytes of positions and 15 bytes after them, seven shown-button bytes (all 1) and eight zero bytes. `references/session-structure.md` counts three flag bytes there, and the layout.py docstring takes the first byte after the seven as the active layer. Both notes stand until a save settles them.
+- 2026-10-31, SD5, SD8, SD10 and SD7 default sessions (V1619 and V2242), read from the files: output banks sit on layer 1 of the Centre bay (SD5, SD8, SD10) and of both Master columns (SD7). The note in `references/script-notes.md` (layout.py section) that every default puts output banks on layer 2 holds for the Left and Right bays. That note stands.

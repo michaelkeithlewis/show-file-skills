@@ -69,6 +69,26 @@ Keys are (module, param) in hex, as in [`FORMAT.md`](../references/FORMAT.md). T
 - The engine mode at header 0x87 offers 1 (48 kHz) and 4 (96 kHz) only on Quantum ([`session-structure.md`](../references/session-structure.md)).
 - Nodal nodes, Spice Rack objects and the Quantum strip kinds: [`session-structure.md`](../references/session-structure.md).
 
+### Fader banks
+
+Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement"). The bay map below was read off the V2242 editors' Fader Banks screens on each console's default session. The record is the section 212 record of the bay. Layers x buttons is the grid the screen shows.
+
+| Family | Models | Bays: record, layers x buttons | Bank moves |
+| --- | --- | --- | --- |
+| `Q1` | Quantum 112 | Main: 2, 3 x 4 | unproven |
+| `Q2` | Quantum 225, 225 Pulse | Left: 3, 3 x 4. Right: 2, 3 x 4 | proven at V2242 and V1619 |
+| `Q3` | Quantum 326/338, 338 Pulse | Left: 2, 3 x 4. Centre: 4, 3 x 4. Right: 3, 3 x 4 | proven at V2242 |
+| `Q5` | Quantum 5 | Left: 2, 3 x 5. Centre: 4, 3 x 4. Right: 3, 3 x 5 | unproven |
+| `SDQ` | Quantum 7 | Left: 2, 6 x 6. Master 1: 1, 1 x 4. Master 2: 0, 1 x 4. Right: 3, 6 x 6 | unproven |
+| `Q8` | Quantum 852 | not mapped | not mapped |
+
+- A bank move is proven when a file with banks moved by bytes loaded in the editor, the Fader Banks screen showed every moved bank, and the re-save kept section 212 byte for byte and added no bank ([`engine-findings.md`](../references/engine-findings.md), "Fader banks"). The runs used the Quantum 225 (V2242 and V1619) and Quantum 326/338 (V2242) editors.
+- The Pulse editors were not part of the runs. A Pulse default session holds the same section 212 as the plain console's.
+- More than two bays: the Quantum 326/338 and Quantum 5 have three. The Quantum 7 has four, with two Master columns of one layer between Left and Right.
+- Quantum 852: the default session fills records 1 to 4. Which record is which bay was not read.
+- Colours: the Quantum 112, 225, 326/338 and 852 defaults hold colour set A. The Quantum 5 and Quantum 7 defaults hold set B ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement"). How the Quantum 5 and Quantum 7 editors draw them was not checked.
+- The scripts in this folder read bays for the `Q2` family only and move no bank.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -82,9 +102,16 @@ Keys are (module, param) in hex, as in [`FORMAT.md`](../references/FORMAT.md). T
 - FET ratio button (1d, 4a) value 0: a contributor reading of the screen order says it is ALL. Unconfirmed; no save holds it.
 - Levelling Amp (1d, 50) as Limit or Compress: unconfirmed by a one-change save.
 - DiGiCo's release notes say V1143 added Spice Rack, Mustard and nodal processing (Quantum 7), V20 the Mustard MSE, V22 the Levelling Amp and set lists, and V2242.4 lifts the Quantum 225 Pulse to 120 inputs. The dialog limit read here is 96 at V1742 to V2242. V2242.4 has not been read in the dialog.
+- Bank moves on the Quantum 112, Quantum 5 and Quantum 7, and on both Pulse models: not run in their editors.
+- Quantum 852 fader bank map: not read.
+- A console swap inside one family, for example Quantum 225 to Quantum 225 Pulse: the swap keeps every bank, record, layer and button as the source has them. This was byte-checked on default sessions of each family. No such file was booted in an editor.
+- Bank colours in the Quantum editors: the Quantum 225 editor drew the set B matrix and talkback colours as the input colour. No other Quantum editor was checked for set B colours.
 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-10-30, Quantum 5 V2025 and Quantum 112 V2242.4, contributed one-change saves on Mustard (Levelling Amp, MSE release, type resets) and nodal nodes ported here and to `references/session-structure.md`.
+- 2026-10-31, Quantum 225 V2242 and V1619, Quantum 326/338 V2242: bank moves loaded in the editors, the Fader Banks screen showed every moved bank, and the re-save kept section 212 byte for byte. The bay map of each family above was read off the V2242 editors' Fader Banks screens. Ported to `references/FORMAT.md` and `references/engine-findings.md`.
+- 2026-10-31, Quantum 225 and Quantum 326/338 V2242 as console swap targets: banks carried from an SD12 (V1619) to the Quantum 225, and from the Quantum 225 to the Quantum 326/338, loaded, showed on the Fader Banks screen and re-saved with section 212 byte for byte. Ported to `references/engine-findings.md`.
+- 2026-10-31, Quantum 326/338, Quantum 5 and Quantum 7 default sessions (V1619 and V2242), read from the files: output banks sit on layer 1 of the Centre bay (Quantum 326/338, Quantum 5) and of both Master columns (Quantum 7). The note in `references/script-notes.md` (layout.py section) that every default puts output banks on layer 2 holds for the Left and Right bays. That note stands.

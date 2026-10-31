@@ -236,3 +236,41 @@ behind them are not published.
 Header fields, versions, the section list, object framing, strip kinds, labels, restructure rules, ports, macros,
 banks and the snapshot frame, each with how it was proven: [`session-structure.md`](session-structure.md). Where it
 disagrees with this file, the open list there says so.
+
+## Fader bank placement (2026-10-31, editor-verified)
+
+Where each bank sits on the faders. The bank list is section 243 ("Surface banks" above). The placement is section 212. A bay is one block of faders on the surface: Left, Centre, Right or a Master column. The bay map and the move status of each console are in [`../quantum/README.md`](../quantum/README.md) and [`../sd/README.md`](../sd/README.md).
+
+"Fader Banks screen" is the editor's Layout > Fader Banks page, read on the console's default session at V2242. The other proof words are the ones in [`session-structure.md`](session-structure.md).
+
+- Section 212 is `u16 0x327`, 8 records of 99 bytes, then 15 bytes. The u16 is the length of what follows. The last 15 bytes are not decoded. Same size in every default session V1455 to V2242 and in every real session read.
+- The whole section, length included, is copied in the 211 tail. The two copies stay equal on the editor's re-save.
+- A record is one bay: 42 u16 bank numbers, 7 bytes, then 8 bytes that are zero in every default session read. A bank number is the bank's place in section 243, counted from 0. `ffff` is no bank.
+- The 42 numbers are 7 layers of 6 buttons. Position = 6 x layer + button, both counted from 0.
+- The 7 bytes hold, per layer, the button that layer shows, counted from 1. Every default session read holds 1 in all seven.
+- Which record is which bay, and how many layers and buttons the screen shows, depends on the console family. Records 5 to 7 are empty in every default session read. No default of a mapped family places a bank on a position its screen does not show.
+- The editor's own move changed two u16 in section 212 and the same two in the 211 tail. Section 243 changed only its save-time heap words. One-change save, Quantum 225 V2242.
+- On load, a layer 1 whose shown button is empty gets a new blank bank on that button. The Quantum 326/338 editor added none when the shown button held a bank. An emptied layer 2 or 3 got none. Editor load: Quantum 225, Quantum 326/338, SD5 and SD12 at V2242.
+- The blank bank has no name, strips, label or colour. Its +0x1a is `ff` x 8, which means off the Layout page. One written this way was kept, and the editor added no second one. Editor load, Quantum 225 to Quantum 326/338.
+- A bank that is in no position of section 212 stays in the bank list through load and re-save. Editor load: Quantum 225, Quantum 326/338 and SD12 (one SD12 with 10 of its 34 banks on no button).
+- A bank list copied from the other console line loads, shows on the Fader Banks screen and re-saves with section 212 byte for byte and no bank added. The copy keeps strips, names, second lines and Layout page places. The pairs are in [`engine-findings.md`](engine-findings.md).
+
+Label and colour:
+
+- Bank +0x137 is the second line of the button: a ShortString[15] such as "Input Channels", "Aux Outputs" or a label the user typed. +0x147 is the button colour: R, G, B, 0. The Fader Banks screen shows both.
+- The editor keeps a bank's R, G, B bytes and draws them from a palette of its own.
+- The default sessions (V1619 and V2242) hold one of two colour sets:
+
+| Bank kind | Set A | Set B |
+| --- | --- | --- |
+| Input | `#c6cdff` | `#c6cdff` |
+| Aux | `#7a00c8` | `#ae5ae7` |
+| Group | `#c00000` | `#c00000` |
+| Matrix | `#00b498` | `#50ffe4` |
+| Control group | `#0062b4` | `#2b9fff` |
+| Talkback | `#0072b4` | `#79cdff` |
+
+- Set A is in the Quantum 112, 225, 326/338 and 852 defaults, Pulse included. Set B is in the Quantum 5, Quantum 7 and every SD default. Read from the files.
+- The SD5 and SD12 editors drew the set A aux, matrix, control group and talkback colours as grey buttons. They drew an orange and a green as grey buttons too. Fader Banks screen.
+- The Quantum 225 editor drew the set B matrix and talkback colours as the input colour. It drew a yellow and a pink as they are. Fader Banks screen.
+- Seven colours are seen on SD banks: the six of set B, and mint `#aeffd2`. The full palette of each editor is not known.

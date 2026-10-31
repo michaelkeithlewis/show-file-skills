@@ -91,6 +91,47 @@ The name switch of older editors has no case for some device types. A file for t
 
 Proven by reading the device-name switch in the Quantum 2 editor binary at each build.
 
+## Fader banks
+
+Tried in the real offline editors on 2026-10-31, at V2242 and, for the Quantum 225 and SD12, at V1619. The bytes are in [`FORMAT.md`](FORMAT.md), "Fader bank placement". The bay map of each console is in the model READMEs.
+
+A bank move takes one bank to another button, layer or bay, or swaps two banks. The site engine follows these rules:
+
+- Write the two u16 in section 212 and the same two in the 211 tail. Change nothing else. This is what the editor's own move writes.
+- Allow a move only on a console family whose moves were proven in its editor: `Q2`, `Q3`, `SD5` and `SDC`.
+- Refuse a move that would leave layer 1 of a bay with no bank. The editor adds a blank bank there on load. A swap never does this.
+- After a move, check the layer the bank left. If its shown button is now empty, point it at a bank that is still in the layer: the button the bank moved to when it stayed in the layer, else the first one. The same move back then restores every byte.
+- Refuse when the two copies of section 212 differ.
+- Refuse while any snapshot has the Layout switch on in its misc scope, or when the snapshot list cannot be read. The first is a precaution (see "Layout and snapshots").
+- A bank on no button can be put on a button. Write the same bytes as a move. The bank that was on the button goes to the bank list.
+
+Proven on the Quantum 225 and SD12 (V2242 and V1619) and on the Quantum 326/338 and SD5 (V2242). The moves tried were inside a layer, across layers, across bays and from the Centre bay. In each editor the Fader Banks screen showed every moved bank. The boot re-save kept section 212 byte for byte and added no bank. A first proof file without the shown-button rule got a blank bank on each layer 1 that a move had emptied. Putting a bank from the list on a button was proven on an SD12.
+
+Not tested: a bank placed on a position the screen does not show, and any family not named above.
+
+### Layout and snapshots
+
+Each snapshot keeps its own copy of section 212 ([`snapshots.md`](snapshots.md), options +0x012). With the misc switch Layout on, a recall puts back which bank each layer shows. A move can change the shown button of a layer, so the site engine refuses while a snapshot has Layout on. [`scope-and-recall.md`](scope-and-recall.md) reports that a recall leaves moved bank buttons where they were, so the refusal may be stricter than needed. No recall was fired on a file after a bank move.
+
+## Fader banks on a console swap
+
+A console swap writes a session for another console and keeps the settings of the old one (for example Quantum 326/338 to SD12). The site engine now carries the fader banks too: names, second lines, colours, strips and where each bank sits. It does so only for a target whose bank moves were proven (`Q2`, `Q3`, `SD5`, `SDC`). Any other target keeps its default layout, and the report says it was reset. Rules:
+
+- Same family: keep every bank, record, layer and button as the source has them, and the button each layer shows.
+- Another family: go bay by bay in order (the source's first bay to the target's first bay) and layer by layer. Keep a bank on the same button when the target has that button.
+- A bank that does not fit goes to the first free button of the same layer number in reading order, then to the first free button anywhere. With no free button left it stays in the bank list on no button.
+- Strips: an input keeps its internal index. An aux, group or matrix strip is matched by the number on the console, because the stored index is the bus's band byte. A strip whose channel the target lacks is emptied. A bank left with no strip at all does not come over.
+- For what only the target has (later matrix outputs and control groups), add the target's own default banks with only those strips, on no button.
+- A bay whose layer 1 ends with no bank gets a blank bank on its shown button, as the editor does on load.
+- Colours: the default colour of each kind of bank becomes the target's default ([`FORMAT.md`](FORMAT.md), set A or set B). The target's set is the one its own default session holds. The Quantum 5 and Quantum 7 defaults hold set B. On an SD target, any other colour becomes the nearest of the seven seen on SD banks.
+
+Proven in the V2242 editors on five swaps: Quantum 326/338 to SD5, Quantum 326/338 to SD12, SD12 (V1619) to Quantum 225, Quantum 225 to Quantum 326/338, and a Quantum 326/338 with a bank on all 36 buttons to SD12 (34 banks, 10 on no button). In each editor the Fader Banks screen showed every bank on its bay, layer and button with its name, second line and colour. The boot re-save kept the bank list and section 212 byte for byte.
+
+Not tested:
+
+- A swap inside one family. The rule keeps the banks, section 212 and its tail copy as the source has them. This was byte-checked on default sessions of each family. No such file was booted in an editor. The model READMEs list the pairs.
+- Strips. The runs compared bank names, second lines, colours and positions after the re-save, not the strips. The strip match comes from the site engine's own reading of the section 201 ids.
+
 ## Guards this folder does not have yet
 
 These stop a bad file in the web engine. The scripts here do not do them.
@@ -104,3 +145,6 @@ These stop a bad file in the web engine. The scripts here do not do them.
 7. FX: `WIDE_ENGINE` for TenTap, and the re-pack on add and remove.
 8. Sibling files: refuse an SD8 file for an SD10, or an SD10 file for an SD8.
 9. Device names: refuse a device type the target build's editor does not name.
+10. Bank bays: `busside.py` reads bays for `Q2` and `SDC` only, as 3 layers of 4 buttons. The site engine reads ten families, each with its own layers and buttons (model READMEs).
+11. Bank moves: no op moves a bank here. Follow the rules under "Fader banks". Keep the 211 tail copy equal and each layer's shown button on a bank.
+12. Bank carry: no console swap exists here. The rules are under "Fader banks on a console swap".

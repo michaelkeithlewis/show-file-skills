@@ -231,6 +231,7 @@ The bank record is in `FORMAT.md`. Added from one-change saves:
 - Fader kinds also include 12 multi. A bank's name does not bind its content.
 - After the strips, 50 bytes hold the category (u8 length, "Input Channels").
 - Section 212: two bytes, then one 99-byte record per surface section: seven layers of six bank buttons (u16 bank index, `ffff` none), then three flag bytes. The editor renumbers it when it inserts a bank. The page shows three layers of four buttons (SD12, Quantum 338) or five (SD5). On the SD12 blank, record 3 is the left banks and record 2 the right. A removed strip's fader becomes `00 00`.
+- Section 212 in full (the bay of each record per console, the bytes after the positions, what the editors do on load, bank colours): [`FORMAT.md`](FORMAT.md), "Fader bank placement".
 
 ## Macros (section 248)
 
