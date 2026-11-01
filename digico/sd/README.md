@@ -111,6 +111,16 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - The scripts in this folder read bays for the `SDC` family only and move no bank.
 - SD11, read 2026-10-31 in the SD11 V2242 editor on its default session. The file carries the SD9 family code, so the `SD9` row above lists the SD11 too. An SD11 file has 8 control groups (header 0x94) and 12 graphic EQs (header 0x97), which tell it from an SD9. The SD11 has one bay: section 212 record 2, 3 layers of 4 buttons. The Fader Banks screen (Master screen > Layout > Fader Banks) shows Ch 1-12, Ch 13-24 and Ch 25-32 on layer 1, Grp 1-6, Aux 1-6, Matrix 1-8 and CGs/Mast on layer 2, and nothing on layer 3. That is the placement in the file. The screen gives the bay no name; the site calls it Main. The map is read only: no bank move was written on an SD11, and no SD11i editor was run.
 
+### Snapshots (2026-10-31, editor-verified)
+
+SD12 at V1619 and V2242. The bytes and the proofs are in [`snapshots.md`](../references/snapshots.md) and [`engine-findings.md`](../references/engine-findings.md).
+
+- Settings of one snapshot (name, note, number, skip, lock, recall time and duration with their switches): a file written by bytes loaded, the Snapshots screen showed the values, and the re-save kept them.
+- Delete of one snapshot and Insert New: written by bytes, equal to the editor's own result, save times masked. The Insert New had no live change, so every state was shared.
+- Restructure with snapshots kept: 24 editor results (13 at V2242, 11 at V1619) for inputs, a stereo input, mono and stereo auxes and groups, and several kinds in one Restructure. Each equalled a section 210 rebuilt by bytes, save times masked. Loaded files re-saved equal, and every snapshot fired.
+- The SD12 editors keep the snapshot copies of strip `0901` on a Restructure. The Quantum 225 V2242 editor drops them.
+- The SD12 V1619 editor keeps the 794-byte trailer on a Restructure. The V2242 editor writes 795.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -122,6 +132,7 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - Snapshots ([`snapshots.md`](../references/snapshots.md)): proven on Quantum only, not tested on an SD file.
 - The docs do not list the 18 console and build pairs where FX units booted and re-saved.
 - Names over 8 characters: not written. Structural edits on a session with snapshots: refused.
+- Snapshot settings, Delete, Insert New and Restructure with snapshots on every SD console but the SD12, and on the SD12 at any build but V1619 and V2242: not run in an editor. SD12-96 files stay closed: a plain SD12 editor opens its own session for them.
 - SD7 pool: a contributor reading of the dialog gives one pool of 249 with buses to 122. The table above reads 255 for paths + matrix outputs + bus slots. Needs a reading that settles it.
 - Thresholds above 0 dBFS: a contributor reading says SD production sessions hold compressor thresholds up to +14.3. The repo says thresholds stop at 0 ([`filters-and-thresholds.md`](../references/filters-and-thresholds.md)). Needs a save that settles it.
 - Bank moves on the SD7, SD8, SD9, SD10 and SD11: not run in their editors. The SD5 CS and SD12-96 editors: not run either.
@@ -143,3 +154,5 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - 2026-10-31, a real SD9 show saved at V1619 (one snapshot group) and the SD12 V1619 sample above: section 210 read with the layout in `references/snapshots.md` and matched the Snapshots screens of the SD9 V2242 and SD12 V1619 editors (names, numbers, group, current snapshot and, on the SD9 show, the recall time and note). Two setlists written by bytes into an SD9 V2242 file showed in order. The lines above, `references/snapshots.md` and `references/scope-and-recall.md` say SD files are not tested. That no longer holds for the snapshot list, the trailer, section 115 and Global Scope. Those notes stand.
 - 2026-10-31, SD9 V2242 and SD12 V1619: section 0 is the session name. The editor shows it as Session on the master screen, as the session title in Session Structure and the Session Notes dialog, and as the Description in the Load and Save Session lists. A 64-character name written into section 0 alone showed in full in the SD12 V1619 editor and the re-save kept it. Ported to `references/FORMAT.md`. The `layout.py` and `inspect.py` docstrings and `set_notes` still call it notes.
 - 2026-10-31, SD11 V2242, default session: the Fader Banks screen was read. The SD11 has one bay, built from section 212 record 2, with 3 layers of 4 buttons. The banks on each layer are listed under Fader banks above. This reading settles the SD11 map for the default session. The line under What we don't know that calls the SD11 bay map unverified stands, and bank moves on an SD11 are still not run.
+- 2026-10-31, SD12 V1619 and V2242: settings of one snapshot loaded in the editor, the Snapshots screen showed the values, and the re-save kept them. A delete and an Insert New (no live change) written by bytes equalled the editor's own result, save times masked. Ported to `references/snapshots.md` and `references/engine-findings.md`.
+- 2026-10-31, SD12 V1619 and V2242: Restructure with clear snapshots off, 24 editor results (11 at V1619, 13 at V2242). Section 210 rebuilt by bytes equalled the editor's save byte for byte, save times masked. Loaded files re-saved equal and every snapshot fired. New auxes and groups started from the default strip. The lines above that say snapshots are not tested on an SD file no longer hold for the SD12 at V1619 and V2242 in these runs. Those notes stand. Ported to `references/snapshots.md`, `references/engine-findings.md` and `references/session-structure.md`.

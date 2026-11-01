@@ -68,6 +68,8 @@ A state leaves out a fixed set of params, which depends only on the module and t
 
 Every other module keeps every param. Among those left out are the safes, hard mute `(0c, 02)`, link pans `(0c, 0f)`, the EQ and dynamics order `(04, 81)` and the bus EQ view `(04, 7b)`.
 
+`7b` is also left out on strip type `07`, the right legs of stereo auxes and groups (2026-10-31, editor-verified). The editor's own states were read back against the table above. On the Quantum 225 at V2242, the table matched in 116 of 117 combinations of module and strip type. The one miss was `7b` on strip type `07`. With that rule added, the table matched in 117 of 117. On the SD12 at V1619 and V2242, the table matched in 88 of 88.
+
 ## Options
 
 The options follow the 992-byte block. Offsets count from the options' first byte as if the MIDI list were empty. When it is not, add its length to every offset from +0x008.
@@ -162,9 +164,13 @@ The trailer follows the last snapshot. It is 794 bytes starting `ec 00`, or 795 
 - In a show without snapshots, +2 and +10 are -1, but +6 often is not (73 of 75 shows). Check +6 only in a show with snapshots.
 - The rest of the trailer is open.
 
+The editor's own Delete and Insert New move +2, +6 and +10 differently from the bullets above that start "Insert New made" and "Delete set". The rules are under "Insert New, as the editor does it" and "Delete a snapshot, as the editor does it".
+
 ## Writing snapshots
 
 Nothing in this folder writes snapshots yet, and the tools refuse structural edits on a session with snapshots. Each recipe below was written by bytes and loaded on a Quantum 112.
+
+The sections marked editor-verified were compared with the editor's own result, or loaded in the editor. Each names its consoles and builds. Where an editor-verified section and an older recipe differ, follow the editor-verified section.
 
 ### Add a snapshot
 
@@ -190,6 +196,25 @@ Checked against a session saved before and after the console stored its first sn
 
 For each module of section 211, take its snapshot form (without the params a snapshot never keeps). Point the new snapshot at the current snapshot's state for that strip and module when the slots, the first 6 of the 10 bytes and the name are equal. Otherwise add a new state with the current snapshot's scope flags. Raise the counts. The new snapshot becomes current and selected.
 
+### Insert New, as the editor does it (2026-10-31, editor-verified)
+
+The editor's own Insert New was compared with the same change written by bytes. Every state, every snapshot and every other section was equal, apart from the save times and, between two snapshots, the 3 bytes in the last bullet below. Quantum 225 at V2242: after one live change (an input muted), with the new snapshot stored after the last one and between two others. SD12 at V1619 and V2242: with no live change, so every state was shared. The recipe above holds, with these changes:
+
+- The trailer's previous snapshot (+6) stays as it was. Only the current (+2) and the selected (+10) snapshot become the new one. The previous snapshot does not move with the snapshots after the new one: in the run between two snapshots it stayed 3, while the snapshot it had named moved to 4.
+- The new snapshot goes after the current one. With no current snapshot, it goes last.
+- The number (+0x33d) follows the neighbours. After the last snapshot, when its number is whole, the new number is the next whole number (3.00 gives 4.00). Between two numbers 1.00 apart, it is the half (1.00 and 2.00 give 1.50). Between two numbers 0.50 apart, it is 0.20 more (1.00 and 1.50 give 1.20). The editor's result for any other gap was not captured.
+- The id (+0x386) is one high byte above the highest id in the show, with low byte 0x10. The editor's own results ran 0x310, 0x410 and 0x510.
+- A new state goes at the end of the pool. Its history fields hold -1 and the position of the new snapshot ("Section 210" above). In every older state, a snapshot index in the second history field at or after that position goes up by 1.
+- Firing a snapshot in the editor changes 3 bytes of strip trailers, in section 211 and in the fired snapshot. A snapshot stored after the fire copies them from section 211. A store by bytes leaves those bytes as they are.
+
+Proof: the new snapshot loaded in the Quantum 225 V2242 editor and appeared in the list. Firing the first snapshot unmuted the input. Firing the new snapshot muted it again.
+
+Not captured, so write no Insert New in these cases:
+
+- The current snapshot's states carry scope flags or crossfade times. The flags of the new states are not known.
+- The gap between the neighbours is not 1.00 or 0.50, or the last number is not whole.
+- The session has setlists. The positions at or after the new snapshot go up by 1, as under "Add a snapshot", but no editor Insert New was driven on a session with setlists.
+
 ### Update a snapshot
 
 - Write the changed values into the snapshot's states. Keep its scope flags, crossfades, strip list and options.
@@ -207,9 +232,36 @@ For each module of section 211, take its snapshot form (without the params a sna
 
 Done this way, a delete matched the console's own delete byte for byte. There the states only the deleted snapshot used were the last in the pool. Removing a state from the middle would move every later index in every snapshot. Leaving it in place with count 0 gives a state like the 7847 that console files already hold.
 
+### Delete a snapshot, as the editor does it (2026-10-31, editor-verified)
+
+The editor's own delete (delete mode, mark the row, confirm, Save As) was compared with the same delete written by bytes. Every state, every snapshot and every other section was equal, apart from the save times. Quantum 225 at V2242: seven deletes in a row, among them the first row, a middle row, the last row, the current snapshot, a snapshot after the current one, and a snapshot that made a state in the middle of the pool. SD12 at V1619 and at V2242: one delete each. The steps above hold, with these changes:
+
+- The trailer's current snapshot follows its snapshot: it becomes -1 when the deleted snapshot was the current one, goes down by 1 when it came after the deleted one, and stays when it came before. The selected snapshot becomes the row above the deleted one (-1 for the first row). The previous snapshot (+6) is not touched. Step 3 above, which sets all three to -1, is not what the editor writes.
+- A state that only the deleted snapshot used leaves the pool wherever it sits. Every later pool index in every snapshot goes down by the number of removed states in front of it. Step 4 above names only the case where the removed states are the last in the pool.
+- Delete does not leave a freed state behind with count 0. Update Current leaves such states.
+- In the second history field of every state, a snapshot index after the deleted snapshot goes down by 1. A state that the deleted snapshot made, and that stays in the pool, gets -1 there.
+- Setlists (V2232 and V2242 files): the snapshot leaves every setlist, later positions go down by 1, and the current setlist becomes -1, as in the steps above. No editor delete was driven on a session with setlists.
+
+Not captured: the delete of the only snapshot. Use Clear all snapshots to empty the list.
+
 ### Notes, MIDI, lock and skip
 
 Written by bytes and loaded: notes (text with CRLF line ends), lock (misc bit 13), skip (+0x344) and a MIDI program change (program number minus 1, misc bit 0).
+
+### Settings of one snapshot (2026-10-31, editor-verified)
+
+One file per console and build, written by bytes, had every setting below changed on one snapshot: Quantum 225 at V2242, SD12 at V1619 and SD12 at V2242. The editor loaded each file as its startup session. The Snapshots screen showed the new name, number, lock, skip, duration and recall time. The editor's re-save read back every value. The re-save equals the editor's re-save of the unchanged session with the same settings written on it by bytes, save times masked. So the editor moved no other byte.
+
+- Name: u16 length and latin-1 text, after the strips. The longest name in 47 real shows is 29 characters.
+- Note: u16 length and text, after the options, with CRLF line ends. The longest note in 47 real shows is 237 characters.
+- Number: the i32 at +0x33d, number x 100. Keep the snapshots in number order: give a snapshot a number between the numbers of its neighbours.
+- Skip: the u8 at +0x344. 1 = skipped.
+- Lock: misc bit 13.
+- Recall time: the i32 at +0x347, in quarter frames at the session's frame rate, on with misc bit 7 (Recall at Time).
+- Duration: the i32 at +0x34b, in 1/100 s, on with misc bit 3.
+- The proof files had each value and its switch on. The Snapshots screen shows a recall time as "fire at timecode hh:mm:ss:ff" and a duration as hh:mm:ss:ff.
+
+A longer or shorter name or note changes the size of section 210. Rewrite the section table offsets to match: the last offset equals the file size ([`FORMAT.md`](FORMAT.md), "File structure"). Skip, lock, number, recall time and duration change bytes in place.
 
 ### Clear all snapshots (2026-10-31, editor-verified)
 
@@ -243,6 +295,24 @@ Not known:
 - The clear on V1455, V1528, V1742, V1926, V2126 and V2232: not captured.
 - The clear on any console other than the Quantum 225, SD9 and SD12 above: not captured.
 
+### Restructure with snapshots (2026-10-31, editor-verified)
+
+Files > Session Structure > Restructure, with clear snapshots off, keeps every snapshot and rebuilds section 210 with the console. Each change was made in the editor and saved with Save As. The same change written by bytes, with section 210 rebuilt by the rules below, equalled the editor's save in 36 results: Quantum 225 at V2242 (12), SD12 at V2242 (13) and SD12 at V1619 (11). The comparison masks the save times. On the Quantum 225, it also leaves out the two resets in rule 9. The sessions are builds from an editor default session with generic channel names, or a sample session, with 2 or 3 snapshots stored in the editor. The changes were: inputs added, removed and moved (moved on the Quantum 225 only), a stereo input added, mono and stereo auxes and groups added, mono auxes and groups removed, and several kinds in one Restructure.
+
+1. A removed strip loses its copy in every snapshot. The pool states that no copy uses any more go, and the rest are numbered again in order. A route to the removed strip inside a pool state becomes 0.
+2. On the Quantum 225 at V2242, the editor drops the snapshot copies of strip `0901` (kind 09, index 1) on every Restructure, whatever the change was. The SD12 editors at V1619 and V2242 keep them.
+3. A new strip gets one new set of pool states, and its new copy in every snapshot points at them. The set holds one state per module of the live strip, without the params a snapshot never keeps for that strip type. The reference count (+0x3a) is the number of snapshots, and +0x39 is 0. Every slot that holds a route to another strip is 0, among them a stereo bus's partner key `(05, 14)`. The width slots hold the mono value, also on a stereo input: `(08, e8)` on bands 0 and 1 and `(0e, e8)` are 1.0, and `(1d, 3f)` is 0.0. The copy goes into every snapshot in strip id order.
+4. The states for the new strips of one Restructure are written in this order: right legs (strip type `07`), auxes (`05`), groups (`06`), inputs (`01`), each by id. Inputs, an aux and a group in one Restructure make one rebuild at the end, so the order holds across kinds.
+5. A new aux or group adds its band to the per-bus runs in the pool states of every kept strip. The editor appends the band's slots at the end of the run, with the value the live strip holds. The runs include the aux sends of module `02` on inputs, groups, right legs and the talkback input (with `f2` left out), and the group assigns of module `03`. The send level `(02, 01)` is the exception: it is -150 (off), also where the live talkback input holds 0. A run per param (the group assigns of the talkback input) takes the new band on its first param only. Quantum 225 and SD12 at V2242.
+6. The runs of removed buses stay in the pool states. A bus added later that takes a freed band finds its slots there, and the editor leaves them as they are. SD12 at V2242: 1200 pool states came back identical, and the 2 new auxes got 9 states each.
+7. The Quantum 225 and SD12 editors at V2242 write the trailer one byte longer after a Restructure: 794 bytes (`ec 00`) become 795 (`ed 00`, a 0 byte inserted at offset 238). A file that the V2242 editor saved before already has 795. The SD12 V1619 editor keeps 794.
+8. Trailer +33 is a bit field, and the low byte of the u32 that Clear all snapshots sets to 0. The Restructure writes 4 when a stereo aux or group is added, and 1 when a stereo strip is added on a Quantum. A stereo input on a Quantum gives 1, a stereo bus on a Quantum gives 5, and a stereo bus on the SD12 gives 4. The byte stays 0 when the change only adds mono strips or removes strips, and for a stereo input on the SD12. Earlier captures held 0x10 for an LCR group and 5 for pre-mute sends, so the byte is not only a stereo flag. The values written here are proven. The meaning of the other bits is open.
+9. The editor resets two things that a file written by bytes keeps. On the Quantum 225, the strip view bytes in the banks (section 243, +0x15d) go back to the SD view. After an input is removed, the editor renumbers the Mustard channels (section 201 input records, +86) on load. Recalls fired in the editor showed that neither changes what a recall brings back.
+
+Proof, loaded: files made this way were the startup session of the SD12 at V1619 (2 files), the SD12 at V2242 (1 file) and the Quantum 225 at V2242 (2 files). Each re-save equalled the written file, save times masked. Proof, recalled: snapshots were fired one by one in the editor on files of the same kinds. Every recall fired, the Snapshots screen listed every snapshot, and the new strips showed on the surface. On the Quantum 225, the recall saves from the written file and from the editor's own result were equal in both recalls, apart from the strip view bytes.
+
+Not covered: a real Quantum 225 show saved at V1619, with 3 snapshots, custom banks and a custom aux order, in the Quantum 225 V1619 editor. The editor put a new mono aux second, and rebuilt the banks and sections 201, 211, 212 and 246 differently from the written file. The rules above were not shown for that case.
+
 ## For tools
 
 - Keep every reference count equal to the number of snapshot strips that point at the state.
@@ -252,6 +322,9 @@ Not known:
 - Leave the params of the table above out of every pool state.
 - Match strips by (index, type) and slots by (param, band), never by position.
 - Don't rely on the history fields, on unique ids, or on unique numbers.
+- A delete takes the states that only the deleted snapshot used out of the pool wherever they sit. Move every later pool index and every history index with them.
+- On a delete and on an Insert New, keep the trailer's previous snapshot as it is. Do not move it with the snapshots.
+- After a structure change on a session with snapshots, rebuild section 210 by the rules in "Restructure with snapshots".
 
 ## What we don't know
 
@@ -263,3 +336,7 @@ Not known:
 - How a fade typed in seconds becomes frames: 2.5 s was stored as 280, which is 70 frames at the session's 30 fps.
 - Whether the console needs the order of the pool states.
 - SD consoles: none of this is tested on an SD file.
+- Settings, Delete, Insert New and Restructure with snapshots: run on the Quantum 225 at V2242 and the SD12 at V1619 and V2242 only. The line above stands for every other SD console.
+- Delete, Insert New and renumber on a session with setlists, and the delete of the only snapshot: not driven in an editor.
+- Insert New after a snapshot whose states carry scope flags or crossfade times, and for number gaps other than 1.00 and 0.50.
+- Whether a delete moves the first history field of a state (the pool index it was copied from) when it removes states in front of that index. The deletes written by bytes left the field as it was and matched the editor. Whether any of them held such a state is not known.

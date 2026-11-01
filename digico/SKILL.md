@@ -66,3 +66,5 @@ Key by (module, param, band), never by offset: the channel stride changes with t
 
 `references/snapshots.md`: the snapshot pool, the snapshot record and its options, snapshot groups, setlists, and how
 to add, update and delete a snapshot by bytes.
+The same file has the settings of one snapshot, the editor's own Delete and Insert New, and what a Restructure does to
+section 210 (editor-verified on the Quantum 225 and the SD12).

@@ -143,6 +143,51 @@ The site engine can remove every snapshot, snapshot group and setlist from a ses
 - Change sections 210 and 115 and the Global Scope words of section 201, and nothing else. The live settings stay.
 - After the clear, snapshots stop blocking the edits that refuse while a session has them: adding, removing, moving and pairing channels, a console swap, and a bank move when a snapshot recalls Layout. Other limits still apply to those edits.
 
+## Editing one snapshot
+
+The site engine changes one snapshot of a session: its settings, a delete, and a store (the editor's Insert New). The bytes and the proofs are in [`snapshots.md`](snapshots.md): "Settings of one snapshot", "Delete a snapshot, as the editor does it" and "Insert New, as the editor does it". Its rules:
+
+- Run an operation only on a console and build where the editor loaded a file written this way and kept it, and where a delete and a store equalled the editor's own: Quantum 225 at V2242, SD12 at V1619 and SD12 at V2242. Refuse any other pair, and name these.
+- Judge the console by what the file was made for. An SD12-96 file and a Pulse file carry their own bit (header 0x25, bit 0x10), so they are not the plain console.
+- Refuse a session with no snapshots. Refuse one whose snapshot list cannot be read, or whose u32 after the pool is not 0.
+- Refuse a delete, a store and a renumber on a session with setlists. The positions move with them, and no editor run covered it.
+- Refuse a delete of the only snapshot. Clear all snapshots is the path that was compared ("Clearing snapshots").
+- Refuse a store when the current snapshot's states carry scope flags or crossfade times (the five bytes from +0x34 of a state). Refuse a store where the number gap was never captured: any gap but 1.00 and 0.50, and a last number that is not whole.
+- Refuse a renumber that leaves the number order. A snapshot takes a number between its neighbours.
+- Refuse a recall time when header 0x5f is not 1, 2 or 5, and a time with hours over 23, minutes or seconds over 59, or frames at or above the frame rate.
+- Cap a name at 31 characters and a note at 2000, in printable latin-1 (32 to 126 and 160 to 255), with line breaks in notes only. The caps are the site engine's own. The longest name in 47 real shows is 29 characters, and the longest note is 237.
+
+Not tested: the same operations on any other console and build, on Pulse and SD12-96 files, and on a session with setlists. Update Current and a MIDI program change were not part of these runs.
+
+## Restructure with snapshots
+
+The site engine adds, removes and moves strips on a session that has snapshots. The site engine rebuilds section 210 by the rules in [`snapshots.md`](snapshots.md), "Restructure with snapshots". A change that is not proven stays closed: clear the snapshots first ("Clearing snapshots") or make the change on the console. Its rules:
+
+- Run a change kind only on a console and build where the editor's own Restructure on a session with snapshots was captured and the rebuilt file equalled it:
+  - Quantum 225 at V2242: add inputs (mono and stereo), remove inputs, move inputs, add and remove mono auxes, add stereo auxes, add and remove mono groups, add stereo groups.
+  - SD12 at V2242 and at V1619: the same kinds, except move inputs.
+- Refuse every other kind, console and build with one sentence that names the proven pairs. The refused kinds include: make a channel stereo, pair or split channels, remove stereo inputs, remove stereo auxes, remove stereo groups, move inputs on the SD12, and FX units with a return channel. The editor makes a channel stereo by removing it and adding a stereo one, and both of those run.
+- Refuse an added aux or group on a session whose aux or group order is custom (mono and stereo mixed). Where the editor puts the new bus is not captured. A real Quantum 225 show saved at V1619 (3 snapshots, custom banks and aux order) gave a different result: the editor put a new mono aux second, where the site engine puts it after the last mono aux, and rebuilt the banks and sections 201, 211, 212 and 246 differently. The Quantum 225 at V1619 stays closed until a plain session with snapshots is captured there.
+- Refuse a session whose snapshots keep a channel pool or their own modules per strip, whose pool states lack send or assign runs that the live strips hold, or that holds no copy of a strip kind to learn the stored params from.
+- Rebuild section 210 once per Restructure, not once per step.
+
+Not tested: the refused kinds above, Pulse and SD12-96 files, and every console and build not named.
+
+## New buses start from the default strip
+
+A new aux or group is not a copy of another bus. The editor writes the default strip of the console for that kind and width, and the default values in the new band of every strip that has aux sends or group assigns. `buses.py` here copies the file's most common bus of the same width, and fills the new band from the most common values in the file.
+
+The editor writes `(02, 10)` = 60.0 and `(02, 02)` = 0 in the new aux band of every input, group and talkback strip. A session that the Session Maker built holds other values in its existing bands. The copied bus and the most common values then differed from the editor's in 42 objects. The differing slots were the two sends above in every input, group and talkback strip, and the key-route and view slots of the new aux. SD12 at V2242.
+
+The rules, matched against the editor on the SD12 at V1619 and V2242 and the Quantum 225 at V2242:
+
+- Read the default session of the same console and build. Take the new bus from its strip of the same kind and width. Take a right leg from a right leg.
+- For each slot of the new band in the other strips, take the value of the same (module, param) in the lowest band of the default session's strip of the same kind.
+- Give the new bus's own per-bus runs the same default values.
+- Without a default session for the console and build, copy the most common bus. The result can differ from the editor's.
+
+The Quantum 225 captures matched under both readings, because the buses of that session already held the default values.
+
 ## Session name
 
 The site engine renames a session by changing section 0 only ([`FORMAT.md`](FORMAT.md), "Session name"). It refuses a name over 64 characters, a name with a character outside printable latin-1 (32 to 126 and 160 to 255), a name equal to the old one, and a file whose section 0 does not start with `00 00`. A 64-character name is proven in two editors. Nothing longer was tested.
@@ -167,3 +212,8 @@ These stop a bad file in the web engine. The scripts here do not do them.
 14. Session name: `set_notes` writes up to 255 bytes, and only 64 characters are proven to show in full. Cap the name at 64 and change nothing but section 0.
 15. Name length: `ses.rename` takes any `max_len` up to 31 for any console and build. Allow more than 8 characters only on the Quantum 112 and Quantum 225 at V2242, the two pairs whose editors loaded names of 31 characters on 2026-10-31 ([`quantum/README.md`](../quantum/README.md)).
 16. Preset library: `fx.library()` finds the next entry by pattern and takes one strip and no note per entry. Walk the layout in [`FORMAT.md`](FORMAT.md) ("FX units, sends, buses and patch") and require the last entry to end where section 219 ends. A unit stores its preset's index in that list, so a missed strip moves every later preset.
+17. Snapshot settings: no op writes a snapshot's name, note, number, skip, lock, recall time or duration. Follow "Settings of one snapshot" in [`snapshots.md`](snapshots.md) and the refusals under "Editing one snapshot".
+18. Delete and Insert New: no op deletes or stores a snapshot. Follow "Delete a snapshot, as the editor does it" and "Insert New, as the editor does it" in [`snapshots.md`](snapshots.md), not the first steps of those recipes. Refuse on setlists, on the only snapshot, on scope flags or crossfade times in the current snapshot, and on a number gap that no capture covers.
+19. Never-kept params: leave `7b` out of the states of strip type `07` too ([`snapshots.md`](snapshots.md), "Params a snapshot never keeps").
+20. Restructure with snapshots: `buses.restructure` and `edit.py` refuse a session with snapshots, and the scripts here do not rebuild section 210 after a structure change. Lift the refusal only for the kinds and pairs under "Restructure with snapshots", and rebuild section 210 by the rules in [`snapshots.md`](snapshots.md).
+21. New buses: `buses.restructure` copies the file's most common bus and its most common send values. Take the new bus and the values of its new band from the default session of the same console and build ("New buses start from the default strip").
