@@ -68,3 +68,10 @@ Key by (module, param, band), never by offset: the channel stride changes with t
 to add, update and delete a snapshot by bytes.
 The same file has the settings of one snapshot, the editor's own Delete and Insert New, and what a Restructure does to
 section 210 (editor-verified on the Quantum 225 and the SD12).
+
+`references/session-structure.md`: header, sections, objects, strip kinds, ports, and the 48kHz and 96kHz keys (header
+0x77 and 0x87, the I/O device table and the Copy Audio prompt).
+`references/io-patch.md`: racks (add, swap, remove), the input patch with gain, 48V and pad, the output patch, and what a
+recall does to a patch change.
+`references/bus-processing.md`: the EQ, compressor, gate, delay, trim and insert switch of aux, group and matrix output
+strips, with the editor's clamps.

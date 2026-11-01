@@ -6,6 +6,7 @@ Each fact says how it was proven:
 
 - "One-change save": one control changed in an editor or on a console, and only the named bytes moved.
 - "Editor load": an editor opened or refused a written file.
+- "Editor capture": the editor's own Files > Session Structure with one key pressed, then Restructure and Save As. The file is compared with the same editor's plain Restructure of the same file, so a difference belongs to the key.
 - "Every session read": the value fits one reading across every session read, but was never moved on its own.
 - "Session Structure dialog": read off the editor's Session Structure page.
 - "Unconfirmed": a reading that fits, not tested.
@@ -37,6 +38,7 @@ The header is 456 bytes (0x1c8). The section offsets (0x100) and the section ids
 
 - The header holds no snapshot count (one-change saves).
 - Engine mode at 0x87: 1 = 48 kHz with 128 buses, 4 = 96 kHz with 64, 8 = 96 kHz with 96, 5 = 96 kHz with 128. The SD5 offers all four. SD12, SD9, SD5 CS and Quantum offer 1 and 4 only. Proven in the Session Structure dialog with a save for each mode.
+- The 48kHz and 96kHz keys write 0x77 and 0x87 together and also change section 246. See "Sample rate keys" below.
 - Early notes read 0x96 as the control group count, because every production session has as many control groups as matrix inputs. An SD7 restructure to 32 matrix inputs moved 0x96 alone, and on eight factory sessions 0x94 is the control groups. This agrees with [`engine-findings.md`](engine-findings.md).
 - The u16 at 0x24 reads 0x0008 or 0x1008. Its high byte is header 0x25, whose bit 0x10 is the extension bit in [`engine-findings.md`](engine-findings.md).
 
@@ -66,6 +68,12 @@ Order seen: `00 db f6 fc c9 d2 (73) d3 f3 d4 e4 d9 e8 ea ec ed dd cf f8 f9 fa eb
 | `d3` (211) | the current mix: every strip, port, FX unit and graphic EQ | one-change saves |
 | `d4` (212) | surface sections: banks on the layer buttons (below) | one-change saves |
 | `f8` (248) | macros (below) | one-change saves |
+| `e5` (229) | Copy Audio presets. A session with none holds 12 bytes here ("Sample rate keys") | editor capture |
+| `f6` (246) | the I/O device table: a 4-byte header, then 50 records of 210 bytes ("Ports, sockets and patch", "Sample rate keys") | editor captures, editor loads |
+| `f7` (247) | Session Notes text, one u16-length string | one-change save |
+
+- Section 0 holds two u16-length strings. The first is empty in every show read, so the section starts `00 00`. The second is the session name. One-change save: the "session title" box of Session Structure changed only the second string.
+- [`FORMAT.md`](FORMAT.md), "Session name", says the editor's place for the Session Notes text is not known. The place is section 247. One-change save: one line typed into Files > Session Notes added the section, between `cf` and `f8`. The captures saved with empty notes have none.
 
 Most of the file size is the library and the snapshots. The current mix is 0.4 to 1.3 MB.
 
@@ -141,6 +149,76 @@ Proven by restructures in the editors, saved and compared:
 - Global Scope (2026-10-31): a Restructure alone keeps every section's Global Scope. With clear snapshots switched on, the Restructure also empties sections 210 and 115 and puts every section's Global Scope back to its type default ([`snapshots.md`](snapshots.md), "Clear all snapshots"; [`scope-and-recall.md`](scope-and-recall.md), "Global Scope defaults and the clear"). The session was saved after a Restructure alone and after clear snapshots plus a Restructure, in five editors, and the two saves were compared.
 - Snapshots (2026-10-31): a Restructure with clear snapshots off keeps every snapshot and rebuilds section 210. Removed strips lose their copies, a new strip gets one shared set of pool states, and a new aux or group adds its band to the runs of every kept state. The rules and proofs are in [`snapshots.md`](snapshots.md), "Restructure with snapshots". Quantum 225 at V2242, SD12 at V1619 and V2242.
 - New auxes and groups (2026-10-31): the editor does not copy the last bus of the kind. The editor writes the default strip of the console, and the default value in the new band of every strip that has aux sends or group assigns. Copying the last bus and writing the default strip give the same bytes on a session whose buses still hold the defaults. They differ when the buses were edited. Matched on the SD12 at V1619 and V2242 and the Quantum 225 at V2242: [`engine-findings.md`](engine-findings.md), "New buses start from the default strip".
+
+## Sample rate keys
+
+Files > Session Structure has a 48kHz key and a 96kHz key. The key takes effect on Restructure.
+
+Editor captures, 2026-11-01. In each capture only a rate key was pressed, then Restructure and Save As. The file was compared with the same editor's plain Restructure of the same file. The test sessions have generic channel names.
+
+| Console, build | Snapshots | Hops captured | What changed |
+| --- | --- | --- | --- |
+| Quantum 225 V2242 | none | up, down, up, down | Header 0x77 and 0x87, and 2 bytes of section 246. Nothing else |
+| Quantum 225 V2242 | 2, with 2 FX units | up, down, up | The same. Section 210 and the FX units stay as they were |
+| SD12 V2242 | none | up, down | Header, 3 records of section 246, and 48 socket objects (sections 201 and 211). Down brings the sockets back |
+| SD12 V2242 | 3 | up | The same, and section 210 loses the 48 sockets from the pool and the copies |
+| SD12 V1619 | none | up | As the SD12 V2242 |
+
+Up is 48 to 96 kHz. Down is 96 to 48 kHz.
+
+Byte rules:
+
+1. Header 0x77 is the float32 SampleFrequency: 48000.0 or 96000.0. Only the float's third byte (0x79) differs: 0x3b at 48 kHz and 0xbb at 96 kHz.
+2. Header 0x87 is the BussingMode byte: 1 at 48 kHz and 4 at 96 kHz. Seen on the Quantum 225 V2242 and on the SD12 at V2242 and V1619.
+3. Section 246 is the I/O device table. The editor re-reads what each device can do at the new rate.
+4. Quantum 225 V2242: byte +4 of two records changes. Record 1 has device type 0x0b (MQ-Rack). Record 2 has device type 0x19 (Std MADI). Both sit on MADI links.
+   - Up: 0x40 to 0x20 on record 1, and 0x40 to 0xa0 on record 2.
+   - Down: 0x20 to 0x00 on record 1, and 0xa0 to 0x80 on record 2.
+   - Up again: 0x00 to 0x20, and 0x80 to 0xa0. Down again: the same as the first down.
+   - Bit 0x40 goes. Bit 0x20 comes at 96 kHz and goes at 48 kHz. Record 2 also gets bit 0x80 and keeps it.
+5. The +4 byte is a bit field with a history. The rate alone does not set it. Console-saved shows hold 0, 1, 3, 0x10, 0x40, 0x80, 0xa0 and 0xa1 there at both rates.
+6. SD12 at 96 kHz, V2242 and V1619:
+   - Record 2 (device type 0x21, MADI 64, on the second MADI port) goes from id 2, link class 2, link index 1 to 0, 0, 0. The port is unlinked.
+   - Record 3 (the USB device, type 0x27) loses the card codes of slots 3 to 5 and 11 to 13.
+   - The USB device loses its sockets 25 to 48, input and output. Section 211 loses 24 objects of type 0x1f and 24 of type 0x51. Section 201 goes from 48 to 24 records in each of the two socket groups.
+   - Record 1 (the D2 rack) byte +4 goes from 0x00 to 0x20.
+7. SD12 at 48 kHz: the 48 sockets come back identical, and record 3 is restored. Record 2 stays unlinked. Record 1 byte +4 goes from 0x20 to 0x00.
+8. SD12 with snapshots: section 210 loses the pool states and the snapshot copies of the 48 sockets. The pool went from 1218 to 1170 states on the session with 3 snapshots.
+9. The SD5 and SD7 bus limit follows the rate key, and the SD7 has four keys ([`../sd/README.md`](../sd/README.md)). The bytes of those keys were not captured.
+
+Copy Audio:
+
+- Section 229 holds the Copy Audio presets. A session with none holds 12 bytes there.
+- When presets exist and the rate changes between 48 kHz and 96 kHz, Restructure asks "Changing Sample Rate will clear all Copied Audio. Continue?" (Yes, No). Restructure asks no other question, except for DEFAULT ALL.
+- After Yes, the saved section 229 equals the original byte for byte. The presets stay in the file.
+- Editor capture on a real Quantum 225 V1619 show whose section 229 held 5958 bytes.
+
+FX units do not change the bytes of the keys and do not ask anything. The Quantum 225 base had two.
+
+Rules the site engine follows. The site engine is the web engine at [I Don't Own a PC](https://idontownapc.com):
+
+- Write header 0x77, header 0x87 and the section 246 records in one change. Change nothing else.
+- Run only for a console, build, direction and snapshot state that an editor capture covers and a written file has proven. Today that is the Quantum 225 V2242, both directions, with and without snapshots.
+- Keep the exact old and new record for each console, build and direction. Refuse a session that has a section 246 record outside that table.
+- Refuse a session with Copy Audio presets (a section 229 longer than 12 bytes).
+- Accept 48000 or 96000 exactly, on a session now at one of them. Refuse everything else.
+- Refuse the SD12 until the socket removal is written and loaded. Refuse the SD5 and SD7.
+- A refusal leaves the whole Restructure as it was, counts included.
+
+Written files, Quantum 225 V2242:
+
+- A file made by the rules above equalled the editor's save for every captured hop. The header and section 246 matched byte for byte. Save times were masked.
+- The editor opened each written file, showed the new rate on the master screen and re-saved the file with that rate.
+- One file combined 96 kHz, 2 added inputs and 1 added aux on the session with 2 snapshots and 2 FX units. The re-save equalled the file.
+- Where a re-save differed, the same editor made the same change when it re-saved the control file with no rate key. The changes were a few objects of section 211, the Mustard path number and one byte of section 210.
+
+Not proven:
+
+- The SD12 rate change. The editor's change is captured only. Nothing writes it, and no file with it was loaded.
+- The SD12 down hop at V1619, and with snapshots at V2242: not captured.
+- The keys on the Quantum 225 at V1619, the Quantum 225 Pulse and every other console and build: not captured there.
+- A device record in a state that no capture covers. The +4 byte has a history.
+- What the Yes in the Copy Audio prompt does while a console runs. The file keeps section 229.
 
 ## Ports, sockets and patch
 
@@ -268,7 +346,7 @@ Proven by editor loads:
 
 Readings that disagree with a one-change save in this repo. The repo's fact stands until a save settles each one.
 
-- Section 246 device records: a contributor reading says a 148-byte head comes first, record N-1 is port N, type `04` is the SD MiniRack class and `0b` the Quantum 112 rack. `FORMAT.md` says `f6 00 | u16 10500` and then the records, record k owns sockets 1c + k (so record 0 is Local I/O), `04` is the D-Rack and `0b` the MQ-Rack. Needs a save that settles it: add one known rack to a port and compare.
+- Section 246 device records: a contributor reading says a 148-byte head comes first, record N-1 is port N, type `04` is the SD MiniRack class and `0b` the Quantum 112 rack. `FORMAT.md` says `f6 00 | u16 10500` and then the records, record k owns sockets 1c + k (so record 0 is Local I/O), `04` is the D-Rack and `0b` the MQ-Rack. Needs a save that settles it: add one known rack to a port and compare. The rack runs of 2026-11-01 wrote racks with the `FORMAT.md` layout (record k is port k, and k owns the socket groups `1c + k` and `4e + k`), and the editors kept every record and socket group ([`io-patch.md`](io-patch.md)). Those runs did not use device type `04`.
 - Thresholds above 0 dBFS: a contributor reading says production sessions hold compressor thresholds up to +14.3. The repo says DiGiCo thresholds stop at 0 ([`filters-and-thresholds.md`](filters-and-thresholds.md)), and the SD12 editor's knob stops at 0.0. Needs a save that settles it: load such a session in its own editor and read the knob.
 - Multiband bands: a contributor reading puts the mid and the high band on dynamics bands 1 and 2. `FORMAT.md` says the UI low, mid and high bands are band bytes 0, 2 and 1 (console-confirmed). Needs a save that moves only the high band.
 - Model markers: a contributor reading says the header code plus counts within the limits are enough to load, with no hidden marker. The repo found that header 0x25 bit 0x10 alone made a plain SD12 refuse an SD12-96 file inside the plain counts, and that SD8 and SD10 files differ by their bus layout ([`../sd/README.md`](../sd/README.md)). The repo's findings stand.

@@ -121,6 +121,32 @@ SD12 at V1619 and V2242. The bytes and the proofs are in [`snapshots.md`](../ref
 - The SD12 editors keep the snapshot copies of strip `0901` on a Restructure. The Quantum 225 V2242 editor drops them.
 - The SD12 V1619 editor keeps the 794-byte trailer on a Restructure. The V2242 editor writes 795.
 
+### Sample rate keys (2026-11-01, editor capture)
+
+SD12 at V2242 and V1619. The bytes are in [`session-structure.md`](../references/session-structure.md), "Sample rate keys".
+
+- Header 0x77 and 0x87 change as on the Quantum 225: 1 at 48 kHz and 4 at 96 kHz.
+- At 96 kHz the editor also changes section 246. The mode byte (+4) of the D2 rack record goes from 0x00 to 0x20. The second MADI port is unlinked. The USB device loses the card codes of 6 slots.
+- At 96 kHz the sockets 25 to 48 of the USB device, input and output, leave the session. With snapshots they leave section 210 too: 1218 to 1170 pool states on the session with 3 snapshots at V2242.
+- At 48 kHz the 48 sockets come back identical. The second MADI port stays unlinked.
+- Hops captured: V2242 up and down without snapshots, V2242 up with 3 snapshots, and V1619 up without snapshots.
+
+### I/O patch (2026-11-01, editor load)
+
+SD12 at V2242 and V1619, and SD9 at V2242. The rules are in [`io-patch.md`](../references/io-patch.md).
+
+- MADI 64 swapped for an SD Rack on the SD12 at V2242 and V1619, with channels 1 to 8 on the rack, gain, 48V and pad on its sockets, and aux outputs on its outputs. The editor kept every route. The V2242 re-save equals a plain boot. The V1619 re-save differs only in sections 219 and 243 and two FX name flags, as the unchanged sample does.
+- SD9 at V2242: Standard MADI swapped for a D2-Rack, an earlier editor run. The run proves the rack change only.
+- The SD12 keeps MADI links 0 to 1 and the SD9 keeps links 0 to 2. A rack added past them keeps its sockets and is marked not connected. So the site engine swaps a rack on these consoles and does not add one.
+
+### Bus processing (2026-11-01, editor load)
+
+SD12 at V2242 (editor default) and V1619 (sample session). The keys and rules are in [`bus-processing.md`](../references/bus-processing.md).
+
+- Aux, group, Master and matrix output strips: EQ, compressor, gate, delay and trim. The editor kept 60 of 60 pairs of change kind and bus kind at both builds. The 60 pairs cover 490 slots, with no stray slot.
+- An SD12 bus holds 4 EQ bands. A low shelf sits on band 1 and a high shelf on band 4. The editor turns a shelf on band 2 or 3 into a bell.
+- Live edits on sessions with 3 snapshots were kept at both builds, and section 210 stayed as it was.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -141,6 +167,11 @@ SD12 at V1619 and V2242. The bytes and the proofs are in [`snapshots.md`](../ref
 - Bank colours in the SD editors: seven colours are seen on SD banks ([`FORMAT.md`](../references/FORMAT.md)). The SD5 and SD12 editors drew the set A colours and an orange and a green as grey buttons. The full palette is not known.
 - The clear snapshots + Restructure on the SD9 at any build but V2242, on the SD12 at any build but V1619, and on the SD5, SD7, SD8, SD10 and SD11: not captured. The cleared SD12 V1619 file was not loaded. SD12-96 files: not load-proven, because a plain SD12 editor opens its own session for them.
 - Names over 8 characters on every SD family: no SD editor was booted with long names (2026-10-31), so the site engine keeps SD names at 8. Real console-saved sessions hold names of up to 16 characters on the SD9 and SD8 and up to 15 on the SD12. That is a reading of the files, not an editor load.
+- The SD12 rate change is not proven. The editor's change is captured only: nothing writes it, and no file with it was loaded. Not captured: the SD12 down hop at V1619 and with snapshots at V2242, the SD5 and SD7 keys (their bus limit follows the key), and every other SD model and build.
+- Racks: adding a rack on the SD12 or the SD9 is not proven. The MADI links are in use, so the editor marks the new rack not connected. Adding a D2-Rack is not proven either.
+- Output patch of a group, matrix or Master output on a rack socket: not proven. Only aux outputs are proven.
+- Any I/O patch change on a session with snapshots: not proven. The recall experiment ran on a Quantum 225 only.
+- Bus processing is not proven for insert in on the SD12 (the only insert in proof is a Quantum 225 show), for bands 5 to 8 on any SD console (the SD12 has none), and for the shelf rule on any SD console but the SD12.
 
 ## Session notes
 
@@ -156,3 +187,4 @@ SD12 at V1619 and V2242. The bytes and the proofs are in [`snapshots.md`](../ref
 - 2026-10-31, SD11 V2242, default session: the Fader Banks screen was read. The SD11 has one bay, built from section 212 record 2, with 3 layers of 4 buttons. The banks on each layer are listed under Fader banks above. This reading settles the SD11 map for the default session. The line under What we don't know that calls the SD11 bay map unverified stands, and bank moves on an SD11 are still not run.
 - 2026-10-31, SD12 V1619 and V2242: settings of one snapshot loaded in the editor, the Snapshots screen showed the values, and the re-save kept them. A delete and an Insert New (no live change) written by bytes equalled the editor's own result, save times masked. Ported to `references/snapshots.md` and `references/engine-findings.md`.
 - 2026-10-31, SD12 V1619 and V2242: Restructure with clear snapshots off, 24 editor results (11 at V1619, 13 at V2242). Section 210 rebuilt by bytes equalled the editor's save byte for byte, save times masked. Loaded files re-saved equal and every snapshot fired. New auxes and groups started from the default strip. The lines above that say snapshots are not tested on an SD file no longer hold for the SD12 at V1619 and V2242 in these runs. Those notes stand. Ported to `references/snapshots.md`, `references/engine-findings.md` and `references/session-structure.md`.
+- 2026-11-01, SD12 V2242 and V1619: the editor's own 48kHz and 96kHz keys were captured (V2242 up and down, V2242 up with 3 snapshots, V1619 up). The rack swap, the input and aux output patch and bus processing were written by bytes, loaded and re-saved. Ported to `references/session-structure.md`, `references/io-patch.md`, `references/bus-processing.md` and `references/engine-findings.md`.

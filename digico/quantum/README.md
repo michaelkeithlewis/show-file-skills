@@ -96,6 +96,32 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - Colours: the Quantum 112, 225, 326/338 and 852 defaults hold colour set A. The Quantum 5 and Quantum 7 defaults hold set B ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement"). How the Quantum 5 and Quantum 7 editors draw them was not checked.
 - The scripts in this folder read bays for the `Q2` family only and move no bank.
 
+### Sample rate keys (2026-11-01, editor capture)
+
+Quantum 225 at V2242. The bytes are in [`session-structure.md`](../references/session-structure.md), "Sample rate keys".
+
+- The 48kHz and 96kHz keys change header 0x77, header 0x87 and the mode byte (+4) of two records of section 246: the MQ-Rack record and the Standard MADI record. Nothing else changes, with or without snapshots. The session with snapshots held 2 snapshots and 2 FX units.
+- Hops captured: up, down, up, down without snapshots, and up, down, up with snapshots.
+- Files written with the same changes loaded in the Quantum 225 V2242 editor. The editor showed the new rate on the master screen and re-saved each file with that rate.
+- Quantum 225 at V1619: a real show with Copy Audio presets showed the prompt "Changing Sample Rate will clear all Copied Audio. Continue?" after the 96kHz key and Restructure. After Yes, section 229 was unchanged.
+
+### I/O patch (2026-11-01, editor load)
+
+Quantum 225 at V2242 and V1619. The rules are in [`io-patch.md`](../references/io-patch.md).
+
+- Editor load of an added SD Rack (V2242 and V1619), an added MQ-Rack (V2242) and a removed rack (V2242): the editor kept every rack record, socket group and route. The V1619 re-save differed only in section 219 stamps and section 243 heap words.
+- The same files held channels 1 to 8 on the new rack, gain, 48V and pad on its sockets, and aux outputs on its outputs. The editor kept them.
+- Quantum 225 V2242 with 3 snapshots: after a live patch change, firing a snapshot brought back the snapshot's input source and aux output. Gain, 48V and pad stayed.
+
+### Bus processing (2026-11-01, editor load)
+
+Quantum 225 at V2242 (sample session) and V1619 (editor default). The keys and rules are in [`bus-processing.md`](../references/bus-processing.md).
+
+- Aux, group, Master and matrix output strips: EQ, compressor, gate, delay and trim. The editor kept 63 of 63 pairs of change kind and bus kind at both builds. The 63 pairs cover 658 slots, with no stray slot.
+- A Quantum bus holds 8 EQ bands. Bands 5 to 8 take gain, frequency and Q only. A shelf on bands 2 and 3 stays.
+- Insert in: 23 switches on groups and matrix outputs of a real V1619 show with 3 snapshots. The editor kept each one after it moved to the other state.
+- Live edits on a session with 3 snapshots were kept at V2242, and section 210 stayed as it was.
+
 ## What we don't know
 
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
@@ -118,6 +144,11 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - Names over 8 characters on the Quantum 225 Pulse, on every build of the Quantum 112 and Quantum 225 below V2242 (the real V1619 shows hold names of up to 12 characters), and on the Quantum 326/338, Quantum 5, Quantum 7 and Quantum 852: no editor was booted with long names there, so the site engine keeps them at 8. What a console strip shows for a name longer than the editor's name box is not known.
 - Levelling Amp mode (1d, 50) and side-chain emphasis (1d, 53): not written in the 2026-10-31 editor runs, so still unconfirmed.
 - A real Quantum 326/338 V2025 show with 1,889 preset library entries and 7 notes did not load in the Quantum 326/338 V2242 editor used for the 2026-10-31 runs, the unchanged show included. The cause is not known. A library entry with a note is proven on a written entry only ([`FORMAT.md`](../references/FORMAT.md), "Preset library").
+- Rate keys are not proven on the Quantum 225 at V1619 (no plain session was captured), on the Quantum 225 Pulse, and on every other Quantum model and build. A device record in a state that no capture covers is not proven either: its +4 byte has a history, so the site engine refuses the record.
+- Racks: adding a rack on the Quantum 326/338 is not proven, so the site engine closes it. The older proof predates the change that clears the routes of the new sockets, and a file from the current writer was never booted. Adding a D2-Rack is not proven either. The Quantum 225 has three MADI links, so the site engine refuses a second added rack.
+- Output patch of a group, matrix or Master output on a rack socket: not proven. Only aux outputs are proven.
+- Any I/O patch change on a session with snapshots: not proven, because a recall undoes the routes. The recall experiment ran on the Quantum 225 V2242 only.
+- Bus processing: insert in on an aux, and insert in on any V2242 file, are not proven. No other Quantum model or build was run.
 
 ## Session notes
 
@@ -136,3 +167,4 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - 2026-10-31, Quantum 225 V2242: settings of one snapshot, seven deletes in a row and Insert New (after a live change, after the last snapshot and between two) were written by bytes and compared with the editor's own result. Every state, snapshot and section was equal, save times masked, except 3 bytes that the editor's fire wrote in the between-two case. The editor's states also leave out `7b` on strip type `07`. Ported to `references/snapshots.md` and `references/engine-findings.md`.
 - 2026-10-31, Quantum 225 V2242: Restructure with clear snapshots off, 12 editor results (inputs added, removed and moved, a stereo input, mono and stereo auxes and groups). Section 210 rebuilt by bytes equalled the editor's save, apart from two resets the editor makes: the strip view bytes and the Mustard channel numbers. New auxes and groups started from the default strip, not from a copy of the last bus. Ported to `references/snapshots.md`, `references/engine-findings.md` and `references/session-structure.md`.
 - 2026-10-31, Quantum 225 V1619, a real show with 3 snapshots, custom banks and a custom aux order: the editor's Restructure did not equal the rebuilt file outside section 210. A new mono aux sat second, and the banks and sections 201, 211, 212 and 246 were rebuilt differently. The pair stays closed. Ported to `references/engine-findings.md`.
+- 2026-11-01, Quantum 225 V2242 and V1619: the 48kHz and 96kHz keys (V2242, captured), rack add and remove, the input and aux output patch, and bus processing were written by bytes, loaded and re-saved in the editors. A real V1619 show with Copy Audio presets showed the Copy Audio prompt. A recall fired after a live patch change brought back the snapshot's input source and aux output (V2242). Ported to `references/session-structure.md`, `references/io-patch.md`, `references/bus-processing.md` and `references/engine-findings.md`.
