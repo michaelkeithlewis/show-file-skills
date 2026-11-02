@@ -183,3 +183,9 @@ Facts that used to sit in code comments, by script. The scripts in this repo car
 ## scripts/verify_routing.py
 
 - -60 dB is the line. A bus with nothing assigned to it reads -240 dB (true digital silence); -78 dB is plug-in noise floor bleeding through an otherwise empty bus, not audio. The main bus reads near 0 dB when it has the mix.
+
+## scripts/click_tempo.py
+
+- accents: brightness of each click (zero-crossing rate); accented clicks are the bright cluster
+- no audible accent: beats_per_bar is null and the meter is the engineer's call
+- PT tempo is in quarter notes: an eighth-note click in x/8 runs at half the quarter BPM

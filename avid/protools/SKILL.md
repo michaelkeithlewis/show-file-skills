@@ -85,8 +85,13 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
    print `ROUTED`. Script-created tracks output to the main bus, not their folder.
    Fallbacks: `references/gui-routing.md`, then `route_groups.py`;
    `verify_routing.py` proves routing by bouncing each bus.
-6. Color by group, detect tempo (`prep_session.py grid` with a dense percussive
-   source; read the candidate table), place section markers (`ptprep.py markers
+6. Color by group, then read the tempo. If the drop has a click stem, use
+   `click_tempo.py <click.wav> [--trim-to-bar N]`. It reads the click rate and the
+   accented downbeat, and from those the meter, the quarter-note tempo for `set_tempo.py`,
+   and the first downbeat. When you cut stems out of a long capture, cut them at
+   `cut_at_sample` so that bar 1 is 0:00. Only when there is no click, detect the tempo
+   from onsets (`prep_session.py grid` with a dense percussive source; read the
+   candidate table). Then place section markers (`ptprep.py markers
    --lyrics`, `--structure`, or `stemqc.py arrangement` for instrumentals). Dry-run
    first. Then set the tempo with `$PY scripts/set_tempo.py <BPM>`: it types the BPM
    into the Tempo ruler's Tempo Change dialog at bar 1 through Accessibility and reads
