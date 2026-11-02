@@ -106,16 +106,16 @@ Proven on real sessions:
   foldering with EDL verification, color, markers) on a 2026 build, including a
   64-stem drop with no input from the engineer.
 - `route_folders.py`: 51 of 51 tracks routed on a test session.
-- `set_tempo.py`, `clipgain_normalize.py`, `pan_to_mono.py`, `premix.py` (all verbs),
+- `set_tempo.py`, `set_meter.py`, `clipgain_normalize.py`, `pan_to_mono.py`, `premix.py` (all verbs),
   `merge_pairs.py`, `resample_session.py`, the Metric AB reference flow and the
   template-update helpers, on real sessions on a 2026 build.
 - `stemid.py`: 45 of 51 folders and 25 of 25 L/R pairs on a 76-file test drop.
 - Offline bounces with `export_mix`.
 
 Known limits (PTSL has no command for these):
-- Meter, pan, faders, plug-in insert or bypass, track order, move into
-  folder, combine two monos to stereo. Tempo, pan and faders have no PTSL command
-  either, but `set_tempo.py`, `pan_to_mono.py` and `premix.py apply` set them through
+- Meter, tempo, pan, faders, plug-in insert or bypass, track order, move into
+  folder, combine two monos to stereo. For meter, tempo, pan and faders,
+  `set_meter.py`, `set_tempo.py`, `pan_to_mono.py` and `premix.py apply` set them through
   Accessibility. Spotting clips by id combines two monos into one stereo track.
 - The original output-ID lookup needed the Private API (an Avid-issued key), so
   the existing scripts use Accessibility. Newer 2026.4.1 tests reused an assigned

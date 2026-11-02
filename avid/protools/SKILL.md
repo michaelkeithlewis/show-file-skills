@@ -93,13 +93,17 @@ Full playbook: `references/session-prep.md`. Read it before a prep. In short:
    from onsets (`prep_session.py grid` with a dense percussive source; read the
    candidate table). Then place section markers (`ptprep.py markers
    --lyrics`, `--structure`, or `stemqc.py arrangement` for instrumentals). Dry-run
-   first. Then set the tempo with `$PY scripts/set_tempo.py <BPM>`: it types the BPM
-   into the Tempo ruler's Tempo Change dialog at bar 1 through Accessibility and reads
-   it back. Absolute markers and sample-based audio do not move.
+   first. If the meter is not 4/4, set it first with `$PY scripts/set_meter.py 6/8`: it
+   types the meter into the Meter ruler's Meter Change dialog at bar 1 through
+   Accessibility and reads it back from the ruler. Then set the tempo with
+   `$PY scripts/set_tempo.py <BPM>` (quarter-note BPM in any meter): it types the BPM
+   into the Tempo ruler's Tempo Change dialog at bar 1 and reads it back. Absolute
+   markers and sample-based audio do not move. Save right away: the premix closes and
+   reopens the session without saving.
    Then `clipgain_normalize.py` (every stem's average at -18 dBFS by clip gain).
    Optional per song: `hp_metricab.py` (headphone send off the master bus, Metric AB
    reference preset from `metricab_ref.py`, aligned with `ref_align.py`).
-7. Save and report, including what the engineer must do by hand (meter, plug-in
+7. Save and report, including what the engineer must do by hand (plug-in
    bypass, track order, VCA membership).
 
 Run `pt_dialog_watch.py` (or `demo_guard.py`) in its own terminal for any unattended

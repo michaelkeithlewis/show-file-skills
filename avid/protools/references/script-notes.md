@@ -189,3 +189,7 @@ Facts that used to sit in code comments, by script. The scripts in this repo car
 - accents: brightness of each click (zero-crossing rate); accented clicks are the bright cluster
 - no audible accent: beats_per_bar is null and the meter is the engineer's call
 - PT tempo is in quarter notes: an eighth-note click in x/8 runs at half the quarter BPM
+
+## scripts/set_meter.py
+
+- AXPress focuses a meter field and the typed value replaces it; an AXFocused write does not take
