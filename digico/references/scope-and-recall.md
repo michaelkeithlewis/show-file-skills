@@ -84,6 +84,7 @@ Global Scope is per section and holds for every snapshot. It lives in section 20
 - The fader column splits into level and mute through the per-parameter sets. Auto Update off for the inputs' fader level cleared bit `0x21` of +0x4d and nothing in +0x29.
 - A default session sets every module the section has (inputs `0x7c4873be`; matrix inputs `0x42`, modules `01` and `06`). Shows narrow it.
 - FX units (strip type `0e`) and Spice Rack slots (`18`) have group records of their own, with the bit of module `15` and of module `1f`. Many shows recall neither.
+- Global Scope's bottom row is not in the group records. MIDI, Relays and Snapshot Recalls Total Gain sit in the snapshot trailer at +37, +38 and bit 0x04 of +30 (one-change save, Quantum 112 at V2242). Waves, KLANG positions and Fourier sit at +111, +237 and +238 (read from the program). The table is in [`snapshots.md`](snapshots.md), "Trailer".
 
 ## Global Scope defaults and the clear (2026-10-31, editor-verified)
 
