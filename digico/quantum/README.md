@@ -93,6 +93,7 @@ Bank placement is section 212 ([`FORMAT.md`](../references/FORMAT.md), "Fader ba
 - The Pulse editors were not part of the runs. A Pulse default session holds the same section 212 as the plain console's.
 - More than two bays: the Quantum 326/338 and Quantum 5 have three. The Quantum 7 has four, with two Master columns of one layer between Left and Right.
 - Quantum 852: the default session fills records 1 to 4. Which record is which bay was not read.
+- Colours on a real Quantum 112 (V2242, 2026-10-15): bank colours written by bytes loaded and showed on the console's bank buttons, which do not show true RGB. Pale colours wash out to white, dark ones go black, and mixed ones shift: salmon `#fa8072` showed warm white, `#0c2238` and `#000000` black, brown `#8b4513` orange-green, pink `#ffc0cb` cold white. These showed close to as written: the set A defaults, `#ff0000`, `#ffff00`, `#ff8000`, `#00c859`, `#00ffff`, `#ff00ff`, `#000080`, `#3cb371` and `#32cd32`. Two files of test colours, each bank named after its colour, read off the surface.
 - Colours: the Quantum 112, 225, 326/338 and 852 defaults hold colour set A. The Quantum 5 and Quantum 7 defaults hold set B ([`FORMAT.md`](../references/FORMAT.md), "Fader bank placement"). How the Quantum 5 and Quantum 7 editors draw them was not checked.
 - The scripts in this folder read bays for the `Q2` family only and move no bank.
 
