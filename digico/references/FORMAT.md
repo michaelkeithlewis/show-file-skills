@@ -259,11 +259,13 @@ Where each bank sits on the faders. The bank list is section 243 ("Surface banks
 
 "Fader Banks screen" is the editor's Layout > Fader Banks page, read on the console's default session at V2242. The other proof words are the ones in [`session-structure.md`](session-structure.md).
 
-- Section 212 is `u16 0x327`, 8 records of 99 bytes, then 15 bytes. The u16 is the length of what follows. The last 15 bytes are not decoded. Same size in every default session V1455 to V2242 and in every real session read.
+- Section 212 is `u16 0x327`, 8 records of 99 bytes, then 15 bytes. The u16 is the length of what follows. The last 15 bytes are the master faders (below). Same size in every default session V1455 to V2242 and in every real session read.
 - The whole section, length included, is copied in the 211 tail. The two copies stay equal on the editor's re-save.
-- A record is one bay: 42 u16 bank numbers, 7 bytes, then 8 bytes that are zero in every default session read. A bank number is the bank's place in section 243, counted from 0. `ffff` is no bank.
+- A record is one bay: 42 u16 bank numbers, 7 bytes, then 8 bytes. The first of the 8 is the layer the bay has active, counted from 0. The other 7 are zero, and every default session read holds 0 in all 8. A bank number is the bank's place in section 243, counted from 0. `ffff` is no bank.
 - The 42 numbers are 7 layers of 6 buttons. Position = 6 x layer + button, both counted from 0.
 - The 7 bytes hold, per layer, the button that layer shows, counted from 1. Every default session read holds 1 in all seven.
+- The active layer: one-change saves on a Quantum 112 at V2242, on its bay (record 2). Adding a bank, which the console put on layer 3, made it 2. Then showing bank 3 on layer 1 made it 0, and pressing layer 2 made it 1.
+- The 15 bytes after the 8 records are the master faders, by the record the Quantum 112 V2242 program reads (unconfirmed): 4 x (u8 strip index, u8 strip type), then u8 master flipped, u16 locked master bridge row and u32 master fader force mono. The strip types in the console-saved files read are `06` group, `10` matrix output, `0a` control group and `0b` solo. The most common tail is `06 06 06 06 06 06 00 00` and seven zero bytes.
 - Which record is which bay, and how many layers and buttons the screen shows, depends on the console family. Records 5 to 7 are empty in every default session read. No default of a mapped family places a bank on a position its screen does not show.
 - The editor's own move changed two u16 in section 212 and the same two in the 211 tail. Section 243 changed only its save-time heap words. One-change save, Quantum 225 V2242.
 - On load, a layer 1 whose shown button is empty gets a new blank bank on that button. The Quantum 326/338 editor added none when the shown button held a bank. An emptied layer 2 or 3 got none. Editor load: Quantum 225, Quantum 326/338, SD5 and SD12 at V2242.
