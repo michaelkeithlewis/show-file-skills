@@ -123,6 +123,18 @@ Facts that used to sit in code comments, by script. The scripts in this repo car
 
 - verify from a fresh read, not from what route_track reported
 
+## scripts/route_out.py
+
+- Pro Tools draws the output selector as an AXDialog. Physical outputs sit in its `output` submenu, buses in `bus`; `ptax.py route` only walks `bus`.
+
+## scripts/relink_dialog.py
+
+- The `Missing Files` dialog has radio buttons (Automatically Find & Relink, Manually Find & Relink, Skip All), a `Regenerate Missing Render Files` checkbox and one OK button. Press the radio, then OK.
+
+## scripts/filecheck.py
+
+- `CId_GetFileLocation` with `FLTFilter_OfflineFiles` lists what is still missing; with `FLTFilter_AllFiles` it gives the path Pro Tools now holds for every file.
+
 ## scripts/route_groups.py
 
 - The folder list comes from the open session. Do NOT hard-code a bus list from CId_GetExportMixSourceList: it only enumerates buses already in use as a source, so an absent name there means "nothing feeds it yet", not "no such bus". The bus a folder owns is shown on the folder's own input selector and is usually, but not always, the folder's name.

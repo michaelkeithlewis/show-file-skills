@@ -64,7 +64,8 @@ If `~/Documents` syncs to iCloud, Pro Tools can freeze or slow down:
 - **Create-from-template hangs** while Pro Tools writes the new session through the
   iCloud File Provider. Create into a folder whose name ends in `.nosync` (Apple's
   exclusion suffix), for example `<your projects>/_LOCAL.nosync/<Song>`. Move it
-  into the synced folder afterwards if you want it there.
+  into the synced folder afterwards if you want it there, then relink (see
+  "Moving a session folder" below). Newer setups may not need `.nosync` at all.
 - **Slow opens.** Pro Tools scans every preset under
   `~/Documents/Pro Tools/Plug-In Settings` while it opens a session. If those files
   are iCloud placeholders, each read waits on the network. Make sure the folder is
@@ -400,9 +401,32 @@ posted to the app do not reach that panel), `isd.py` (Import Session Data destin
 - Pan. (Hard-panned pairs do not need it: they become one stereo track in step 3.)
 - Bypass plug-ins. Reorder tracks (for example move utility tracks to the top).
   (Faders: `premix.py apply` types them through Accessibility.)
-- Set the main output of a track that is not in a folder: use
-  `ptax.py route <bus or output> <track>...` (Accessibility).
+- Set the main output of a track that is not in a folder: `ptax.py route <bus> <track>...`
+  for a bus, `route_out.py "<output>" <track>...` for a physical output (Accessibility).
+- Utility tracks at the top: create them with `insertion_point_position: TIPoint_Before`
+  the first track; existing tracks cannot be reordered from PTSL.
 - VCA membership for tracks you created.
+
+## Moving a session folder (relink)
+
+A `.ptx` stores each audio file as an absolute path. Files inside the session's own
+folder follow a move. Stems imported by reference from a sibling folder (`Stems/`,
+`MULTITRACKS/`) do not, and Pro Tools opens with a `Missing Files` dialog. Fix it in
+Pro Tools, never by editing the `.ptx`:
+
+1. Open the session: `$PY scripts/opensess.py "<session>.ptx"` (run it detached).
+2. While it opens, run `$PY scripts/relink_dialog.py 30`. It waits up to 30 s for the
+   dialog, selects `Automatically Find & Relink` and presses OK.
+3. Run `$PY scripts/relink_wait.py`. Pro Tools keeps relinking after the session
+   reports open (up to about 2 minutes for 224 files). Saving or closing during that
+   search crashed Pro Tools once. The script waits until the offline count is 0, or
+   unchanged for 90 s while Pro Tools' CPU is under 40%.
+4. Run `$PY scripts/filecheck.py`. It prints the file count, the offline count and any
+   path that still points under the old folder. All three must be what you expect.
+5. Save the session.
+
+Measured: 19 missing stems relinked by name in about 70 s, 0 offline, and 17 sessions
+done in one unattended pass with this loop.
 
 ## Long live captures (one file per input, a whole show)
 
@@ -428,7 +452,8 @@ posted to the app do not reach that panel), `isd.py` (Import Session Data destin
   high-contrast colors with no adjacent repeats.
 - A common convention: crowd mics in a basic folder routed straight to the main
   bus (`ptax.py route <bus> <tracks>...`); utility tracks (board feed, click,
-  talkback) at the top, muted and uncolored (`color_index: -1`); drum triggers in a
+  talkback) at the top, muted, uncolored (`color_index: -1`) and sent to the monitor
+  output (`route_out.py "<output>" <tracks>...`); drum triggers in a
   basic folder at the bottom, muted.
 - Still manual afterwards: VCA membership for new tracks, and inserts on them.
 
