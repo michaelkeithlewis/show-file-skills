@@ -88,8 +88,8 @@ The options follow the 992-byte block. Offsets count from the options' first byt
 | +0x344 | u8 | 1 = skipped by Fire Previous and Fire Next | one-change save |
 | +0x345 | u16 | 18 in every snapshot | files |
 | +0x347 | i32 | recall time, in quarter frames at the session's frame rate. On with misc bit 7 | one-change saves |
-| +0x34b | i32 | duration, in 1/100 s. On with misc bit 3 | one-change save |
-| +0x34f, +0x353, +0x357 | i32 | play from, play to, locate to. On with misc bits 4, 5, 6 | one-change save; unit open |
+| +0x34b | i32 | duration, in quarter frames at the session's frame rate, like the recall time: 5 s is 500 at 25 fps and 600 at 30 fps. On with misc bit 3 | one-change saves at 25 and 30 fps |
+| +0x34f, +0x353, +0x357 | i32 | play from, play to, locate to, in quarter frames like every snapshot time. On with misc bits 4, 5, 6 | one-change save; the unit read from the program, not from a save |
 | +0x35b | u32 | note text colour, Windows RGB (black by default) | one-change save |
 | +0x35f | u32 | note background (white by default) | one-change save |
 | +0x363 | u8 | note font charset (1) | files |
@@ -102,9 +102,15 @@ The options follow the 992-byte block. Offsets count from the options' first byt
 Recall time:
 
 - 01:00:00:00 at 25 fps is 90,000 frames and is stored as 360,000. One second more adds 100, one frame adds 4.
-- Changing the session's frame rate leaves the stored number as it is. The frame rate is header byte 0x5f: 2 = 25 fps and 5 = 30 fps (one-change saves), 1 = 24 fps (read from a show).
+- Changing the session's frame rate leaves every stored time as it is, also through 29.97, 29.97 drop and 30 drop (one-change saves). The frame rate is header byte 0x5f: 2 = 25 fps, 5 = 30 fps, 3 = 29.97 fps, 4 = 29.97 drop and 6 = 30 drop (one-change saves), 1 = 24 fps (read from a show).
 - A timecode offset is not a field: the console adds it into the stored time.
 - Recall at Time switched off keeps the stored time.
+
+Snapshot times:
+
+- All five snapshot times are quarter frames of the session's frame rate: recall time, duration, play from, play to and locate to. The Quantum 112 program turns each into timecode with one routine: the value mod 4 is the quarter frame, the value / 4 is the frames.
+- A quarter frame is 1/100 s only at 25 fps. A duration of 5 s is 500 at 25 fps and 600 at 30 fps (one-change saves, Quantum 112 at V2242). A duration written as seconds x 100 runs 17 % short at 30 fps (500 reads 4 s and 5 frames) and 4 % long at 24 fps.
+- The program counts 30 frames a second at 29.97, 29.97 drop and 30 drop alike, so 5 s is 600 at each of them. A file written by bytes at 29.97 drop with a duration of 600 loaded on a Quantum 112 and showed 5 s.
 
 Fade:
 
@@ -148,21 +154,50 @@ A snapshot's group byte (+0x343) points into this list, counted from 1. Nothing 
 
 The trailer follows the last snapshot. It is 794 bytes starting `ec 00`, or 795 bytes starting `ed 00`:
 
-- 794 in every V1742 and V1926 show, and in the empty sessions of the Quantum 225 and 338 offline programs at V2242 (not the Pulse ones).
+- 794 in every V1742 and V1926 show, and in the empty sessions of the Quantum 225 and 338 offline programs at V2242. The Pulse empty sessions first read for this file held 795 because they were saved after the Restructure that switches Pulse on, and a Restructure at V2242 writes 795 ("Restructure with snapshots", rule 7). The Pulse programs' own default sessions hold 794.
 - 795 in every V2232 and V2242 show. V2025 shows have either.
 - Two files written from those empty sessions, saved again by DiGiCo's software, came back with 795 bytes: one 0 byte was inserted at offset 238.
 
-| Offset | Type | Meaning |
-| --- | --- | --- |
-| +2 | i32 | current snapshot, -1 = none |
-| +6 | i32 | the snapshot that was current before it |
-| +10 | i32 | selected snapshot |
-| +0x1f | u8 | 1 = Relative Groups on |
+The trailer is the Snapshots panel's own settings, in three blocks with a u16 length each: the panel's fields (236 or 237 bytes), the section scope of sections A to D (288 bytes), and their auto update exclusions (264 bytes). 2 + 237 + 2 + 288 + 2 + 264 = 795. So `ec 00` and `ed 00` are the first block's length, not a tag, and the byte at offset 238 is that block's last field. The layout is read from the Quantum 112 V2242 program's loader. Every one of the 348 console-saved files read for these notes fits it.
+
+Offsets count from the length word. "Program" means the field's name and size as that program reads them, not tested one by one.
+
+| Offset | Type | Meaning | Proof |
+| --- | --- | --- | --- |
+| +2 | i32 | current snapshot, -1 = none | one-change saves |
+| +6 | i32 | the snapshot that was current before it | one-change saves |
+| +10 | i32 | selected snapshot | one-change saves |
+| +14 | i32 | the list's scroll position | program |
+| +18 | i32 | automation mode (0 in every file) | program |
+| +22 to +25 | u8 each | automation safe, the panel is open, scope view, timed view | program |
+| +26, +27 | u8 each | MIDI control and MIDI output, the two buttons of the snapshot MIDI page | program |
+| +28 | u8 | scope preview | program |
+| +29 | u8 | 1 = touch to recall (View Options) | one-change save |
+| +30 | u8 | 0x04 = Snapshot Recalls Total Gain (Global Scope's bottom row). 0x01 auto update on, 0x02 read at load | 0x04 one-change save; 0x01, 0x02 program |
+| +31 (0x1f) | u8 | 0x01 = Relative Groups on. 0x02 keep relative changes, 0x04 group option All | 0x01 one-change save; 0x02, 0x04 program |
+| +32 | u8 | undo enabled (1) | program |
+| +33 | u32 | changed since the snapshot: the marks the panel shows for edits since the last store | program; fits rule 8 under "Restructure with snapshots" |
+| +37, +38 | u8 each | Global Scope's MIDI and Relays buttons: 1 = off | one-change save |
+| +39, +40 | u8 each | notes visible, Snapshots Overview (Options, Surface) | program |
+| +41 | 33 x u16 | auto update exclusions per module type (Options, Theatre) | program |
+| +107 | u32 | channel snapshot column | program |
+| +111 | u8 | Waves safe (Global Scope) | program |
+| +112 | 12 x u32 | the notes' custom colours, Windows RGB (0x1fffffff = none) | program |
+| +160, +161 | u8 each | Theatre: principals update players, player update exclusions | program |
+| +227 | u32 | relay scope | program |
+| +231, +232 | u8 each | View Options: 1 = large rows, 1 = white text | one-change save |
+| +233 | u8 | use the notes colour (1) | program |
+| +234 | u8 | View Options: background brightness, 0xa3 by default (0x29 turned down) | one-change save |
+| +235 | u8 | ripple down: 0x01 CG snapshots, 0x02 MIDI programs, 0x04 aliases | program |
+| +236 | u8 | 1 = Record Recall Times on | one-change save |
+| +237, +238 | u8 each | Global Scope: KLANG positions safe, Fourier safe. +238 is the byte the 795-byte trailer adds | program |
+| +239 | u16 288 + 288 bytes | section scope, sections A to D: four 72-byte records, the same record as the four blocks of a group record | program |
+| +529 | u16 264 + 264 bytes | section auto update exclusions, sections A to D | program |
 
 - Insert New made the new snapshot current and selected, and put the old current one at +6.
-- Delete set +2, +6, +10 and the current setlist to -1.
+- Delete set +2, +6, +10 and the current setlist to -1 in a one-change save that deleted the first row while no snapshot was current. The editor's rule under "Delete a snapshot, as the editor does it" gives the same result in that case.
 - In a show without snapshots, +2 and +10 are -1, but +6 often is not (73 of 75 shows). Check +6 only in a show with snapshots.
-- The rest of the trailer is open.
+- The fields marked program are named, not tested one by one.
 
 The editor's own Delete and Insert New move +2, +6 and +10 differently from the bullets above that start "Insert New made" and "Delete set". The rules are under "Insert New, as the editor does it" and "Delete a snapshot, as the editor does it".
 
@@ -258,7 +293,7 @@ One file per console and build, written by bytes, had every setting below change
 - Skip: the u8 at +0x344. 1 = skipped.
 - Lock: misc bit 13.
 - Recall time: the i32 at +0x347, in quarter frames at the session's frame rate, on with misc bit 7 (Recall at Time).
-- Duration: the i32 at +0x34b, in 1/100 s, on with misc bit 3.
+- Duration: the i32 at +0x34b, in quarter frames at the session's frame rate ("Snapshot times" above), on with misc bit 3. At 25 fps that equals 1/100 s.
 - The proof files had each value and its switch on. The Snapshots screen shows a recall time as "fire at timecode hh:mm:ss:ff" and a duration as hh:mm:ss:ff.
 
 A longer or shorter name or note changes the size of section 210. Rewrite the section table offsets to match: the last offset equals the file size ([`FORMAT.md`](FORMAT.md), "File structure"). Skip, lock, number, recall time and duration change bytes in place.
@@ -290,8 +325,7 @@ Not load-proven: the cleared Quantum 225 V2025 and SD12 V1619 files (their captu
 
 Not known:
 
-- What the trailer bytes at +14, +23 and +33 mean. The clear sets them to 0.
-- Header byte 0x5f = 3. Some real shows hold it. Which frame rate it is stays open.
+- What the trailer bytes at +14, +23 and +33 do. The Quantum 112 program names them the list's scroll position, the panel is open, and changed since the snapshot ("Trailer"). The clear sets them to 0.
 - The clear on V1455, V1528, V1742, V1926, V2126 and V2232: not captured.
 - The clear on any console other than the Quantum 225, SD9 and SD12 above: not captured.
 
@@ -328,8 +362,8 @@ Not covered: a real Quantum 225 show saved at V1619, with 3 snapshots, custom ba
 
 ## What we don't know
 
-- The 992-byte block in each snapshot record, the four blocks of a group record, and most of the trailer.
-- The unit of play from, play to and locate to.
+- The 992-byte block in each snapshot record. What sections A to D do (the four blocks of a group record, trailer +239 and +529), and the trailer fields marked program.
+- Play from, play to and locate to: quarter frames by the program's code. No one-change save typed one of these times.
 - What the id is for, and what its low byte means.
 - The GPO relay states: only the field's name is known.
 - Which modules each Cross Fades column covers, beyond Input/Trim on an aux. A fade written by bytes is not tested.
