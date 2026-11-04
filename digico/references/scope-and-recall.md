@@ -187,11 +187,41 @@ So a channel renamed in section 211 alone gets its old name back at the next rec
 
 - KLANG mode, azimuth, elevation and width on a send (`02`, params `0b`, `0e` to `10`). Level and unmute do come back.
 - The fader's control group bits `(0c, 04, 0)`: they go with CG Members.
-- An output socket's own source `(12, 00, 0)`: output routes come from the buses.
+- The fader's gang `(0c, 05, 0)`, named so by the Quantum 112 program: it comes back only with the misc switch Gangs. With Gangs off, two matrix outputs kept gang 2 over a stored 0.
+- An output socket's own source `(12, 00, 0)`: it does not come back with the socket. It follows the strip that feeds it ("Output sockets follow their feeder" below).
 - The Mustard compressor's stereo link `(1d, 3f, 0)` comes back on buses, but on a stereo input it is always on after a recall, whatever is stored.
 - A Spice Rack slot that the recall changes loses its preset (its preset index becomes -1).
 
 With the misc switch Layout on, a recall puts back which bank each layer shows on each fader bay. It does not put the bank buttons back: after a bank was moved to another button, a recall left the buttons as they were.
+
+## Output sockets follow their feeder
+
+An output socket's source comes back with the strip that feeds it, not with the socket's own module `12`. The feeder decides, under the three conditions of "What a recall changes": its Outputs (`0e`) for its output, the right leg of a stereo input included, and its Inserts (`08`) for its insert sends (tap `08`, side `00` for insert A and `10` for insert B).
+
+- A socket the snapshot holds takes its stored source, an empty one included.
+- A socket the snapshot does not hold, such as one of a rack added after the snapshot was stored, is let go when an insert send comes back pointing elsewhere. A bus's Outputs keep it.
+- A socket whose feeder is not recalled keeps its source: a feeder whose Outputs are off in Global Scope, and the solo buses.
+
+The recall experiment in [`io-patch.md`](io-patch.md) fits this. The snapshot held aux 1's socket with no source, so the aux's recalled Outputs left it empty.
+
+Proven by six save-backs: files written by bytes, loaded on a Quantum 112 at V2242, snapshots recalled at the console, saved. Replaying these rules and the recall rule above on each written file gives the console's live values and names in five of them. The sixth recall changed the source of 59 output sockets and emptied 51 of them. There the replay gives every value but five: 58 of the 59 sockets, and four values of two input sockets and two output sockets patched straight to each other. The five are under "What we don't know".
+
+## The FX rack on a recall
+
+A recall makes the FX rack the snapshot's. It takes what any FX value takes: Global Scope recalls module `15` in the FX section, and the unit safe `(15, f0, 0)` is off.
+
+- A unit the snapshot does not hold goes: its strip in section 211, and its record in the FX group of section 201, whose count goes down by one. The strips that fed it or took its return recall their own stored states, as on any recall.
+- A unit the snapshot holds with another algorithm `(15, 80, 0)`, or one that is not live, is made anew from the stored strip, the way a new unit is written ("FX unit" under "FX units, sends, buses and patch" in [`FORMAT.md`](FORMAT.md)), with the stored name, preset and width. A unit with the same algorithm takes the stored values only.
+- The FX list keeps its order. A unit made anew in its own place keeps its section 201 record: the stored name is written over the old one, so a shorter name leaves the old name's last letters after it. The record takes the stored preset index (+42) and keeps its EngineChannel (+84).
+- A unit that was not live takes the place and the EngineChannel of a unit of its kind (reverb or other effect) that the same recall took away. Its section 201 record is written clean, with the stored name.
+
+The console's FX > NEW does not store the new unit in any snapshot. So on a session whose Global Scope recalls FX, a new unit lasts until the next recall unless the snapshots are updated.
+
+Proven on a Quantum 112 at V2242:
+
+- One-change saves: FX > NEW added a delay, fed by an aux and with its return on an input, to a show with one snapshot. No snapshot held the new unit. Recalling the snapshot at the console then took the delay away, its strip and its section 201 record, and left the rest as a recall leaves it.
+- A save-back: a file written by bytes with seven FX units, its one snapshot recalled at the console. Three units went, four took the snapshot's algorithm and name, and one unit that was not live came back in the place of a reverb the recall took away.
+- Replaying these rules on the file before each recall gives the console's FX units with their values and names, and the FX records of section 201 byte for byte.
 
 ## Store and update
 
@@ -204,6 +234,8 @@ With the misc switch Layout on, a recall puts back which bank each layer shows o
 Nothing in this folder writes scope yet. A tool that edits a show with snapshots has to keep these rules:
 
 - An edit to section 211 lasts until the next recall that reaches it under the rule above. To keep it, write it into the snapshots' states too. [`engine-findings.md`](engine-findings.md) says the same for insert routes.
+- An FX unit added to or removed from section 211 alone lasts until the next recall that reaches FX: the recall takes away a unit the snapshot does not hold and brings back one it holds ("The FX rack on a recall"). On a session whose Global Scope recalls module `15`, refuse the FX change or say so in the result.
+- An output socket's source lasts until the next recall that reaches the strip feeding it ("Output sockets follow their feeder").
 - A rename lasts only if each snapshot's strip trailer and Input/Trim state get the new name too. `ses.rename()` writes section 211 and section 201, not section 210.
 - Keep section 211 free of scope: +0x34 = 0, +0x39 = 1, +0x3a = 0.
 - To change one snapshot's scope, copy a shared state first and set both reference counts.
@@ -216,3 +248,8 @@ Nothing in this folder writes scope yet. A tool that edits a show with snapshots
 - Misc scope bits 1, 8 to 12 and 14: read from the panel order, not saved one by one.
 - What the console does with +0x39 in a pool state. It is 0 there in every show.
 - SD consoles: none of this is tested on an SD file.
+- How the FX list is numbered when a recall takes a unit away and no unit takes its place. No console-saved file has a gap in its FX numbers.
+- Which EngineChannel a unit gets when a recall changes it from a reverb to another effect, or back.
+- A recall with FX off in Global Scope, or with a unit safed: the recall rule says the rack, or the safed unit, stays. No such recall was saved.
+- On one recall, a stereo input's right leg went onto the output socket after its stored left one, and two input sockets were patched straight onto two plug-in rack outputs (`(11, fe, 0)` and `(12, e2, 0)`, as in [`FORMAT.md`](FORMAT.md)). Nothing stored says so.
+- The same recall changed 36 input records of section 201: the i32 at +42 (on an FX record, its preset index) and the u16 at +86. Nothing in the rules above writes them.
