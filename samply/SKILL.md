@@ -32,6 +32,7 @@ search the machine for it.
   array of version boxes (`v1`, `v2`, ...). Folder `children` give bare stack ids only,
   so resolve names one stack at a time.
 - `POST /projects/:pid/files/:id {"name"}`: rename a stack or a version. No re-upload.
+- `DELETE /projects/:pid/files/:versionid`: remove one version from its stack (returns 200).
 - Upload: two-step signed URL (below).
 
 ### What the API cannot do
