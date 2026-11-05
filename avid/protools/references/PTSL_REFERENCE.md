@@ -228,6 +228,10 @@ feeds. `get_monitor_output_path()` returns the monitor path, which is NOT the
 bounce source.
 
 **Gotchas:**
+- **Several buses in one pass** (for example a pre-master and a post-master bus):
+  pass every source and set `delivery_format=pt.EM_DF_FilePerMixSource`. With
+  `EM_DF_SingleFile`, Pro Tools writes one multichannel interleaved file
+  (channels 1-2 = the first source) instead of one stereo file per bus.
 - **`EM_FD_Directory` with a custom directory raised an assertion**
   (`Sys_FileLocMacOS.cpp`, ErrType 100). Use `EM_FD_SessionFolder` and move the
   file afterwards.
