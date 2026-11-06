@@ -34,6 +34,8 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - With PM7 remembered, RIVAGE PM Editor still uses the last DSP picked, so a PM7 file can carry another engine's counts; a new offline session restores the previous session's state (editor test).
 - PM Editor V7.10 controlled saves on a PM3 project (CS-R3, DSP-RX) placed: the `#END` record as required (without it the editor refuses the file as `TYPE ???`); the 16-character file name limit; dynamics `TypeNo` 5 DUCKING and the COMP260, gate and ducking units; the three changes that pair two mixes, byte for byte against the editor; CS1 OMNI, DSP HY slot 2 and M1 RY slot input codes; the surface output patch paths; the PM Editor CSV set, which round-trips to the same bytes (`references/rivage-fields.md`, sections V7.10).
 - REV-X REV TIME, INI. DLY and filter words; SP2016, Y7, SPX Reverb and SPX Stereo Delay words; MBC4, DynamicEQ4 and DynamicEQ6 words were pinned by controlled saves (`references/premium-rack.md`).
+- PM Editor V7.2.0 controlled saves placed the top of the dynamics ranges: COMP260 ratio 300:1 then inf, PM Comp and EXPANDER ratio 20:1 then inf, DUCKING range -72 dB then -inf, GATE range -inf (`references/rivage-fields.md`, section V7.20).
+- On a stereo main, a matrix send level belongs on the L leg only. A level on the R leg makes PM Editor V7.1.0 show every matrix send on that main at -inf (editor load, `references/rivage-fields.md`).
 
 ## What we don't know
 
@@ -75,3 +77,5 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - 2026-10-29, V7.20, markcarlberg's controlled saves in RIVAGE PM Editor 7.2 mapped tap points, A/B and Theatre banks, dynamics type numbers, insert and rack codes (`references/rivage-fields.md`).
 - 2026-10-30, V7.20, markcarlberg's controlled saves pinned DynamicEQ6, SP2016, Y7, SPX and MBC4 words (`references/premium-rack.md`).
 - 2026-10-30, V7.10, PM3 (CS-R3, DSP-RX) controlled saves in PM Editor: dynamics units and `TypeNo` 5, mix pairing, input and surface output patch codes, the CSV set (`references/rivage-fields.md`).
+- 2026-11-03, V7.20, controlled saves in PM Editor 7.2.0 placed the COMP260, PM Comp, EXPANDER, GATE and DUCKING range ends (`references/rivage-fields.md`).
+- 2026-09-07, V7.10, controlled saves and editor loads in PM Editor 7.1.0 settled where a stereo main keeps its matrix send levels (`references/rivage-fields.md`).
