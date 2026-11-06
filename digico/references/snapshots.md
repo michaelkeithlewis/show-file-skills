@@ -195,6 +195,7 @@ Offsets count from the length word. "Program" means the field's name and size as
 | +529 | u16 264 + 264 bytes | section auto update exclusions, sections A to D | program |
 
 - Insert New made the new snapshot current and selected, and put the old current one at +6.
+- A recall made the fired snapshot current and selected, and put the one current before it at +6, also when the same snapshot was fired again. +33 was 0 after every recall. Seen on seven recalls fired and saved on a Quantum 112 at V2242.
 - Delete set +2, +6, +10 and the current setlist to -1 in a one-change save that deleted the first row while no snapshot was current. The editor's rule under "Delete a snapshot, as the editor does it" gives the same result in that case.
 - In a show without snapshots, +2 and +10 are -1, but +6 often is not (73 of 75 shows). Check +6 only in a show with snapshots.
 - The fields marked program are named, not tested one by one.
@@ -257,6 +258,7 @@ Not captured, so write no Insert New in these cases:
 - A rename also goes into the snapshot's strip trailer and its Input/Trim state ("Names on a recall" in `scope-and-recall.md`).
 - A value can go into section 211 only, into one snapshot, into every snapshot, or only into the snapshots that held the old live value.
 - An FX unit's state in a snapshot can hold another algorithm than the live unit. The same param is another control there, so leave such states alone.
+- A recall of such a state makes the live unit the stored one ("The FX rack on a recall" in `scope-and-recall.md`).
 
 ### Delete a snapshot
 
