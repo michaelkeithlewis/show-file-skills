@@ -134,7 +134,7 @@ What the experiment shows:
 
 - A patch change made by bytes on a session with snapshots lasts only until the next recall that reaches it.
 - Gain, 48V and pad stayed in this session. Its Global Scope is the default, and the default recalls no module of the input ports ([`scope-and-recall.md`](scope-and-recall.md), "Global Scope defaults and the clear"). A show whose Global Scope recalls its I/O ports could bring them back. No run tested another scope.
-- The aux output fits "Output sockets follow their feeder" in [`scope-and-recall.md`](scope-and-recall.md): a socket's source comes back with the Outputs of the strip that feeds it. The snapshot held the socket with no source, so aux 1's recalled Outputs left it empty. Six recalls fired and saved on a Quantum 112 at V2242 follow the same rule.
+- The aux output fits "Output sockets follow their feeder" in [`scope-and-recall.md`](scope-and-recall.md): a socket's source comes back with the Outputs of the strip that feeds it. The snapshot held the socket with no source, so aux 1's recalled Outputs left it empty. Six recalls fired and saved at V2242 follow the same rule: five in Quantum 112 files, one in the Quantum 326/338 editor.
 - The experiment ran on one console and build. No SD file was tested.
 
 ## Rules the site engine follows
