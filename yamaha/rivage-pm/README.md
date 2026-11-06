@@ -77,5 +77,5 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - 2026-10-29, V7.20, markcarlberg's controlled saves in RIVAGE PM Editor 7.2 mapped tap points, A/B and Theatre banks, dynamics type numbers, insert and rack codes (`references/rivage-fields.md`).
 - 2026-10-30, V7.20, markcarlberg's controlled saves pinned DynamicEQ6, SP2016, Y7, SPX and MBC4 words (`references/premium-rack.md`).
 - 2026-10-30, V7.10, PM3 (CS-R3, DSP-RX) controlled saves in PM Editor: dynamics units and `TypeNo` 5, mix pairing, input and surface output patch codes, the CSV set (`references/rivage-fields.md`).
-- 2026-11-03, V7.20, bryandhargrave's controlled saves in PM Editor 7.2.0 placed the COMP260, PM Comp, EXPANDER, GATE and DUCKING range ends (`references/rivage-fields.md`).
-- 2026-09-07, V7.10, bryandhargrave's controlled saves and editor loads in PM Editor 7.1.0 settled where a stereo main keeps its matrix send levels (`references/rivage-fields.md`).
+- 2026-11-03, V7.20, controlled saves in PM Editor 7.2.0 placed the COMP260, PM Comp, EXPANDER, GATE and DUCKING range ends (`references/rivage-fields.md`).
+- 2026-09-07, V7.10, controlled saves and editor loads in PM Editor 7.1.0 settled where a stereo main keeps its matrix send levels (`references/rivage-fields.md`).
