@@ -29,6 +29,7 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - A file that keeps the template's save ids loads and re-saves in DM Editor 2.0 (load test).
 - U76 and Opt-2A parameter words were pinned by controlled saves; MBC4 by four controlled saves and a load (`references/premium-rack.md`).
 - Confirmed 2026-10-31 in DM Editor 2.0.1 (DM7 V2.01): the +48V master is `Unit.48VMaster` in the Setup entry (`SetupBackupFile.bup`). Setup > General "+48V Active" off and on, each saved with Save As, read 1, 0, 1. DM Editor loads the Setup entry only with "Load with System Setting". A file with the master off and 48V on OMNI 1 and 2 showed General +48V Active off and +48V lit on the CH 1 channel bar (BB-DM-MASTER).
+- DM7 Editor 1.7 controlled saves (V1.73 layout): Legacy Comp ratio inf = 255; Diode Bridge ratio steps 1.5 to 20:1 = index 0 to 6; FET Limiter word 6 = 10 x (input dB + output dB); mix, matrix and stereo insert send kinds 0x13E, 0x140 and 0x142; the Rev. HD Hall word laws including the reverb time index; delay times in ms x10; An. Delay Modern's delay curve (`references/dm7-fields.md`).
 
 ## What we don't know
 
@@ -72,3 +73,4 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - 2026-10-29, DM Editor 2.0, markcarlberg's controlled saves mapped patch codes, dynamics words, tap points and bus fields (`references/dm7-fields.md`).
 - 2026-10-30, DM Editor 2.0 and RIVAGE PM Editor 7.2, DynamicEQ4 Q law corrected against a DM Editor reading (0.91 at 61); MBC4 words proven on both desks.
 - 2026-10-31, DM Editor 2.0.1, DM7 V2.01: the +48V master flipped in the editor and read at `Unit.48VMaster`; a file with the master off loaded with System Setting showed the master off and the channel 48V lamp lit. Ported to `references/dm7-fields.md` and `references/FORMAT.md` (BB-DM-MASTER).
+- 2026-11-05, DM7 Editor 1.7 (V1.73 layout), controlled saves placed Legacy Comp, Diode Bridge and FET Limiter words, output insert send kinds and FX rack word laws (`references/dm7-fields.md`).

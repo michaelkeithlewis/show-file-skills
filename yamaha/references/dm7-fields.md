@@ -336,6 +336,49 @@ All (files).
   `SplitPoint`; word clock `SET/WordClock.Source` (`DANTE96000`); Dante `SET/DanteNetwork/Config` (`DeviceID`,
   `BitDepth`, `ReceiveLatency` in 0.01 ms, `NetworkFs`). (files)
 
+## DM7 Editor 1.7 saves (V1.73 layout)
+
+One change per save in DM7 Editor 1.7, offline, `Mixing` at 309,618 bytes. Words are `Parameter[n].Value`.
+
+- Legacy Comp (`PM Comp`) on CH 1 DYN2, all six words read against the panel: ratio inf:1, attack 30 ms, release
+  256 ms, Soft-2 stored `0, 30, 256000, 255, 2, 0`; threshold -17.8 dB, ratio 1.7:1, gain +5.4 dB, attack 69 ms,
+  release 723 ms, Soft-5 stored `-1780, 69, 723000, 17, 5, 540`. Ratio inf = 255, so the ratio word runs past 200.
+  (save) The 20:1 step was not saved on the DM7.
+- Diode Bridge Comp ratio, word 1: the panel steps are 1.5, 2, 3, 4, 6, 12 and 20:1. Stepping 4:1 to 20:1 moved word 1
+  from 3 to 6 (save), so 1.5:1 is index 0 (editor display, by step order).
+- FET Limiter word 6 = 5 x (word 0 + word 1), that is 10 x (input dB + output dB). Output -19.5 to -12.0 dB moved word 6
+  from -540 to -465 and nothing else past word 1 (save). Five input and output pairs in saved files all follow the rule
+  (files). A written file with word 6 recomputed loaded showing Output -9.0 (load).
+- EQ: `PEQ/Bank.Type` `SMOOTH` (PRECISE to SMOOTH, save). `Attenuator.Gain` 0 to -5 dB (save).
+- Insert sends of output strips, as an EQ rack half's `AB[h]/Patch.Source`: mix 0x13E00000 + mix (MX 3 = 0x13E00002,
+  MX 4 = 0x13E00003), matrix 0x14000000 + matrix (MT 1), stereo 0x14200000 + leg (ST A L = 0x14200000). (save) ST A R
+  as 0x14200001 loaded showing the EQ rack on that leg's insert A (load).
+- EQ rack type `31BandGEQ` sets `ItemNum` from 2 to 1. (save)
+- A written file with EQ racks on a mix, a matrix and both ST A legs loaded with System Setting and showed each rack in
+  insert slot A with insert ON lit. (load)
+
+FX rack (`FX/FX[n]/Param/Bank.Value`), one knob per save:
+
+| Effect | Word | Stored | Proof |
+| --- | --- | --- | --- |
+| Rev. HD Hall | 0 Rev. Time | index: 0.3 s + 0.1 s per step to 5.0 s at 47, then 0.5 s per step (53 = 8.0 s). Above 8 s not saved | save |
+| Rev. HD Hall | 1 Room Size | the display value (3 = 3) | save |
+| Rev. HD Hall | 2 Ini. Delay | index, about 1.576 ms per step: 32 = 50.5 ms, 48 = 75.7, 97 = 152.8 | save |
+| Rev. HD Hall | 3 Damp Freq | 1/6-octave index, 20 kHz x 2^((i - 60) / 6): 55 = 11.0 kHz, 58 = 16.0, 60 = 20.0 | save |
+| Rev. HD Hall | 4 Hi Ratio, 7 Lo Ratio | x10 (0.8 = 8, 2.2 = 22) | save |
+| Rev. HD Hall | 5 HPF, 6 LPF | the 1/12-octave index (HPF 35 = 150 Hz, LPF 103 = 7.50 kHz, 117 = Thru) | save |
+| Rev. HD Hall | `MixBalance` | percent (100, 87, 47) | save |
+| Stereo Delay | 0 Delay L, 3 FB Gain R, 6 LPF | ms x10 (625.5 ms = 6255), percent, 1/12-octave index | save |
+| Cross Delay | 0 Delay L>R, 4 Hi Ratio | ms x10, x10 | save |
+| Echo | 1 Delay R, 6 X FB Gain, 8 HPF | ms x10 (297.0 ms = 2970), percent, 1/12-octave index (10 = 35.5 Hz) | save |
+| Echo | 0, 2, 3 delays; 4, 5 FB Gain L, R (signed); 7 Hi Ratio; 9 LPF; 10 SYNC; 11 to 14 notes; 15 BPM | as the saved words | editor display |
+| An. Delay Modern | 0 Delay | index 0 to 127, ms = 50 x 20^(i / 127): 0 = 50 ms, 67 = 242.9, 76 = 300.3, 127 = 1000 | save |
+
+- `TempoAssign`: 0 off, 1 to 4 Tempo 1 to 4, 5 MIDI CLK. (save)
+- A unit re-typed by writing `PluginName`, `LibraryName` and that plug-in's factory words loaded as the new type (Rev.
+  HD Room in place of a Plate). A written HD Hall loaded showing Rev. Time 1.2 s, Ini. Delay 31.6 ms, Damp 5.60 kHz;
+  a written Stereo Delay showed 1210.0 ms. (load)
+
 ## Firmware differences
 
 What later schemas add, oldest console schema first, then later console firmware, then `.dmxf`. (files)
