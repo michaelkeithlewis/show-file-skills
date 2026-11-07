@@ -117,6 +117,16 @@ Other blocks are unallocated. Block n is the strip the desk addresses as n on it
 | 0x14A | signal generator assign, 1 assigned [save-proven on Aux 1 and LR] |
 | 0x14C | bit 0 polarity, bit 1 mute, bit 2 recall safe; other bits 1 (0xF8 base) [save-proven] |
 
+More saves in SQ MixPad 1.6.1, one change each:
+
+- LR balance is +0x149 on block 104 too: centre 0x25 to 0x08 moved that one byte (Routing > Main LR gear > Output
+  Bal). [save-proven]
+- Matrices 1 and 2 show no balance or pan control: their gear pages are empty. [seen in MixPad]
+- Group delay: Group 1 (block 72) +0x130 = 10841 (0x2A59), shown as 112.92 ms, with +0x132 = 1. [save-proven]
+- Compressor key source +0x24 names a group, an aux, LR or a matrix by block number: Input 3 keyed from Group 1
+  (72), Aux 1 (88), LR (104) and Matrix 6 (120), one save each. MixPad's key picker offers no FX return.
+  [save-proven]
+
 ## Inputs, patch and head amps
 
 - **Patch kinds** at +0x1A: 00 none, 01 Local, 02 SLink, 03 USB, 04 I/O Port, 0x13 signal generator.
@@ -135,8 +145,8 @@ Other blocks are unallocated. Block n is the strip the desk addresses as n on it
   width and codes 0, 1, 4, 7; 2, 3, 5, 6 by menu order only]
 - **Tube Stage** (DEEP preamp): +0x3C level u16 (law unknown), +0x43 mode (Pentode 0, Triode 1, Warm
   Pentode 2, Dual Pentode 3, Pentode Triode 4, High Drive 5), +0x44 FineAdj (bias, raw byte), +0x50 02 =
-  loaded, +0x51 bypass (1 out, 0 in). [save-proven: bypass, modes 2 and 3; seen in every file: the loaded flag;
-  modes 0, 1, 4, 5 by panel order only, unconfirmed]
+  loaded, +0x51 bypass (1 out, 0 in). [save-proven: bypass and all six modes, one save each (2026-11-07); loading
+  the model moved +0x50 from 00 to 02]
 
 ## Processing
 
@@ -185,7 +195,7 @@ each model at its control ends in MixPad]
 | 03 | 16T | F8 threshold, FA gain, 10B ratio code on the 41-code table, 110 soft knee |
 | 04 | 16VU | F8 threshold, FA gain, 10B compression code 0-40 |
 | 05 | Ducker | F4 attack, F6 release, 102 hold (time law), F8 threshold (-72 to +18), 100 depth (dB law, 20 dB = `00 94`); 10B 00 |
-| 06 | Peak Limiter 76 | FC input, FE output (0x8000-0x9200, 0 to +18 dB), 104 ratio (00 all buttons, 04 20:1; 01-03 read as 4, 8, 12 by button order, unconfirmed), 106 attack (knob 1 `E9 A9` to 7 `81 C4`), 108 release (1 `DD 73` to 7 `E4 94`), 10A unit (00 1, 01 2); no threshold control |
+| 06 | Peak Limiter 76 | FC input, FE output (0x8000-0x9200, 0 to +18 dB), 104 ratio (00 all buttons, 01 4:1, 02 8:1, 03 12:1, 04 20:1, one save each; a new Peak Limiter 76 starts on 01), 106 attack (knob 1 `E9 A9` to 7 `81 C4`), 108 release (1 `DD 73` to 7 `E4 94`), 10A unit (00 1, 01 2); no threshold control |
 | 07 | Mighty | F6 release (`16 56` 0.05 s to `0A 8F` 5 s per 20 dB), F8 threshold (`00 5C` -40 to `00 92` +18), FA output (`00 6E` to `00 92`), 10A detector (00 average, 01 peak) |
 | 08 | OptTronik | F4 gain, F6 peak reduction (bytes, 0-100 dial units), F8 compress 00 / limit 01, F9 unit A 00 / B 01, FA emphasis (16 flat, 1C 80 Hz, 1F 80 Hz and 5 kHz); no threshold control |
 | 09 | Bus | F4-F5 `00 80`, F6 ratio (1.5, 2, 4, 10:1; default 02), F7 threshold `(dB + 15) x 4` for -15 to +15, F8 attack (0.1, 0.3, 1, 3, 10, 30 ms; default 05), F9 release (0.1, 0.3, 0.6, 1.2 s, Auto); make-up is not stored although MixPad has the knob |
@@ -268,7 +278,9 @@ Record s (s = block) is 50 entries of 6 bytes; entry k is the send from block s 
 - **Mute groups, section 4**: 32 records of 24 (8 used): +0-7 `00 00 00 00 00 FF FF FF`, +8 mute (01 engaged),
   +9 name (13 bytes NUL-filled, to a closing `FF FF`). [save-proven on MG1-2; seen on the rest]
 - **Gangs** (8 on an SQ): input block +0x134 = gang n-1, FF none. Gang n's attribute word (u16) at 0x15FE4 +
-  4(n-1) (section 14 body +0xB4; SQ+ 0x163AC, +0xB8). Bits 3 PEQ, 7 Fader, 8 Mute. [save-proven] Applying a
+  4(n-1) (section 14 body +0xB4; SQ+ 0x163AC, +0xB8). Bits 0 Trim, 1 Filter, 2 Gate, 3 PEQ, 5 Compressor, 6
+  Delay, 7 Fader, 8 Mute, 9 Pan, 10 Routing, 11 Direct Out; bit 4 has no button, and all on is 0x0FEF. [save-proven,
+  one attribute per save] MixPad's gang member picker lists input channels only, so a mix cannot be ganged. Applying a
   gang rewrites the second member's section 5 entries 7-15, 21-31, 33, 39-42 and 49 to `00 00 25 00 00 00`.
   [save-proven] Only inputs have been ganged.
 
@@ -381,7 +393,8 @@ Section 9 (body offsets; SQ body starts 0x14478) [save-proven by one-change save
 | +0x18 | flags: bit 1 Additive, 2 Sel Follow PAFL, 3 LR to PAFL, 4 Input AFL, 5 Output AFL, 6 PAFL Follow Mix, 7 Input Override Mix |
 | +0x19 | Ext in to PAFL, 0 on |
 
-- Input to PAFL Source is block 106 +0x148: 3 Post Delay/AMM, 0 Post Preamp. [save-proven]
+- Input to PAFL Source is block 106 +0x148: 0 Post Preamp, 2 Post PEQ, 3 Post Delay/AMM, 4 Post Compressor, the
+  aux pre-send point codes. MixPad offers no 1, so menu order is not code order. [save-proven, all four]
 - PAFL Ext In source: section 8 records 3 and 4 (body +0x08, +0x0C), the same value in both, read as an input
   patch `[socket][00][kind][fill]`. Record 5 reads `3A 00 01` in every image. [save-proven for the field]
 - **AMM**, section 14 body (0x15F30; SQ+ 0x162F8): +0x00 and +0x08 two 64-bit slot masks; +0x10 48 slot
