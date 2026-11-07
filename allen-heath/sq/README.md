@@ -41,6 +41,7 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 - A scene's bus layout copy is not applied on recall; the layout lives in NVDATA (MixPad check).
 - Reverb and Stereo Tap Delay parameter words: a file written with them loaded in MixPad 1.6.1 showing the values written. The same words apply on Avantis and dLive.
 - Switching MixPad between SQ-5, SQ-6 and SQ-7 rewrites nothing in the file (MixPad check; a real SQ-5 load is not checked).
+- LR balance is +0x149 on block 104; matrices show no balance or pan control; Group 1 delay sits at +0x130 like an input's; the compressor key source takes a group, aux, LR or matrix by block number (SQ MixPad 1.6.1 saves, `references/FORMAT.md`).
 
 ## What we don't know
 
@@ -73,6 +74,8 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 2026-10-30, SQ MixPad 1.6.1, SQ+ MixPad 2.0.3, SQ desk 1.6.3: format notes contributed by markcarlberg (pull request #2).
+
+2026-11-05, SQ MixPad 1.6.1, controlled saves placed LR balance, group delay and group, aux, LR and matrix compressor key sources; matrices have no balance control (`references/FORMAT.md`).
 
 ## Built on tour
 

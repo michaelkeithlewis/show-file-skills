@@ -117,6 +117,16 @@ Other blocks are unallocated. Block n is the strip the desk addresses as n on it
 | 0x14A | signal generator assign, 1 assigned [save-proven on Aux 1 and LR] |
 | 0x14C | bit 0 polarity, bit 1 mute, bit 2 recall safe; other bits 1 (0xF8 base) [save-proven] |
 
+More saves in SQ MixPad 1.6.1, one change each:
+
+- LR balance is +0x149 on block 104 too: centre 0x25 to 0x08 moved that one byte (Routing > Main LR gear > Output
+  Bal). [save-proven]
+- Matrices 1 and 2 show no balance or pan control: their gear pages are empty. [seen in MixPad]
+- Group delay: Group 1 (block 72) +0x130 = 10841 (0x2A59), shown as 112.92 ms, with +0x132 = 1. [save-proven]
+- Compressor key source +0x24 names a group, an aux, LR or a matrix by block number: Input 3 keyed from Group 1
+  (72), Aux 1 (88), LR (104) and Matrix 6 (120), one save each. MixPad's key picker offers no FX return.
+  [save-proven]
+
 ## Inputs, patch and head amps
 
 - **Patch kinds** at +0x1A: 00 none, 01 Local, 02 SLink, 03 USB, 04 I/O Port, 0x13 signal generator.
