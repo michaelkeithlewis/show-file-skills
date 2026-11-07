@@ -315,6 +315,34 @@ editor.
 | | `Attack` | signed 8-bit, ms | save |
 | | `Hold`, `Decay` | unsigned 32-bit, µs | save |
 
+## V7.20: dynamics range ends (save)
+
+One change per save in PM Editor V7.2.0, on channel 1, DYN2 bank A.
+
+| Processor | Control | Stored | Proof |
+| --- | --- | --- | --- |
+| COMP260 | `Ratio` | top finite step 300:1 = 30000, next step inf = 65535 | save |
+| PM Comp (LEGACY COMP), EXPANDER | Ratio | unsigned 8-bit, ratio x10: 20:1 = 200, inf = 255. The PM Comp default 2.5:1 is 25 | save |
+| DUCKING | `Range` | -72 dB = -7200, next step -inf = -32768 | save |
+| GATE | `Range` | -inf = -32768 | save |
+
+- GATE and DUCKING `Range` run to -72 dB in 1 dB steps, then -inf. (editor display)
+- LEGACY COMP and EXPANDER ratio steps read inf, 20, 10, 8 going down. (editor display)
+- EXPANDER has no range control. (editor display)
+- Changing the dynamics type resets that type's settings to defaults. (save)
+
+## V7.10: stereo main sends to matrix (save, load)
+
+PM Editor V7.1.0, ST A to MT1, MT2 and MT3.
+
+- The L leg holds the send level. The R leg stays at -inf. Pre and ON are the same on both legs. (save)
+- A file with the level written to both legs loads, but ST A's page shows every matrix send at -inf. The editor's own
+  save of the same sends shows them, and the R leg level was the only difference. (load)
+- With the level on the L leg only, the written file loads with the sends shown: MT1 pre -120.00, MT2 off -138.00,
+  MT3 -105.00. (load)
+- A bus with both stereo assigns clear loads with TO ST A and TO ST B dark. A TO ST A seen lit in an open session
+  before any edit did not come from the file. (load)
+
 ## V7.10: input patch codes (save)
 
 | Source | Code |
