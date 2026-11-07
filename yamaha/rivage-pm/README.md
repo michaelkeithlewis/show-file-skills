@@ -36,6 +36,7 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - REV-X REV TIME, INI. DLY and filter words; SP2016, Y7, SPX Reverb and SPX Stereo Delay words; MBC4, DynamicEQ4 and DynamicEQ6 words were pinned by controlled saves (`references/premium-rack.md`).
 - PM Editor V7.2.0 controlled saves placed the top of the dynamics ranges: COMP260 ratio 300:1 then inf, PM Comp and EXPANDER ratio 20:1 then inf, DUCKING range -72 dB then -inf, GATE range -inf (`references/rivage-fields.md`, section V7.20).
 - On a stereo main, a matrix send level belongs on the L leg only. A level on the R leg makes PM Editor V7.1.0 show every matrix send on that main at -inf (editor load, `references/rivage-fields.md`).
+- `BusType` FIXED, the matrix `Delay.Time` in microseconds and a matrix pan knob that writes nothing were placed by controlled saves in PM Editor 7.1.0 (`references/rivage-fields.md`).
 
 ## What we don't know
 
@@ -79,3 +80,4 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - 2026-10-30, V7.10, PM3 (CS-R3, DSP-RX) controlled saves in PM Editor: dynamics units and `TypeNo` 5, mix pairing, input and surface output patch codes, the CSV set (`references/rivage-fields.md`).
 - 2026-11-03, V7.20, controlled saves in PM Editor 7.2.0 placed the COMP260, PM Comp, EXPANDER, GATE and DUCKING range ends (`references/rivage-fields.md`).
 - 2026-09-07, V7.10, controlled saves and editor loads in PM Editor 7.1.0 settled where a stereo main keeps its matrix send levels (`references/rivage-fields.md`).
+- 2026-09-06, V7.10, controlled saves in PM Editor 7.1.0 placed `BusType` FIXED and the matrix delay; a matrix pan knob wrote nothing (`references/rivage-fields.md`).
