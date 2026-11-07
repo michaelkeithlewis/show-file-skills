@@ -343,6 +343,15 @@ PM Editor V7.1.0, ST A to MT1, MT2 and MT3.
 - A bus with both stereo assigns clear loads with TO ST A and TO ST B dark. A TO ST A seen lit in an open session
   before any edit did not come from the file. (load)
 
+## V7.10: bus type, matrix delay and pan (save, load)
+
+PM Editor V7.1.0, one change per save.
+
+- `Mix[m].BusType`: setting MX 3 and MX 4 to FIXED wrote `FIXED` in place of `VARI`. (save)
+- Matrix delay: MT 36 delay +20.00 ms stored `Delay.Time` 20000 (microseconds), and MT 4 DELAY ON set `Delay.On`. A
+  written file with MT 4 delay on at 41.00 ms loaded with the delay lit at 41.00 ms. (save, load)
+- Matrix pan: turning the MT 36 pan knob wrote no byte. (save)
+
 ## V7.10: input patch codes (save)
 
 | Source | Code |
