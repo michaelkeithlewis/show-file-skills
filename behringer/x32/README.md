@@ -38,7 +38,6 @@ These come from published documents and are consistent with real scenes, but no 
 - The scene node list. Real files match it except the `/-stat/*` lines and `grp` on matrices and mains.
 - The X32 quick start guide says an insert on a bus, main or matrix swaps between pre-EQ and post-EQ.
 - FX 1-4 parameter order follows the parser published with the protocol doc.
-- Head amp gain moves in 0.5 dB steps: a one-pixel drag in M32-Edit 4.4.0 offline took `/headamp/000` from +2.5 to +3.0, and one mouse wheel step moved it 2.5 dB (save). The channel delay `/ch/NN/delay` stores milliseconds to one decimal: 17.9 ms (shown with 20.1 ft and 6.14 m) saved as `OFF  17.9` (save). M32-Edit writes the same `#4.0#` scene text.
 
 ## What we don't know
 
@@ -59,8 +58,6 @@ These come from published documents and are consistent with real scenes, but no 
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
-
-- 2026-11-07, M32-Edit 4.4.0 offline, one-change scene saves: head amp step 0.5 dB, channel delay in ms.
 
 ## Built on tour
 
