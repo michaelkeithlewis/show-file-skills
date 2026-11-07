@@ -21,6 +21,7 @@ Covers QL1 and QL5. File extension: `.CLF`.
 - Patch codes differ from CL: 65 to 72 are INPUT 1 to 8, and 193 to 216 are INPUT 9 to 32 (BB-CSV-2).
 - A patch to FX 3B written into a QL show with another rack set-up came back as NONE (BB-RACK).
 - A CSV import needs all nine files, or QL Editor shows one error box per missing file. A header-only file raises no box and changes nothing (FORMAT.md 3.4.1, BB-CSV-3).
+- CL Editor 5.8.1 controlled saves (same `.CLF` layout) placed the input insert, direct out, delay, ATT, gate, comp, EQ and send cells, the mix, matrix, ST and MONO processing and fader cells, and the shared hold and release time ladder (`references/FORMAT.md` 3.8). Read from saves only; no written file has been loaded with them.
 
 ## What we don't know
 
@@ -39,3 +40,5 @@ Covers QL1 and QL5. File extension: `.CLF`.
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+- 2026-09-19, CL Editor 5.8.1, controlled saves placed input processing, sends and the mix, matrix, ST, MONO and DCA master cells (`references/FORMAT.md` 3.8).
