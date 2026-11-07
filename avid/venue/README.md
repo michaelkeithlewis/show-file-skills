@@ -27,6 +27,7 @@ VENUE-style Inputs, Outputs and Plug-Ins pages.
   UNVERIFIED) and the test behind it.
 - `references/plugins.md`: what a Waves SoundGrid rack slot and an Avid Channel Strip slot hold.
 - `references/FORMAT.md`: the first notes, for classic shows.
+- `references/editor-acceptance.md`: what VENUE Standalone accepts, refuses or silently drops when it loads a generated S6L show.
 
 ## Requirements
 

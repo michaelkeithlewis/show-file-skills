@@ -25,3 +25,5 @@ Covers DM5 and DM5 Compact. File extensions: `.dm7f` and `.dmxf`.
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+- 2026-10-19, DM5 Editor (version not recorded), DM5 and DM5 Compact exports were accepted in a recorded editor run (`references/editor-acceptance.md`).

@@ -11,6 +11,7 @@ This folder is documentation only. There is no SQ reader or writer yet.
 | File | Content |
 |---|---|
 | `references/FORMAT.md` | Show folder, header and CRC, the 14 sections, value laws, strip blocks, patch and head amps, processing and DEEP models, sends, bus config, output patch, FX racks, desk-wide settings, version differences |
+| `references/editor-acceptance.md` | What SQ MixPad accepts, refuses or silently drops when it loads a generated show |
 
 ## How the SQ differs from Avantis and dLive
 
@@ -43,6 +44,7 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 - Switching MixPad between SQ-5, SQ-6 and SQ-7 rewrites nothing in the file (MixPad check; a real SQ-5 load is not checked).
 - LR balance is +0x149 on block 104; matrices show no balance or pan control; Group 1 delay sits at +0x130 like an input's; the compressor key source takes a group, aux, LR or matrix by block number (SQ MixPad 1.6.1 saves, `references/FORMAT.md`).
 - Peak Limiter 76 ratio codes 01-03 are 4, 8 and 12:1; Tube Stage modes 0-5 are all save-proven; Input to PAFL Source codes are 0 Post Preamp, 2 Post PEQ, 3 Post Delay/AMM, 4 Post Compressor; gang attribute bits 0-11 are placed, and only inputs can be ganged (SQ MixPad 1.6.1 saves, `references/FORMAT.md`).
+- A generated show loads in MixPad. Proven by an editor run (2026-10-15). No generated show has been loaded on a physical SQ.
 
 ## What we don't know
 
@@ -79,6 +81,8 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 2026-11-05, SQ MixPad 1.6.1, controlled saves placed LR balance, group delay and group, aux, LR and matrix compressor key sources; matrices have no balance control (`references/FORMAT.md`).
 
 2026-11-07, SQ MixPad 1.6.1, one-change saves placed the Peak Limiter 76 ratio codes, all six Tube Stage modes, the Input to PAFL Source codes and every gang attribute bit (`references/FORMAT.md`).
+
+2026-10-15, SQ MixPad (version not recorded), a generated SQ show was accepted; a no-edit round trip of a show saved on a physical SQ is byte-identical and keeps the show's own scene label (`references/editor-acceptance.md`).
 
 ## Built on tour
 

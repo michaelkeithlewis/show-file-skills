@@ -42,6 +42,7 @@ change in a command is refused, nothing is written.
 - `scripts/yamaha_tool.py`: `show`, `check`, `ports`, and one command per write (`rename`, `colour`, `icon`, `fader`,
   `on`, `hpf`, `patch`, `preamp`, `dca`, `busname`), plus `apply` for a JSON list of changes.
 - `references/FORMAT.md`: both file generations, where each value lives, and the test that proved each fact.
+- `references/editor-acceptance.md`: what the Yamaha offline editors accept, refuse or silently drop when they load a generated show.
 
 ## Requirements
 

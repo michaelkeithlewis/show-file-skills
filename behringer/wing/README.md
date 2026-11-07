@@ -14,6 +14,7 @@ line with its source.
 | File | Content |
 |---|---|
 | `references/FORMAT.md` | Container, `ae_data` layout, value laws, sockets and patching, outputs, channel processing, dynamics models and ranges, sends, monitor and talkback, effects, layers and safes, library files, the blank snapshot, firmware differences, what WING Edit writes |
+| `references/editor-acceptance.md` | What WING-Edit accepts, refuses or silently drops when it loads a generated snapshot |
 
 ## Safety
 
@@ -38,6 +39,8 @@ Edit, check it, save it from WING Edit, and load only that save. Do the first lo
 - WING-Edit 3.3.3 loads a legacy `D241` token in a 3.3 file as the stock compressor. Proven by a load and save.
 - The WING-Edit 3.3.3 INIT CONSOLE snapshot, full size and Compact (`references/FORMAT.md`, "The blank
   snapshot"). Proven by the editor saves, held byte for byte.
+- A generated snapshot loads in WING-Edit with gate and compressor on exactly the channels written and 48V on exactly the channels written. Proven by a load of an 8-channel snapshot (2026-08-23).
+- A stereo Source on an adjacent odd and even pair shows one name on both strips in WING-Edit. Proven by a load (2026-10-18).
 
 ## From the manual and the protocol doc
 
@@ -76,6 +79,8 @@ These come from published documents and are consistent with real snapshots, but 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-10-29, WING-Edit 3.3.3, contributor reading: `DEQ` and `DEQ2` keys and `mode` decoded from the editor page and saves.
+- 2026-08-23, WING-Edit (version not recorded), a generated 8-channel snapshot loaded with gate and compressor lit on channels 1 to 8 and 48V on channels 4 to 6 (`references/editor-acceptance.md`).
+- 2026-10-18, WING-Edit (version not recorded), a stereo Source on an adjacent odd and even pair showed its one name on both strips, while the file kept both typed names.
 
 ## Built on tour
 

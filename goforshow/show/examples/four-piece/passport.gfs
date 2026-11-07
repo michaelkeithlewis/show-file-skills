@@ -1,0 +1,27 @@
+{
+  "created": "2026-01-01T00:00:00Z",
+  "created_by": {
+    "name": "synthetic example"
+  },
+  "event": {
+    "city": "",
+    "dates": [],
+    "name": "Example Four-Piece",
+    "stages": [],
+    "venue": ""
+  },
+  "gfs_version": 3,
+  "integrity": "sha256:3a4b3d69f0d307ddc46d0e9214c706ed3a64e856e9be1b215de9dac61073c831",
+  "modules": {
+    "show": {
+      "count": 4,
+      "encrypted": false,
+      "version": 1
+    }
+  },
+  "scope": {
+    "dates": [],
+    "stages": []
+  },
+  "type": "passport"
+}

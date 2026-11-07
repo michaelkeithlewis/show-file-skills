@@ -30,6 +30,7 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - U76 and Opt-2A parameter words were pinned by controlled saves; MBC4 by four controlled saves and a load (`references/premium-rack.md`).
 - Confirmed 2026-10-31 in DM Editor 2.0.1 (DM7 V2.01): the +48V master is `Unit.48VMaster` in the Setup entry (`SetupBackupFile.bup`). Setup > General "+48V Active" off and on, each saved with Save As, read 1, 0, 1. DM Editor loads the Setup entry only with "Load with System Setting". A file with the master off and 48V on OMNI 1 and 2 showed General +48V Active off and +48V lit on the CH 1 channel bar (BB-DM-MASTER).
 - DM7 Editor 1.7 controlled saves (V1.73 layout): Legacy Comp ratio inf = 255; Diode Bridge ratio steps 1.5 to 20:1 = index 0 to 6; FET Limiter word 6 = 10 x (input dB + output dB); mix, matrix and stereo insert send kinds 0x13E, 0x140 and 0x142; the Rev. HD Hall word laws including the reverb time index; delay times in ms x10; An. Delay Modern's delay curve (`references/dm7-fields.md`).
+- The DM7 Editor V1.7.5 offline does not respond to the +48V and phase buttons, so neither can be set or captured offline. Proven by repeated clicks with before and after screens (2026-08-03).
 
 ## What we don't know
 
@@ -74,3 +75,5 @@ Covers DM7 and DM7 Compact. File extensions: `.dm7f` and `.dmxf`.
 - 2026-10-30, DM Editor 2.0 and RIVAGE PM Editor 7.2, DynamicEQ4 Q law corrected against a DM Editor reading (0.91 at 61); MBC4 words proven on both desks.
 - 2026-10-31, DM Editor 2.0.1, DM7 V2.01: the +48V master flipped in the editor and read at `Unit.48VMaster`; a file with the master off loaded with System Setting showed the master off and the channel 48V lamp lit. Ported to `references/dm7-fields.md` and `references/FORMAT.md` (BB-DM-MASTER).
 - 2026-11-05, DM7 Editor 1.7 (V1.73 layout), controlled saves placed Legacy Comp, Diode Bridge and FET Limiter words, output insert send kinds and FX rack word laws (`references/dm7-fields.md`).
+- 2026-08-03, DM7 Editor V1.7.5, a session with channel 1 renamed loaded and showed the new name; offline, the +48V and phase buttons do not respond; the file-open sheet remembers the previous folder, so a scripted load can reload the old file (`references/editor-acceptance.md`).
+- 2026-09-01, DM7 Editor (version not recorded), a real show with mix-bus names not written opened with the factory names Mix 1 to Mix 8.

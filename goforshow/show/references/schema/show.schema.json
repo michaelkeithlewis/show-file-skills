@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/michaelkeithlewis/show-file-skills/goforshow/show/references/schema/show.schema.json",
+  "title": "Show module (proposed)",
+  "description": "What an engineer states about a show, with no console encoding in it. Stored as show/show.json inside a .show container.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "channels"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "notes": { "type": "string", "maxLength": 4000 },
+    "channels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/channel" }
+    },
+    "patch": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/patch_entry" }
+    },
+    "stage": { "$ref": "#/$defs/stage" },
+    "outputs": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/output" }
+    },
+    "processing": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/processing" }
+    }
+  },
+  "$defs": {
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "name"],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "name": { "type": "string", "maxLength": 64 },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "enum": ["mic", "di", "line", "playback", "talkback", "other"] },
+            "model": { "type": "string", "maxLength": 64 }
+          }
+        },
+        "instrument": { "type": "string", "maxLength": 64 },
+        "phantom": { "type": "boolean" },
+        "polarity_inverted": { "type": "boolean" },
+        "stereo_link": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["partner", "side"],
+          "properties": {
+            "partner": { "type": "integer", "minimum": 1, "maximum": 512 },
+            "side": { "enum": ["left", "right"] }
+          }
+        },
+        "notes": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "patch_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "location", "socket"],
+      "properties": {
+        "channel": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "location": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "socket": { "type": "integer", "minimum": 1, "maximum": 512 }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_m", "depth_m", "elements"],
+      "properties": {
+        "width_m": { "type": "number", "minimum": 0.5, "maximum": 100 },
+        "depth_m": { "type": "number", "minimum": 0.5, "maximum": 100 },
+        "elements": {
+          "type": "array",
+          "maxItems": 512,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "label", "x_m", "y_m"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9_-]{1,32}$" },
+              "kind": { "enum": ["performer", "instrument", "monitor", "riser", "di", "mic_stand", "other"] },
+              "label": { "type": "string", "maxLength": 64 },
+              "x_m": { "type": "number", "minimum": -100, "maximum": 100 },
+              "y_m": { "type": "number", "minimum": -100, "maximum": 100 },
+              "channels": {
+                "type": "array",
+                "maxItems": 64,
+                "items": { "type": "integer", "minimum": 1, "maximum": 512 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "name", "kind"],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1, "maximum": 256 },
+        "name": { "type": "string", "maxLength": 64 },
+        "kind": { "enum": ["main", "group", "aux", "matrix", "monitor", "iem", "fx_send", "direct", "other"] },
+        "stereo": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "processing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel"],
+      "properties": {
+        "channel": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "high_pass_hz": { "type": "number", "minimum": 0, "maximum": 1000 },
+        "gate": { "type": "boolean" },
+        "compressor": { "enum": ["off", "light", "medium", "heavy"] },
+        "eq_notes": { "type": "string", "maxLength": 1000 },
+        "sends": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["output", "level_db"],
+            "properties": {
+              "output": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "level_db": { "type": "number", "minimum": -90, "maximum": 10 }
+            }
+          }
+        },
+        "notes": { "type": "string", "maxLength": 1000 }
+      }
+    }
+  }
+}
