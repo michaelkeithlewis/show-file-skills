@@ -97,10 +97,12 @@ Input/Trim -> Channel Delay -> DiGiTube -> Filters(HPF/LPF) -> [Insert A] -> EQ 
   - Comp 1d: model 0b (0 Classic, 3 Vintage VCA, 4 FET, 5 Optical, 8 Leveling amp), on 02, mix 47 (1.0 = 100 %),
     threshold 0e, knee 0f (1 hard, 0 soft), attack 11 / release 12 (s), ratio 10, gain 09, sensing 46 (0 RMS,
     1 peak), side-chain filter on 03 with low (05, 1) and high (05, 0), stereo link 3f.
-    Optical: attack 48 and recovery 49 (0 fast, 1 medium, 2 slow); the ratio is a step, 4c: 2, 3, 4, 5 with the ratio
-    10 at 2:1, 3:1, 4:1, 6:1 in real sessions. FET: input 41, ratio button 4a (1 4:1, 2 8:1, 3 12:1, 4 20:1), output 4d.
-    Leveling amp: mode 50 (0 compress, 1 limit), gain 51 (default 25), peak reduction 52 (default 20), side-chain
-    emphasis 53 (51-53 not console-tested).
+    Optical: attack 48 and recovery 49 (0 slow, 1 medium, 2 fast; one-change saves, Quantum 338 V2242); the ratio is a step, 4c: 2, 3, 4, 5 with the ratio
+    10 at 2:1, 3:1, 4:1, 6:1 in real sessions. FET: input 41, ratio button 4a (0 ALL, 1 4:1, 2 8:1, 3 12:1, 4 20:1; one button stepping 4, 8, 12, 20, ALL; a new
+    FET starts on 1), output 4d.
+    Leveling amp: mode 50 (0 compress, 1 limit; one-change saves), gain 51 (default 25), peak reduction 52 (default
+    20). Quantum 338 V2242 saves hold no 53 cell and its panel has no side-chain emphasis control: the side-chain
+    controls are listen and the low and high filter.
     Controls per model: Classic threshold, attack, release, ratio, gain, mix, knee, sensing; Vintage VCA threshold,
     ratio, gain, mix; FET input, attack, release, output, ratio buttons, mix; Optical threshold, ratio step, gain, mix,
     attack, recovery; Leveling amp peak reduction, gain, mix, compress / limit.
