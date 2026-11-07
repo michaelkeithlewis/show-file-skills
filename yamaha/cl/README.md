@@ -23,6 +23,7 @@ Covers CL1, CL3 and CL5. File extension: `.CLF`.
 - Head amp writes cover OMNI 1 to 8 only. CL Editor showed every gain from -6 to +50 dB, +60 dB and +66 dB.
 - Stored scenes on format 7 take names, colours and patch. A recall showed the written values (BB-SCENE).
 - A CSV import needs all nine files, or CL Editor shows one error box per missing file. A header-only file raises no box and changes nothing (FORMAT.md 3.4.1, BB-CSV-3).
+- CL Editor 5.8.1 controlled saves placed the input insert, direct out, delay, ATT, gate, comp, EQ and send cells, the mix, matrix, ST and MONO processing and fader cells, and the shared hold and release time ladder (`references/FORMAT.md` 3.8). Read from saves only; no written file has been loaded with them.
 
 ## What we don't know
 
@@ -39,3 +40,5 @@ Covers CL1, CL3 and CL5. File extension: `.CLF`.
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+- 2026-09-19, CL Editor 5.8.1, controlled saves placed input processing, sends and the mix, matrix, ST, MONO and DCA master cells (`references/FORMAT.md` 3.8).
