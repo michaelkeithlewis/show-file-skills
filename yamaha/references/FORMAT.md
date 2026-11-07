@@ -290,6 +290,121 @@ On a QL, ports 1 to 32 are INPUT 1 to 32 (patch codes 65 to 72 and 193 to 216). 
 minus 6. The editor showed every value from -6 to +50 dB, +60 dB and +66 dB. A channel patched from Dante or a
 slot has its head amp on another device, so this tool refuses a head amp change on it.
 
+### 3.8 Processing, sends and buses (CL Editor saves)
+
+One control per save in CL Editor 5.8.1: the control dialled, the scene stored over #001, the file saved, and the stored
+scene's MEMAPI data compared. Offsets are in the frame of 3.2 (they land on its fader, ON, HPF, DCA, mute group and
+name offsets). A per-slot table holds 96 slots as in 3.1; mix tables hold 24, matrix tables 8. Every plant was read back
+from the saved file as dialled. No written file has been loaded with these cells yet.
+
+Inputs:
+
+| Value | Offset | Encoding | Proof |
+| --- | --- | --- | --- |
+| Insert ON | 1,962 | mask | save |
+| Insert point | 1,974 | u8 per slot: 0 PRE EQ, 1 PRE FADER, 2 POST ON | save |
+| Direct out ON | 2,070 | mask | save |
+| Direct out point | 2,082 | u8 per slot: 0 PRE HPF, 1 PRE EQ, 3 POST ON (PRE FADER between them in the picker) | save |
+| Direct out level | 2,178 | u16 per slot, the fader rule of 3.5 (0x337 to 0x333 = -0.20 dB) | save |
+| Delay ON | 2,778 | mask | save |
+| Delay time | 2,806 | u16 per slot, ms x100 (0.24 ms = 24) | save |
+| Input attenuator (ATT) | 3,404 | i16 per slot, dB x10 | save |
+| LCR mode (TO ST/MONO) | 1,445 | mask, 1 = LCR | save |
+| Gate ON | 3,704 | mask | save |
+| Dynamics 1 type | 3,716 | u8 per slot: 0 GATE, 1 DUCKING, 2 COMPRESSOR, 3 EXPANDER, 4 COMPANDER-H, 5 COMPANDER-S, 6 DE-ESSER | save |
+| Gate key in source | 3,836 | u8 per slot: 0 SELF PRE EQ, 1 SELF POST EQ, 2 to 5 MIX OUT 21 to 24, 6 to 13 CH x POST EQ | save |
+| Gate key filter ON | 3,932 | mask | save |
+| Gate key filter frequency | 4,040 | u8 per slot, the EQ frequency index (32 = 100 Hz) | save |
+| Gate attack | 4,232 | u8 per slot, ms | save |
+| Gate range | 4,328 | i8 per slot, dB | save |
+| Gate hold | 4,424 | u8 per slot, time ladder index (below) | save |
+| Gate decay | 4,520 | u8 per slot, time ladder index | save |
+| Comp ON | 5,204 | mask | save |
+| Dynamics 2 type | 5,216 | u8 per slot, the Dynamics 1 list | save |
+| Comp key in source | 5,336 | u8 per slot, the gate's list | save |
+| Comp makeup gain | 6,212 | u8 per slot, dB x10 | save |
+| Comp knee | 6,308 | u8 per slot: 0 hard, 1 to 5 the knee number | save |
+| EQ ON | 6,920 | mask | save |
+| EQ LOW type, HIGH type | 6,932, 7,028 | u8 per slot: 0 PEQ, 1 shelf | save |
+| EQ band b bypass | 38,572 + 12(b-1) | mask per band, 1 = bypassed | save |
+| TO MIX m: ON, PRE, levels | 10,448 + 216(m-1) | 12-byte ON mask, 12-byte PRE mask, then 96 x u16 levels on the fader rule | save |
+
+Mixes (MIX m; a u8 table steps 1 per mix, a u16 table 2):
+
+| Value | Offset | Encoding | Proof |
+| --- | --- | --- | --- |
+| ON | 19,091 | 3-byte mask, bit m-1 | save |
+| Master fader | 19,118 | u16 per mix, the fader rule (0x337 to 0x305 = -2.50 dB) | save |
+| Stereo pairing | 19,166 | 3-byte mask, bit m-1 | save |
+| ATT | 19,170 | i16 per mix, dB x10 | save |
+| LCR mode | 18,935 | 3-byte mask | save |
+| TO ST assign | 20,621 | 3-byte mask | save |
+| Pan | 20,627 | i8 per mix, -63 to +63 | save |
+| Comp ON | 19,245 | 3-byte mask | save |
+| Comp attack | 19,377 | u8, ms | save |
+| Comp release | 19,449 | u8, time ladder index | save |
+| Comp ratio | 19,473 | u8 index on the 16-step ratio list (6 = 2.5:1, 10 = 5:1) | save |
+| Comp makeup gain | 19,497 | u8, dB x10 | save |
+| Comp knee | 19,521 | u8, as the inputs | save |
+| Comp threshold | 19,546 | i16, dB x10 | save |
+| EQ ON | 19,624 | 3-byte mask | save |
+| EQ LOW type, HIGH type | 19,627, 19,651 | u8: 0 PEQ, 1 shelf | save |
+| EQ band 1 Q, frequency | 19,684, 19,708 | u8 Q index (23 = 0.7, 19 = 1.1), u8 frequency index (36 = 125 Hz) | save |
+| EQ band b gain | 19,732 + 100(b-1) | i16, dB x10 (bands 1 and 4 saved) | save |
+| EQ band b bypass | 38,692 + 3(b-1) | 3-byte mask | save |
+| TO MATRIX t: ON, PRE, levels | 20,089 + 54(t-1) | ON mask +0, PRE mask +3, 24 x u16 levels from +7 (t = 1 and 2 saved) | save |
+| DCA d, mute group g | 20,681 + 3(d-1), 20,657 + 3(g-1) | 3-byte masks | save |
+
+Matrices:
+
+| Value | Offset | Encoding | Proof |
+| --- | --- | --- | --- |
+| Insert point | 20,763 | u8 per matrix (1 to 2 = POST ON) | save |
+| ON | 20,771 | 1-byte mask | save |
+| Master fader | 20,780 | u16 per matrix, the fader rule | save |
+| ATT | 20,798 | i16, dB x10 | save |
+| Comp ON | 20,823 | mask | save |
+| Comp attack, release, ratio, makeup, knee | 20,867, 20,891, 20,899, 20,907, 20,915 | as the mixes | save |
+| Comp threshold | 20,924 | i16, dB x10 | save |
+| EQ ON | 20,950 | mask | save |
+| EQ band 1 Q, frequency, gain | 20,970, 20,978, 20,986 | u8 index, u8 index, i16 dB x10 | save |
+| EQ band 2 Q, frequency, gain | 21,003, 21,011, 21,020 | u8 index, u8 index, i16 dB x10 | save |
+| EQ band 3 Q, frequency, gain | 21,037, 21,045, 21,054 | u8 index, u8 index, i16 dB x10 | save |
+| EQ band 4 Q, frequency, gain | 21,071, 21,079, 21,088 | u8 index, u8 index, i16 dB x10 | save |
+| DCA d, mute group g | 21,112 + (d-1), 21,104 + (g-1) | 1-byte masks | save |
+
+ST and MONO:
+
+| Value | Offset | Encoding | Proof |
+| --- | --- | --- | --- |
+| Insert ON | 21,142 | u8, bit 0 ST L, bit 1 ST R | save |
+| ON | 21,146 | u8, bit 0 ST L, bit 1 ST R, bit 2 MONO | save |
+| Balance | 21,147 (L), 21,148 (R) | i8, R mirrors L | save |
+| Fader | 21,150 ST L, 21,152 ST R, 21,154 MONO | u16, the fader rule | save |
+| Comp attack, release, ratio, makeup, knee (L) | 21,187, 21,196, 21,199, 21,202, 21,205 | u8, as the mixes; R at +1 | save |
+| Comp threshold (L) | 21,208 | i16, dB x10; R at +2 | save |
+| EQ band b Q, frequency, gain (L) | 21,229, 21,232, 21,236, each + 14(b-1) | u8 index (R +1), u8 index (R +1), i16 dB x10 (R +2) | save |
+| TO MATRIX 1 ON, level | 21,287, 21,290 | u8 bits 0 and 1 ST L and R (switch together), bit 2 MONO; u16 on the fader rule | save |
+| DCA n, mute group g | 21,373 + (n-1), 21,365 + (g-1) | u8, bits 0 and 1 L and R | save |
+
+DCAs and mute groups:
+
+| Value | Offset | Encoding | Proof |
+| --- | --- | --- | --- |
+| DCA OFF | 21,389 | u16, bit n-1 set = DCA n off | save |
+| DCA master fader | 21,458 + 2(n-1) | u16, the fader rule (421 = -20.2 dB) | save |
+| Mute group engaged | 1,264 | 1-byte mask | save |
+
+- Time ladder: gate hold, gate decay and comp release share one index, a 48 kHz sample count. samples = index + 1 up to
+  index 32; then segments k = 1, 2 ... of 16 steps each, step 2^k samples (samples = 33 + 16 x (2^k - 2) + m x 2^k,
+  m = 1 to 16). Hold ms = samples / 48. Release and decay ms = samples x 256 / 48. All 216 hold readouts (index 0 = 0.02
+  ms to 215 = 1.96 s) and 50 release readouts (to index 159 = 42.3 s) sit on it; the editor truncates the display to
+  three digits. A save of hold index 215 stored 215. (save, editor display)
+- The HPF slope button, the M(C) button, the insert and direct out point buttons themselves, and the matrix delay knob
+  moved no scene byte. (save)
+- Head amp gain, +48V and digital gain on the Selected Channel window moved no byte in the stored scene: the head amp is
+  per port, outside the scene. Output port delay (Outport Setup) is also per port, outside the scene. (save)
+
 ## 4. Generation 2 container: `#YAMAHA MBDF`
 
 ### 4.1 Header (BB-G2-WALK)
