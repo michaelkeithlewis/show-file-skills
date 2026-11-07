@@ -49,6 +49,10 @@ details.
 - Avantis Director does not open a show name longer than 14 characters before `.tar.gz` (`references/console-safety.md`).
 - A FollowPanSettings block that does not match the bus config crashes Avantis Director on load (`references/mixer.md`).
 - dLive to Avantis and Avantis to dLive translations loaded on an Avantis Solo (FW 2.01) and a dLive S3000 (FW 2.12) (`references/translate-dlive.md`).
+- Avantis Director V2.01 offline, one change per save (values in `Show/Scenes/StageBoxScene65535.tar.gz`, the `.dat` inside):
+  - PEQ width is a u16, high byte the 25-step width index, low byte a fraction between steps; the screen shows only the step. Ch 1 band 2: 0.85 oct `08 2E`, 0.6 oct `0D 00`, 0.45 oct `10 65`, 1/3 oct `12 61`. Whether the DSP uses the fraction is not tested.
+  - The file holds 16 `FX Manager NN` records, but Director offers 12 standard racks (FX returns 1-12, FX sends 1-8), so records 13-16 go unused. A rack record runs `05 02 00`, the FX type (00 Empty Rack, 03 SMR Reverb), then an 18-character name, space-padded, then `00 7C 00 7C 00`. Store New capped a 26-character name at 18 (`ABCDEFGHIJKLMNOPQR`); a recalled preset stored as "Chamber Small" plus five spaces.
+  - Show names: the Store Show keyboard stops at 16 characters. Shows named with 15 and 16 characters stored, recalled and showed in full under Utility > Status "Last Show". The name is only the file name; it is not inside the show. `references/console-safety.md` still says 14 and is left as it is.
 
 ## What we don't know
 
@@ -87,6 +91,8 @@ details.
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 2026-10-30, Avantis Director V1.30 and V2.01: field map additions contributed by markcarlberg (pull request #2), merged into `references/` under "markcarlberg, pull request #2" headings.
+
+2026-11-07, Avantis Director V2.01 offline: one-change saves settled the PEQ width coding, the FX rack count and name length, and the 16-character show name limit.
 
 ## Built on tour
 
