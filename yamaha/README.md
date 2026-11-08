@@ -120,9 +120,7 @@ template, preset, font or screenshot is copied here, and no Yamaha file ships wi
 This tool is not affiliated with or endorsed by Yamaha. Yamaha and the console names are trademarks of Yamaha
 Corporation. No warranty.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack planning app for touring and production crews.
+## Credits
 
 RIVAGE PM research by [John Merkel](https://www.instagram.com/johnmerkel_mix/) (Christ Community Chapel), from real PM5 shows. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 

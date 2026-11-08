@@ -78,8 +78,3 @@ The working code is in this repo:
 - PTSL (the scripting SDK) cannot set a track's output. `ptax.py` sets it through the output selector by control
   name. Accessibility controls only exist for tracks Pro Tools has drawn, so scroll or show the track first.
 - Plug-in demo prompts block automation. `demo_guard.py` dismisses them.
-
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.

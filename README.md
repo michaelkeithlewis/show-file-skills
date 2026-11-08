@@ -95,8 +95,6 @@ Each person here proved what they added on their own consoles and sessions.
 | Franklin Rice ([GitHub](https://github.com/franklinricemixes)) | Mix engineer | Pro Tools: macOS session-prep field notes on Pro Tools 2026.4.1 (routing IDs, session data import, Accessibility dialogs) |
 | markcarlberg ([GitHub](https://github.com/markcarlberg)) | Engineer | Cross-desk format notes: Allen & Heath SQ, Avantis and dLive, DiGiCo, Avid S6L, Yamaha DM7, DM3 and RIVAGE, Behringer X32 and WING |
 
-I'm Michael. When I'm not in a show file, I'm usually working on [Truck Packer](https://truckpacker.com), which plans truck packs for touring crews.
-
 ## Contributing
 
 Found a field we got wrong, or a firmware we have not seen? Open an issue with the console,

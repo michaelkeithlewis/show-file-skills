@@ -62,9 +62,6 @@ These come from published documents and are consistent with real scenes, but no 
 
 - 2026-11-07, M32-Edit 4.4.0 offline, one-change scene saves: head amp step 0.5 dB, channel delay in ms.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

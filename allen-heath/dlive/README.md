@@ -107,10 +107,7 @@ with a save-proven fact here, the repo fact stands until a save settles it:
 
 2026-10-31, Director 2.12 (Windows 11): show files named with 9, 14 and 16 characters recalled, and one named with 28 characters failed with "Show not found". A real show with 9 stored scenes, written again without them, recalled with no error and listed no scenes. Ported to `references/field-notes.md`.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 The scene safes map is by [Stefan "Hedde" Hettenbach](https://www.instagram.com/stefan_hettenbach/) (Clap! Live Solutions, Mannheim). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 

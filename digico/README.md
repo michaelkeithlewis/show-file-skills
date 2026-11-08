@@ -75,10 +75,7 @@ Not affiliated with DiGiCo or Allen & Heath. DiGiCo, Quantum, Mustard and Spice 
 dLive is a trademark of Allen & Heath. The format was decoded by hand and is not documented by the manufacturer.
 Check every session before it goes near a console. No warranty.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 DiGiCo field work by [Jan Rosenbauer](https://www.instagram.com/janrosenbauer/) (Wellenbrecher Audio, Hamburg), proven on a Quantum 112. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 
