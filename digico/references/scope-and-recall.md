@@ -2,7 +2,7 @@
 
 On a recall, a live value takes the snapshot's value only when three things all allow it: Global Scope recalls that module in the section, no safe on the strip keeps it, and the snapshot's own scope has it. A snapshot's scope is not a table in the snapshot record. It is a flag on the stored module states that the snapshot points at, so snapshots that share a state share its scope.
 
-Proven on a Quantum 112 at V2242 and V2242.4. Each fact comes from a one-change save (one edit on the console, Save As, then a byte compare with the file before) or from recalls fired on the console and saved. Console-saved shows from the Quantum 225, 326, 338 and 852 (V1742 to V2242) use the same flags. SD files are not tested.
+Proven on a Quantum 112 at V2242 and V2242.4. Each fact comes from a one-change save (one edit on the console, Save As, then a byte compare with the file before) or from recalls fired and saved in the editor or on the console. Console-saved shows from the Quantum 225, 326, 338 and 852 (V1742 to V2242) use the same flags. SD files are not tested.
 
 Keys are (module, param, band) in hex, as in [`FORMAT.md`](FORMAT.md).
 
@@ -204,7 +204,7 @@ An output socket's source comes back with the strip that feeds it, not with the 
 
 The recall experiment in [`io-patch.md`](io-patch.md) fits this. The snapshot held aux 1's socket with no source, so the aux's recalled Outputs left it empty.
 
-Proven by six save-backs: files written by bytes, loaded on a Quantum 112 at V2242, snapshots recalled at the console, saved. Replaying these rules and the recall rule above on each written file gives the console's live values and names in five of them. The sixth recall changed the source of 59 output sockets and emptied 51 of them. There the replay gives every value but five: 58 of the 59 sockets, and four values of two input sockets and two output sockets patched straight to each other. The five are under "What we don't know".
+Proven by six save-backs at V2242: files written by bytes, loaded, snapshots recalled, saved. Five are Quantum 112 files, four of them saved by its editor. The sixth was saved by the Quantum 326/338 editor. Replaying these rules and the recall rule above on each written file gives the console's live values and names in five of them. The sixth recall changed the source of 59 output sockets and emptied 51 of them. There the replay gives every value but five: 58 of the 59 sockets, and four values of two input sockets and two output sockets patched straight to each other. The five are under "What we don't know".
 
 ## The FX rack on a recall
 
@@ -217,10 +217,10 @@ A recall makes the FX rack the snapshot's. It takes what any FX value takes: Glo
 
 The console's FX > NEW does not store the new unit in any snapshot. So on a session whose Global Scope recalls FX, a new unit lasts until the next recall unless the snapshots are updated.
 
-Proven on a Quantum 112 at V2242:
+Proven at V2242:
 
-- One-change saves: FX > NEW added a delay, fed by an aux and with its return on an input, to a show with one snapshot. No snapshot held the new unit. Recalling the snapshot at the console then took the delay away, its strip and its section 201 record, and left the rest as a recall leaves it.
-- A save-back: a file written by bytes with seven FX units, its one snapshot recalled at the console. Three units went, four took the snapshot's algorithm and name, and one unit that was not live came back in the place of a reverb the recall took away.
+- One-change saves of a Quantum 112 session: FX > NEW added a delay, fed by an aux and with its return on an input, to a show with one snapshot. No snapshot held the new unit. Recalling the snapshot then took the delay away, its strip and its section 201 record, and left the rest as a recall leaves it.
+- A save-back from the Quantum 326/338 editor: a file written by bytes with seven FX units, its one snapshot recalled there. Three units went, four took the snapshot's algorithm and name, and one unit that was not live came back in the place of a reverb the recall took away.
 - Replaying these rules on the file before each recall gives the console's FX units with their values and names, and the FX records of section 201 byte for byte.
 
 ## Store and update
