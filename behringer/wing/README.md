@@ -82,9 +82,6 @@ These come from published documents and are consistent with real snapshots, but 
 - 2026-08-23, WING-Edit (version not recorded), a generated 8-channel snapshot loaded with gate and compressor lit on channels 1 to 8 and 48V on channels 4 to 6 (`references/editor-acceptance.md`).
 - 2026-10-18, WING-Edit (version not recorded), a stereo Source on an adjacent odd and even pair showed its one name on both strips, while the file kept both typed names.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

@@ -114,10 +114,7 @@ with a save-proven fact here, the repo fact stands until a save settles it:
 
 2026-09-01, Director archives, stereo inputs are held two ways: a gang table in the scene and an input stereo setting held at archive level outside every scene. The factory default show ships its last five input pairs as stereo.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 The scene safes map is by [Stefan "Hedde" Hettenbach](https://www.instagram.com/stefan_hettenbach/) (Clap! Live Solutions, Mannheim). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 

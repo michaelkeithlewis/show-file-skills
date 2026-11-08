@@ -126,6 +126,6 @@ Not covered:
 
 2026-11-07, Python 3.14.7, first draft: examples packed and re-packed to identical hashes (see Determinism check).
 
-## Built on tour
+## Credits
 
 Proposed by go·for·show, tools for live-sound engineers, built by a touring front-of-house and monitor engineer. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

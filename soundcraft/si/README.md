@@ -38,9 +38,6 @@ the show.
 
 2026-10-14, Si Offline Expression 2.2, a generated Expression show loaded and showed the plot name as the show name.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Full list of contributors: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

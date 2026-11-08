@@ -157,10 +157,6 @@ More Accessibility rules (save panels, hung jobs, Logic) are in `../../apple/mac
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
-## Built on tour
-
-Built by Michael Lewis, touring engineer and co-founder of
-[Truck Packer](https://truckpacker.com), the truck-pack planning app for touring
-and production crews.
+## Credits
 
 macOS session-prep field notes by [Franklin Rice](https://github.com/franklinricemixes). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

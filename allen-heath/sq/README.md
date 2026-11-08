@@ -84,9 +84,6 @@ Each line says how it was proven. Details and offsets are in `references/FORMAT.
 
 2026-10-15, SQ MixPad (version not recorded), a generated SQ show was accepted; a no-edit round trip of a show saved on a physical SQ is byte-identical and keeps the show's own scene label (`references/editor-acceptance.md`).
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

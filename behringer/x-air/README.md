@@ -32,9 +32,6 @@ show.
 
 2026-09-02, committed captures, the only compressor single-change is the on and off switch.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Full list of contributors: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

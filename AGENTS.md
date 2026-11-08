@@ -64,6 +64,6 @@ A contributor can add a show file or session as an example. This is the contribu
 
 ## Pull requests
 
-Every format folder README ends with the "Built on tour" line. Keep it. Do not overwrite text that a merged pull request added.
+Do not add a "built by" line or product promotion to any README. Do not overwrite text that a merged pull request added.
 
-When a pull request from a new contributor merges, add that person to the Contributors table in `README.md`: name, role, what they proved, and Instagram and GitHub links. Add a credit line under "Built on tour" in each folder README that the pull request changed.
+When a pull request from a new contributor merges, add that person to the Contributors table in `README.md`: name, role, what they proved, and Instagram and GitHub links. Add a credit line under "Credits" at the end of each folder README that the pull request changed. Create the section if the folder has none.

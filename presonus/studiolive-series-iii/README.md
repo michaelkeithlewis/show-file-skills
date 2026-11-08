@@ -32,9 +32,6 @@ the show.
 
 2026-10-19, Universal Control 5.1.1, a factory project stored for each model; grouped by comparing the saves.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Full list of contributors: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

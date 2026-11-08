@@ -69,9 +69,6 @@ These come from published documents and are consistent with real scenes, but no 
 - 2026-08-14, X32 and M32 firmware 2.7 and 4.0, desk-written scenes: 2.7 puts the channel blocks last and 4.0 puts them first, and five scenes covering both orders round-trip byte-identical when the source order is kept.
 - 2026-08-23, X32-Edit (version not recorded), a generated partial scene showed names, colours, a pair badge and EQ, gate and compressor on the channels it carried, and the editor kept its own state on the rest.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).

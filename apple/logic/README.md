@@ -76,7 +76,3 @@ Status: the bounce, insert-state and plug-in window code ran on a real project i
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
-
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack planning app for touring and production crews.

@@ -39,9 +39,6 @@ check it, save it from the editor, and load only that save. Do the first load at
 
 2026-10-20, HD96 Edit 2.4.2, colour, fader, gate, compressor on and off, high-pass and EQ on and off, and band shapes saved.
 
-## Built on tour
-
-Built by Michael Lewis, a touring engineer and co-founder of [Truck Packer](https://truckpacker.com), the truck-pack
-planning app for touring and production crews.
+## Credits
 
 Full list of contributors: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
