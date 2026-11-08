@@ -42,3 +42,5 @@ Covers CL1, CL3 and CL5. File extension: `.CLF`.
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-09-19, CL Editor 5.8.1, controlled saves placed input processing, sends and the mix, matrix, ST, MONO and DCA master cells (`references/FORMAT.md` 3.8).
+- 2026-09-01, CL Editor (version not recorded), colours translated from another desk showed wrong when the palette was wrong: purple and green swapped, white as blue, yellow as cyan, only red held. The palette read back holds off, purple, cyan, red, green and blue (`references/editor-acceptance.md`).
+- 2026-08-04, CL1 console, 48V can be held back on recall by the desk's recall-safe settings even when the file says on.

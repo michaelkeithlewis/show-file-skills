@@ -42,3 +42,4 @@ Covers QL1 and QL5. File extension: `.CLF`.
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-09-19, CL Editor 5.8.1, controlled saves placed input processing, sends and the mix, matrix, ST, MONO and DCA master cells (`references/FORMAT.md` 3.8).
+- 2026-09-03, CL and QL files read from a desk-written CL5 file, names are 8 characters, and the placeholder form is a fixed four-character name such as "ch10", not the spaced "ch 10" (`references/editor-acceptance.md`).

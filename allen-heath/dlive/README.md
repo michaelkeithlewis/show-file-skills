@@ -51,6 +51,7 @@ The examples in `examples/` are synthetic (a made-up band). Each script's docstr
   hold format constants.
 - `references/`: format notes for every section the tools touch, how the format was decoded, a safety write-up,
   and how to build a show from an input list (`show-maker.md`).
+- `references/editor-acceptance.md`: what Director accepts, refuses or silently drops when it loads a generated archive.
 - `examples/`: synthetic plans.
 
 ## Status
@@ -106,6 +107,12 @@ with a save-proven fact here, the repo fact stands until a save settles it:
 2026-10-30, Director V1.9x to V2.11: version 11-14 field notes contributed by markcarlberg (pull request #2), in `references/format-versions.md`.
 
 2026-10-31, Director 2.12 (Windows 11): show files named with 9, 14 and 16 characters recalled, and one named with 28 characters failed with "Show not found". A real show with 9 stored scenes, written again without them, recalled with no error and listed no scenes. Ported to `references/field-notes.md`.
+
+2026-08-23, Director V2.12, a re-saved archive recalled, System Status named the show and the exported tree matched the desk archive in all 184 files. Director shows its previous session when it opens a new file, so check the show name first (`references/editor-acceptance.md`).
+
+2026-08-24, Director archives (218 counted), 81,111 name slots hold a bare number and 79,560 of them equal their own channel number. The factory default show holds socket records for inputs 1 to 64 only, so 128 channels written with 48V on came back with 64 on.
+
+2026-09-01, Director archives, stereo inputs are held two ways: a gang table in the scene and an input stereo setting held at archive level outside every scene. The factory default show ships its last five input pairs as stereo.
 
 ## Credits
 

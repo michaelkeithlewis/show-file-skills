@@ -1,0 +1,609 @@
+{
+  "channels": [
+    {
+      "instrument": "kick drum",
+      "name": "Kick In",
+      "number": 1,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic kick mic"
+      }
+    },
+    {
+      "instrument": "kick drum",
+      "name": "Kick Out",
+      "number": 2,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "large-diaphragm dynamic"
+      }
+    },
+    {
+      "instrument": "snare drum",
+      "name": "Snare Top",
+      "number": 3,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic snare mic"
+      }
+    },
+    {
+      "instrument": "snare drum",
+      "name": "Snare Bottom",
+      "number": 4,
+      "phantom": false,
+      "polarity_inverted": true,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic snare mic"
+      }
+    },
+    {
+      "instrument": "hi-hat",
+      "name": "Hat",
+      "number": 5,
+      "phantom": true,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "small condenser"
+      }
+    },
+    {
+      "instrument": "tom",
+      "name": "Rack Tom",
+      "number": 6,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "clip dynamic"
+      }
+    },
+    {
+      "instrument": "tom",
+      "name": "Floor Tom",
+      "number": 7,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "clip dynamic"
+      }
+    },
+    {
+      "instrument": "cymbals",
+      "name": "OH L",
+      "number": 8,
+      "phantom": true,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "small condenser"
+      },
+      "stereo_link": {
+        "partner": 9,
+        "side": "left"
+      }
+    },
+    {
+      "instrument": "cymbals",
+      "name": "OH R",
+      "number": 9,
+      "phantom": true,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "small condenser"
+      },
+      "stereo_link": {
+        "partner": 8,
+        "side": "right"
+      }
+    },
+    {
+      "instrument": "bass guitar",
+      "name": "Bass DI",
+      "number": 10,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "di",
+        "model": "active DI"
+      }
+    },
+    {
+      "instrument": "bass guitar",
+      "name": "Bass Amp",
+      "number": 11,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic"
+      }
+    },
+    {
+      "instrument": "electric guitar",
+      "name": "Gtr 1",
+      "number": 12,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic"
+      }
+    },
+    {
+      "instrument": "electric guitar",
+      "name": "Gtr 2",
+      "number": 13,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "ribbon"
+      }
+    },
+    {
+      "instrument": "keyboard",
+      "name": "Keys L",
+      "number": 14,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "di",
+        "model": "stereo DI"
+      },
+      "stereo_link": {
+        "partner": 15,
+        "side": "left"
+      }
+    },
+    {
+      "instrument": "keyboard",
+      "name": "Keys R",
+      "number": 15,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "di",
+        "model": "stereo DI"
+      },
+      "stereo_link": {
+        "partner": 14,
+        "side": "right"
+      }
+    },
+    {
+      "instrument": "lead vocal",
+      "name": "Lead Vox",
+      "number": 16,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic vocal mic"
+      }
+    },
+    {
+      "instrument": "backing vocal",
+      "name": "Vox 2",
+      "number": 17,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic vocal mic"
+      }
+    },
+    {
+      "instrument": "backing vocal",
+      "name": "Vox 3",
+      "number": 18,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic vocal mic"
+      }
+    },
+    {
+      "instrument": "backing vocal",
+      "name": "Vox 4",
+      "number": 19,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic vocal mic"
+      }
+    },
+    {
+      "instrument": "percussion",
+      "name": "Perc L",
+      "number": 20,
+      "phantom": true,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "small condenser"
+      },
+      "stereo_link": {
+        "partner": 21,
+        "side": "left"
+      }
+    },
+    {
+      "instrument": "percussion",
+      "name": "Perc R",
+      "number": 21,
+      "phantom": true,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "small condenser"
+      },
+      "stereo_link": {
+        "partner": 20,
+        "side": "right"
+      }
+    },
+    {
+      "instrument": "playback",
+      "name": "Track L",
+      "number": 22,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "playback"
+      },
+      "stereo_link": {
+        "partner": 23,
+        "side": "left"
+      }
+    },
+    {
+      "instrument": "playback",
+      "name": "Track R",
+      "number": 23,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "playback"
+      },
+      "stereo_link": {
+        "partner": 22,
+        "side": "right"
+      }
+    },
+    {
+      "instrument": "click",
+      "name": "Click",
+      "number": 24,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "playback"
+      }
+    }
+  ],
+  "name": "Example Festival Act",
+  "notes": "Synthetic show for format testing.",
+  "outputs": [
+    {
+      "kind": "main",
+      "name": "Main",
+      "number": 1,
+      "stereo": true
+    },
+    {
+      "kind": "group",
+      "name": "Drums",
+      "number": 2,
+      "stereo": true
+    },
+    {
+      "kind": "monitor",
+      "name": "Wedge 1",
+      "number": 3
+    },
+    {
+      "kind": "monitor",
+      "name": "Wedge 2",
+      "number": 4
+    },
+    {
+      "kind": "iem",
+      "name": "Ears Lead",
+      "number": 5,
+      "stereo": true
+    },
+    {
+      "kind": "fx_send",
+      "name": "Hall Reverb",
+      "number": 6
+    }
+  ],
+  "patch": [
+    {
+      "channel": 1,
+      "location": "Stage box A",
+      "socket": 1
+    },
+    {
+      "channel": 2,
+      "location": "Stage box A",
+      "socket": 2
+    },
+    {
+      "channel": 3,
+      "location": "Stage box A",
+      "socket": 3
+    },
+    {
+      "channel": 4,
+      "location": "Stage box A",
+      "socket": 4
+    },
+    {
+      "channel": 5,
+      "location": "Stage box A",
+      "socket": 5
+    },
+    {
+      "channel": 6,
+      "location": "Stage box A",
+      "socket": 6
+    },
+    {
+      "channel": 7,
+      "location": "Stage box A",
+      "socket": 7
+    },
+    {
+      "channel": 8,
+      "location": "Stage box A",
+      "socket": 8
+    },
+    {
+      "channel": 9,
+      "location": "Stage box A",
+      "socket": 9
+    },
+    {
+      "channel": 10,
+      "location": "Stage box A",
+      "socket": 10
+    },
+    {
+      "channel": 11,
+      "location": "Stage box A",
+      "socket": 11
+    },
+    {
+      "channel": 12,
+      "location": "Stage box A",
+      "socket": 12
+    },
+    {
+      "channel": 13,
+      "location": "Stage box A",
+      "socket": 13
+    },
+    {
+      "channel": 14,
+      "location": "Stage box A",
+      "socket": 14
+    },
+    {
+      "channel": 15,
+      "location": "Stage box A",
+      "socket": 15
+    },
+    {
+      "channel": 16,
+      "location": "Stage box A",
+      "socket": 16
+    },
+    {
+      "channel": 17,
+      "location": "Stage box B",
+      "socket": 1
+    },
+    {
+      "channel": 18,
+      "location": "Stage box B",
+      "socket": 2
+    },
+    {
+      "channel": 19,
+      "location": "Stage box B",
+      "socket": 3
+    },
+    {
+      "channel": 20,
+      "location": "Stage box B",
+      "socket": 4
+    },
+    {
+      "channel": 21,
+      "location": "Stage box B",
+      "socket": 5
+    },
+    {
+      "channel": 22,
+      "location": "Stage box B",
+      "socket": 6
+    },
+    {
+      "channel": 23,
+      "location": "Stage box B",
+      "socket": 7
+    },
+    {
+      "channel": 24,
+      "location": "Stage box B",
+      "socket": 8
+    }
+  ],
+  "processing": [
+    {
+      "channel": 1,
+      "compressor": "medium",
+      "gate": true,
+      "high_pass_hz": 35
+    },
+    {
+      "channel": 3,
+      "compressor": "light",
+      "gate": true,
+      "high_pass_hz": 80
+    },
+    {
+      "channel": 10,
+      "compressor": "heavy",
+      "high_pass_hz": 30
+    },
+    {
+      "channel": 16,
+      "compressor": "medium",
+      "eq_notes": "gentle presence lift",
+      "high_pass_hz": 100,
+      "sends": [
+        {
+          "level_db": -4,
+          "output": 3
+        },
+        {
+          "level_db": 0,
+          "output": 5
+        },
+        {
+          "level_db": -12,
+          "output": 6
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "stage": {
+    "depth_m": 8,
+    "elements": [
+      {
+        "channels": [
+          10,
+          11
+        ],
+        "id": "bass",
+        "kind": "instrument",
+        "label": "Bass",
+        "x_m": 4,
+        "y_m": 4
+      },
+      {
+        "channels": [
+          17,
+          18,
+          19
+        ],
+        "id": "bv",
+        "kind": "performer",
+        "label": "Backing singers",
+        "x_m": 2.5,
+        "y_m": 2
+      },
+      {
+        "channels": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "id": "drums",
+        "kind": "instrument",
+        "label": "Drum riser",
+        "x_m": 0,
+        "y_m": 6
+      },
+      {
+        "channels": [
+          12
+        ],
+        "id": "gtr1",
+        "kind": "instrument",
+        "label": "Guitar 1",
+        "x_m": -4,
+        "y_m": 4
+      },
+      {
+        "channels": [
+          13
+        ],
+        "id": "gtr2",
+        "kind": "instrument",
+        "label": "Guitar 2",
+        "x_m": -2.5,
+        "y_m": 4
+      },
+      {
+        "channels": [
+          14,
+          15
+        ],
+        "id": "keys",
+        "kind": "instrument",
+        "label": "Keys",
+        "x_m": 5,
+        "y_m": 5.5
+      },
+      {
+        "channels": [
+          16
+        ],
+        "id": "lead",
+        "kind": "performer",
+        "label": "Lead singer",
+        "x_m": 0,
+        "y_m": 1.5
+      },
+      {
+        "channels": [
+          20,
+          21
+        ],
+        "id": "perc",
+        "kind": "instrument",
+        "label": "Percussion",
+        "x_m": -5,
+        "y_m": 5.5
+      },
+      {
+        "id": "wedge1",
+        "kind": "monitor",
+        "label": "Wedge 1",
+        "x_m": 0,
+        "y_m": 0.8
+      },
+      {
+        "id": "wedge2",
+        "kind": "monitor",
+        "label": "Wedge 2",
+        "x_m": 3,
+        "y_m": 0.8
+      }
+    ],
+    "width_m": 12
+  }
+}

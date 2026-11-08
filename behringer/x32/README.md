@@ -12,6 +12,7 @@ few facts were moved by a single save. `references/FORMAT.md` labels each line w
 | File | Content |
 |---|---|
 | `references/FORMAT.md` | Container, value grids and spellings, strip paths, enumerations, routing and head amps, outputs, desk-wide nodes, effects, firmware line sets, what X32-Edit writes |
+| `references/editor-acceptance.md` | What X32-Edit and X-AIR-Edit accept, refuse or silently drop when they load a generated scene |
 
 ## Safety
 
@@ -29,6 +30,9 @@ X32-Edit, check it, save it from X32-Edit, and load only that save. Do the first
 - Node token positions that held a non-default value in a firmware 4.0 export are proven by that save.
 - The contents of the X32-Edit 4.x "Initialize Settings > Mixer" scene (`references/FORMAT.md`, "What X32-Edit
   writes"). Proven by the editor save.
+- A scene that lists the global sections before the channel blocks loads in X32-Edit with all channel processing discarded and no error. Proven by loading generated scenes (2026-08-13).
+- Firmware 2.7 scenes put the channel blocks last and firmware 4.0 scenes put them first. Proven by five desk-written scenes that round-trip byte-identical in their own order.
+- A partial scene loads in X32-Edit, and channels it has no records for keep the editor state. Proven by a load (2026-08-23).
 
 ## From the protocol doc and the manual
 
@@ -61,6 +65,9 @@ These come from published documents and are consistent with real scenes, but no 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
 
 - 2026-11-07, M32-Edit 4.4.0 offline, one-change scene saves: head amp step 0.5 dB, channel delay in ms.
+- 2026-08-13, X32-Edit (version not recorded), a generated scene that lists the global sections before the channel blocks loaded with all channel processing discarded and no error (`references/editor-acceptance.md`).
+- 2026-08-14, X32 and M32 firmware 2.7 and 4.0, desk-written scenes: 2.7 puts the channel blocks last and 4.0 puts them first, and five scenes covering both orders round-trip byte-identical when the source order is kept.
+- 2026-08-23, X32-Edit (version not recorded), a generated partial scene showed names, colours, a pair badge and EQ, gate and compressor on the channels it carried, and the editor kept its own state on the rest.
 
 ## Credits
 

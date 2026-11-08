@@ -146,6 +146,7 @@ SD12 at V2242 (editor default) and V1619 (sample session). The keys and rules ar
 - Aux, group, Master and matrix output strips: EQ, compressor, gate, delay and trim. The editor kept 60 of 60 pairs of change kind and bus kind at both builds. The 60 pairs cover 490 slots, with no stray slot.
 - An SD12 bus holds 4 EQ bands. A low shelf sits on band 1 and a high shelf on band 4. The editor turns a shelf on band 2 or 3 into a bell.
 - Live edits on sessions with 3 snapshots were kept at both builds, and section 210 stayed as it was.
+- Sessions saved by the SD7, SD8, SD9, SD10 and SD11 offline editors re-export byte-identical when nothing is edited. Proven by byte compare of 11, 4, 10, 10 and 79 files (2026-10-18).
 
 ## What we don't know
 
@@ -188,3 +189,5 @@ SD12 at V2242 (editor default) and V1619 (sample session). The keys and rules ar
 - 2026-10-31, SD12 V1619 and V2242: settings of one snapshot loaded in the editor, the Snapshots screen showed the values, and the re-save kept them. A delete and an Insert New (no live change) written by bytes equalled the editor's own result, save times masked. Ported to `references/snapshots.md` and `references/engine-findings.md`.
 - 2026-10-31, SD12 V1619 and V2242: Restructure with clear snapshots off, 24 editor results (11 at V1619, 13 at V2242). Section 210 rebuilt by bytes equalled the editor's save byte for byte, save times masked. Loaded files re-saved equal and every snapshot fired. New auxes and groups started from the default strip. The lines above that say snapshots are not tested on an SD file no longer hold for the SD12 at V1619 and V2242 in these runs. Those notes stand. Ported to `references/snapshots.md`, `references/engine-findings.md` and `references/session-structure.md`.
 - 2026-11-01, SD12 V2242 and V1619: the editor's own 48kHz and 96kHz keys were captured (V2242 up and down, V2242 up with 3 snapshots, V1619 up). The rack swap, the input and aux output patch and bus processing were written by bytes, loaded and re-saved. Ported to `references/session-structure.md`, `references/io-patch.md`, `references/bus-processing.md` and `references/engine-findings.md`.
+- 2026-08-13, SD8 desk-written show (editor version not recorded), channel names are stored as number, colon, name. A tool that compares the stored name with the shown name sees a rename on every channel of an untouched show (`references/editor-acceptance.md`).
+- 2026-10-18, SD7, SD8, SD9, SD10 and SD11 offline editors (versions not recorded), sessions saved by each editor (11, 4, 10, 10 and 79 files) re-export byte-identical with no edit.

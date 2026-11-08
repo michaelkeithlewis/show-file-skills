@@ -54,3 +54,4 @@ Covers DM3 and DM3 Standard. File extension: `.dm3f`.
 
 - 2026-10-29, DM3 Editor 3.1, markcarlberg's blanks of both models and controlled saves mapped identity, patch, head amp, send, insert and output patch fields (`references/dm3-fields.md`).
 - 2026-10-31, DM3 Editor 3.1, a new session and files written for the test: the +48V master, the input patch, head amp gain and 48V, and the HPF each showed as read. Ported to `references/dm3-fields.md` and `references/FORMAT.md` (section 1.5).
+- 2026-07-29, DM3 Editor 3.0.0, fresh standard-strip exports and same-format channel relocation exports opened with no format error (`references/editor-acceptance.md`).

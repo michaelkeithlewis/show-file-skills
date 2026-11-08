@@ -124,6 +124,7 @@ Quantum 225 at V2242 (sample session) and V1619 (editor default). The keys and r
 - Insert in: 23 switches on groups and matrix outputs of a real V1619 show with 3 snapshots. The editor kept each one after it moved to the other state.
 - Live edits on a session with 3 snapshots were kept at V2242, and section 210 stayed as it was.
 - Quantum 338 V2242 offline editor, one change per save on Ch 1: Mustard Optical attack (1d, 48) and recovery (1d, 49) store 0 slow, 1 medium, 2 fast. The FET ratio button (1d, 4a) stores 0 for ALL, then 1 to 4 for 4, 8, 12 and 20:1; it is one button stepping 4, 8, 12, 20, ALL, and a new FET starts on 4:1. Levelling Amp (1d, 50) stores 0 Compress, 1 Limit. No (1d, 53) cell exists in these saves and the panel has no side-chain emphasis control. Comp type (1d, 0b): Classic 0, FET 4, Optical 5, Levelling Amp 8. A type change sets attack (1d, 11) to the new type's default (FET 0.0008 s, Levelling Amp 0.01 s). Every save moved only its one cell beyond the save stamps.
+- The Quantum 225 offline editor 21.0.2126 refuses a Quantum 112 session under a Quantum 225 name and loads a session built from its own factory session. Proven by the open dialog and a load (2026-10-18).
 
 ## What we don't know
 
@@ -175,3 +176,4 @@ Quantum 225 at V2242 (sample session) and V1619 (editor default). The keys and r
 - 2026-11-01 to 11-03, Quantum 326/338 editor V2242, one-change saves on a real show: where Restructure puts one more mono group, stereo group or mono aux, and a show's first stereo aux. Quantum 326/338 and Quantum 852 editors V2242: real shows with no bus of the width asked for, the bus written by bytes from another width or the master, loaded. Ported to `references/session-structure.md`.
 - 2026-11-02 to 11-04, Quantum 112 V2242: the Minimum session (no aux) with one mono aux added and saved. A file written by bytes equals the save. A session from Minimum with three auxes written that way loaded in the editor, and the sends metered. Ported to `references/session-structure.md`.
 - 2026-11-07, Quantum 338 V2242, one-change saves settled the Mustard Optical attack and recovery order, the FET ratio value for ALL and the Levelling Amp mode; (1d, 53) is absent.
+- 2026-10-18, Quantum 225 offline editor 21.0.2126, a Quantum 112 session handed over as a Quantum 225 session was greyed out in the open dialog and would not open, while the Quantum 112 editor opened the same file. A session built from the Quantum 225 editor's own factory session loaded (`references/editor-acceptance.md`).

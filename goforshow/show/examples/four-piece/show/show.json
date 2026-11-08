@@ -1,0 +1,154 @@
+{
+  "channels": [
+    {
+      "instrument": "kick drum",
+      "name": "Kick",
+      "number": 1,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic kick mic"
+      }
+    },
+    {
+      "instrument": "snare drum",
+      "name": "Snare",
+      "number": 2,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic snare mic"
+      }
+    },
+    {
+      "instrument": "bass guitar",
+      "name": "Bass",
+      "number": 3,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "di",
+        "model": "passive DI"
+      }
+    },
+    {
+      "instrument": "lead vocal",
+      "name": "Vox",
+      "number": 4,
+      "phantom": false,
+      "polarity_inverted": false,
+      "source": {
+        "kind": "mic",
+        "model": "dynamic vocal mic"
+      }
+    }
+  ],
+  "name": "Example Four-Piece",
+  "outputs": [
+    {
+      "kind": "main",
+      "name": "Main",
+      "number": 1,
+      "stereo": true
+    },
+    {
+      "kind": "monitor",
+      "name": "Wedge 1",
+      "number": 2
+    }
+  ],
+  "patch": [
+    {
+      "channel": 1,
+      "location": "Stage box A",
+      "socket": 1
+    },
+    {
+      "channel": 2,
+      "location": "Stage box A",
+      "socket": 2
+    },
+    {
+      "channel": 3,
+      "location": "Stage box A",
+      "socket": 3
+    },
+    {
+      "channel": 4,
+      "location": "Stage box A",
+      "socket": 4
+    }
+  ],
+  "processing": [
+    {
+      "channel": 1,
+      "compressor": "medium",
+      "eq_notes": "cut low mids, add beater click",
+      "gate": true,
+      "high_pass_hz": 40
+    },
+    {
+      "channel": 3,
+      "compressor": "heavy",
+      "high_pass_hz": 30
+    },
+    {
+      "channel": 4,
+      "compressor": "light",
+      "high_pass_hz": 100,
+      "sends": [
+        {
+          "level_db": -6,
+          "output": 2
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "stage": {
+    "depth_m": 4,
+    "elements": [
+      {
+        "channels": [
+          3
+        ],
+        "id": "bass",
+        "kind": "instrument",
+        "label": "Bass amp",
+        "x_m": 2,
+        "y_m": 1.5
+      },
+      {
+        "channels": [
+          1,
+          2
+        ],
+        "id": "drums",
+        "kind": "instrument",
+        "label": "Drum kit",
+        "x_m": 0,
+        "y_m": 2.5
+      },
+      {
+        "channels": [
+          4
+        ],
+        "id": "vox",
+        "kind": "performer",
+        "label": "Singer",
+        "x_m": -0.5,
+        "y_m": 0.8
+      },
+      {
+        "id": "wedge1",
+        "kind": "monitor",
+        "label": "Wedge 1",
+        "x_m": -0.5,
+        "y_m": 0.3
+      }
+    ],
+    "width_m": 6
+  }
+}

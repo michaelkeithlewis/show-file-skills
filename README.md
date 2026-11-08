@@ -94,6 +94,7 @@ Each person here proved what they added on their own consoles and sessions.
 | John Merkel ([Instagram](https://www.instagram.com/johnmerkel_mix/), [GitHub](https://github.com/jfmerkel)) | Mix engineer and audio director, Christ Community Chapel, Hudson, Ohio | Yamaha RIVAGE PM: show structure, value paths, scenes, library recall and editor-load tests from real PM5 shows |
 | Franklin Rice ([GitHub](https://github.com/franklinricemixes)) | Mix engineer | Pro Tools: macOS session-prep field notes on Pro Tools 2026.4.1 (routing IDs, session data import, Accessibility dialogs) |
 | markcarlberg ([GitHub](https://github.com/markcarlberg)) | Engineer | Cross-desk format notes: Allen & Heath SQ, Avantis and dLive, DiGiCo, Avid S6L, Yamaha DM7, DM3 and RIVAGE, Behringer X32 and WING |
+| go·for·show ([GitHub](https://github.com/viavespucci)) | Tools for live-sound engineers | Editor-acceptance notes for X32, WING, SQ, dLive, DiGiCo, VENUE and Yamaha; desk notes for Midas HD96, Soundcraft Si and Vi, PreSonus StudioLive III and Behringer X-Air; the X32 to DM7 translation note; the `.show` interchange proposal |
 
 ## Contributing
 

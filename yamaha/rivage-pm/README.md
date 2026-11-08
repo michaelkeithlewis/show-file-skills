@@ -37,6 +37,7 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - PM Editor V7.2.0 controlled saves placed the top of the dynamics ranges: COMP260 ratio 300:1 then inf, PM Comp and EXPANDER ratio 20:1 then inf, DUCKING range -72 dB then -inf, GATE range -inf (`references/rivage-fields.md`, section V7.20).
 - On a stereo main, a matrix send level belongs on the L leg only. A level on the R leg makes PM Editor V7.1.0 show every matrix send on that main at -inf (editor load, `references/rivage-fields.md`).
 - `BusType` FIXED, the matrix `Delay.Time` in microseconds and a matrix pan knob that writes nothing were placed by controlled saves in PM Editor 7.1.0 (`references/rivage-fields.md`).
+- RIVAGE PM Editor loads a generated file and the surface shows the generated names, IN1 to IN144. Proven by two discriminating loads against a renamed control (2026-08-23).
 
 ## What we don't know
 
@@ -81,3 +82,5 @@ Covers PM3, PM5, PM7 and PM10. File extension: `.RIVAGEPM`.
 - 2026-11-03, V7.20, controlled saves in PM Editor 7.2.0 placed the COMP260, PM Comp, EXPANDER, GATE and DUCKING range ends (`references/rivage-fields.md`).
 - 2026-09-07, V7.10, controlled saves and editor loads in PM Editor 7.1.0 settled where a stereo main keeps its matrix send levels (`references/rivage-fields.md`).
 - 2026-09-06, V7.10, controlled saves in PM Editor 7.1.0 placed `BusType` FIXED and the matrix delay; a matrix pan knob wrote nothing (`references/rivage-fields.md`).
+- 2026-08-23, RIVAGE PM Editor (version not recorded), a file with channel 1 renamed KICK flipped the surface to KICK on factory defaults, then a generated file flipped it to IN1 to IN144 (`references/editor-acceptance.md`).
+- 2026-10-17, RIVAGE PM Editor (version not recorded), channel capacity follows the DSP: 144 on DSP-R10 and CSD-R7, 120 on DSP-RX, 288 on DSP-RX-EX; PM3, PM5 and PM10 export as DSP-R10 and PM7 as CSD-R7.

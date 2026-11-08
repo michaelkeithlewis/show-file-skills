@@ -31,6 +31,8 @@ Covers S6L shows from VENUE 5.0 and later. File extension: `.dsh`.
   refuse these engines.
 - VENUE 8.0 and 8.1 snapshot streams convert to the 8.2 layout by fixed record rules that reproduce VENUE 8.2's
   resave byte for byte in ten of thirteen pairs (section 10.11).
+- 48V on an S6L belongs to the input socket. Switching it on a channel moves nothing in any channel strip. Proven by a byte compare of a desk-written pair with and without 48V.
+- No S6L strip has an uncoloured state. Every one of 15,714 input strips in 87 desk-written shows carries one of eight named colours. Proven by count.
 
 ## What we don't know
 
@@ -57,3 +59,5 @@ Covers S6L shows from VENUE 5.0 and later. File extension: `.dsh`.
 
 - 2026-10-29, VENUE 8.0.3.1, 8.1.0.216 and 8.2.0.187 Standalone, contributor notes (markcarlberg): strip, bus, matrix, output patch and preamp fields from one-change saves; engine and surface codes; snapshot record framing and the 8.0 to 8.2 rules.
 - 2026-10-30, VENUE 8.1.0.216 and 8.2.0.187 Standalone, contributor notes (markcarlberg): 8.1 to 8.2 snapshot rules; snapshot record 235 is built from record 46, not a constant.
+- 2026-10-18, VENUE Standalone (version not recorded), a generated S6L show was accepted in a recorded editor run. On an S6L, 48V belongs to the input socket, not the channel (`references/editor-acceptance.md`).
+- 2026-08-14, S6L desk-written shows (86 swept), a no-edit round trip is byte-identical, and a stereo link was found in exactly two of the 86.

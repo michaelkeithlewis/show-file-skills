@@ -29,3 +29,6 @@ Covers TF1, TF3, TF5 and TF-RACK. File extension: `.tff`.
 ## Session notes
 
 *Add a dated line here after every session: `YYYY-MM-DD, firmware, what you found.`*
+
+- 2026-09-29, TF Editor V4.5.0 offline, TF3 model, every save path tried wrote a .tff file and none wrote .tfp or .tfs in three attempts. No TF Editor load of a generated export is on file (`references/editor-acceptance.md`).
+- 2026-10-18, TF Editor files (14 per model for TF1, TF3, TF5 and TF Rack), read and written with no edit come back byte-identical.

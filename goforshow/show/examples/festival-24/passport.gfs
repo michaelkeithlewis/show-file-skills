@@ -1,0 +1,27 @@
+{
+  "created": "2026-01-01T00:00:00Z",
+  "created_by": {
+    "name": "synthetic example"
+  },
+  "event": {
+    "city": "",
+    "dates": [],
+    "name": "Example Festival Act",
+    "stages": [],
+    "venue": ""
+  },
+  "gfs_version": 3,
+  "integrity": "sha256:14d3d698d2fe1af7a2b46d1e86bf800050bc124bfbafad1ae2ac5ae80b7bfb00",
+  "modules": {
+    "show": {
+      "count": 24,
+      "encrypted": false,
+      "version": 1
+    }
+  },
+  "scope": {
+    "dates": [],
+    "stages": []
+  },
+  "type": "passport"
+}

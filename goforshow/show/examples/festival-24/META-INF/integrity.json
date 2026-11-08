@@ -1,0 +1,8 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "passport.gfs": "e72bfda33d1de2401ab7eca0b2e351ad44bf6e3ec2bc42c73d580b59657be14b",
+    "show/show.json": "fa6b95ff29ab5df3d9784db1ed40119212e6ebec16d5f8782c01500450ddf292"
+  },
+  "version": 1
+}
