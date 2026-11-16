@@ -33,6 +33,7 @@ Folders go manufacturer, then product. A model folder such as [`yamaha/cl/`](yam
 | [`digico/`](digico/) | DiGiCo SD and Quantum session (`.ses`) | Read any session, build and edit sessions from an input list or plain description on an editor-made baseline |
 | [`avid/protools/`](avid/protools/) | Avid Pro Tools (PTSL scripting) | Drive a running session: transport, tracks, markers, routing, import, bounce. Stems to a prepped session, stem QC, a first premix, bounce naming and versioning |
 | [`samply/`](samply/) | Samply (samply.app API) | Deliver mixes and show audio: upload to a project or folder, add a new mix as a version, rename, build L/R timecode + audio files for lighting |
+| [`eventric/master-tour/`](eventric/master-tour/) | Master Tour (official REST API and the desktop sync API) | Read tours, days and guest lists, write day notes, insert and edit days, show events, venues and production fields, schedule items, hotels and guest lists |
 | [`apple/logic/`](apple/logic/) | Apple Logic Pro `ProjectData` | Read channel strips, insert slots and routing, measure plug-in latency, bounce through Accessibility |
 | [`harrison/livetrax/`](harrison/livetrax/) | LiveTrax 3 (Ardour XML) | Generate multitrack record templates from an input list |
 | [`audiostrom/liveprofessor/`](audiostrom/liveprofessor/) | LiveProfessor `.rack2` (JUCE ValueTree) | Read, write and generate pre-routed sessions byte-exact |
