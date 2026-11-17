@@ -96,7 +96,7 @@ Each person here proved what they added on their own consoles and sessions.
 | Franklin Rice ([GitHub](https://github.com/franklinricemixes)) | Mix engineer | Pro Tools: macOS session-prep field notes on Pro Tools 2026.4.1 (routing IDs, session data import, Accessibility dialogs) |
 | markcarlberg ([GitHub](https://github.com/markcarlberg)) | Engineer | Cross-desk format notes: Allen & Heath SQ, Avantis and dLive, DiGiCo, Avid S6L, Yamaha DM7, DM3 and RIVAGE, Behringer X32 and WING |
 | go·for·show ([GitHub](https://github.com/viavespucci)) | Tools for live-sound engineers | Editor-acceptance notes for X32, WING, SQ, dLive, DiGiCo, VENUE and Yamaha; desk notes for Midas HD96, Soundcraft Si and Vi, PreSonus StudioLive III and Behringer X-Air; the X32 to DM7 translation note; the `.show` interchange proposal |
-| latouring ([GitHub](https://github.com/latouring)) | Touring | Eventric Master Tour: the official and desktop API clients, notes and token capture in `eventric/master-tour/` |
+| Wesley Davis ([GitHub](https://github.com/latouring)) | Touring | Eventric Master Tour: the official and desktop API clients, notes and token capture in `eventric/master-tour/` |
 
 ## Contributing
 

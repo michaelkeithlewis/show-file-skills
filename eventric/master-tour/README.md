@@ -31,7 +31,7 @@ This project is not affiliated with or endorsed by Eventric. The desktop API is 
 
 ## Credits
 
-Master Tour API work in this folder is by [latouring](https://github.com/latouring). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
+Master Tour API work in this folder is by [Wesley Davis](https://github.com/latouring). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 
 ## Session notes
 
