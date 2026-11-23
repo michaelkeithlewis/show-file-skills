@@ -181,6 +181,7 @@ input patch/routing; bus sends/assignments; freq/gain quantization grid.
 - **Surface banks** (section 243): u16 | u32 bank count | banks of 0x169 B: u16 size | u16 index |
   name ShortString[15] | ... | 12 strips of (index u8, type u8) at +0x23 (01 input = internal index - 1, 05 aux,
   06 group, 0a CG, 10 matrix) | ... | 12 view bytes at the end of the bank (0 SD view, 2 Mustard view).
+  SD files hold 0 only, and a 2 breaks the strip on the SD10 ([`sd/README.md`](../sd/README.md), "Fader banks").
   +0x6b: per slot the four locked encoder rows as keys (16 B: param, module, band, 0 each; inputs default analog gain,
   aux send 1, aux send 2, pan); +0x12b: per slot which of those rows are locked (bits). +0x137 label, +0x147 button
   colour (R, G, B, 0).
