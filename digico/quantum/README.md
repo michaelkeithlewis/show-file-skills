@@ -47,6 +47,9 @@ The table above shows what `consoles.py` allows today. This table shows what the
 - Quantum 5 pool: paths + bus slots must be 290 or fewer. Matrix outputs do not count. At the default 36 bus slots this gives 254 paths.
 - The `consoles.py` caps for Q5 (124), Q7 (253) and Q852 (253) sit below these limits, and the Q112 cap (80) equals its limit. They count channels, so stereo inputs can still pass the path limit: 253 channels with 4 stereo is 257 paths on a Q7.
 - The Quantum 5 load check allows 256 inputs and 134 bus paths and does not know the pool. A file can load and then lose inputs at the first Restructure.
+- Mustard channels in the Session Structure dialog, read in the V2242 offline programs: Quantum 5 48, Quantum 7 80. `consoles.py` gives both 24.
+- Real shows hold more than 24. A real Quantum 5 show saved at V2025 holds 41 Mustard channels on 34 strips (section 201 +86, numbers 0 to 41), and one saved at V1623 holds 29. Both were edited by bytes, their Mustard untouched, and loaded in the Quantum 5 V2242 offline program, and its saves kept every channel with the same number. A real Quantum 852 show saved at V1926 holds 31 on 27 strips. Edited by bytes, its Mustard untouched, it loaded in the Quantum 852 V2242 offline program, and the save kept all 31, numbered again from 0 (the highest now 31). The Quantum 225 editor turns off the channels past its 24 on load (above); neither program turned any off.
+- Inputs past 256 on the Quantum 852 are strip type `02` ([`FORMAT.md`](../references/FORMAT.md), "Inputs past 256"). On the 300-input save of the Quantum 852 V2242 offline program, `sessionmaker.inspect` reports 256 inputs and "No input channel list was found", and `sessionmaker.validate` reports BAD ("channel record ids != section 211 input ids").
 
 ### Other findings
 
@@ -131,7 +134,8 @@ Quantum 225 at V2242 (sample session) and V1619 (editor default). The keys and r
 - Whether a real console processes input paths past the dialog limit: no console test has been run.
 - Quantum 852 before V1926 and Quantum 112 before V2126: no editor exists. Pulse before V1742: the extension did not exist.
 - The extension option on Q5, Q7, Q852 and Q112: the Enable Console Extensions panels were not opened.
-- Mustard caps: Q225 Pulse, Q338 and Q338 Pulse come from DiGiCo's V1742 release notes, and the Q112's 20 from the V2242.4 release notes (no Q112 session numbers a Mustard channel above 19). The 24 on Q5, Q7 and Q852 is unverified.
+- Mustard caps: Q225 Pulse, Q338 and Q338 Pulse come from DiGiCo's V1742 release notes, and the Q112's 20 from the V2242.4 release notes (no Q112 session numbers a Mustard channel above 19). The Quantum 852's count was not read in its dialog; its V2242 program kept 31 ("Session Structure limits"). The Quantum 7's 80 is the dialog's figure only: no Quantum 7 file with more than 24 was loaded. No Quantum 5 file past 48 was loaded.
+- Inputs past 256 written by bytes: no such file was loaded. Routes, macros and snapshots that name a type `02` input: not in any file read.
 - Every other model and build: same writers and `validate.py`, marked untested until someone loads one.
 - `ses.py` parse floor: `digico/README.md` says V1455, FORMAT.md says V1619. Both list Q2, Q3, Q5, SD8, SD9 and SD12.
 - Structural edits on a session with snapshots: refused.
@@ -176,4 +180,5 @@ Quantum 225 at V2242 (sample session) and V1619 (editor default). The keys and r
 - 2026-11-01 to 11-03, Quantum 326/338 editor V2242, one-change saves on a real show: where Restructure puts one more mono group, stereo group or mono aux, and a show's first stereo aux. Quantum 326/338 and Quantum 852 editors V2242: real shows with no bus of the width asked for, the bus written by bytes from another width or the master, loaded. Ported to `references/session-structure.md`.
 - 2026-11-02 to 11-04, Quantum 112 V2242: the Minimum session (no aux) with one mono aux added and saved. A file written by bytes equals the save. A session from Minimum with three auxes written that way loaded in the editor, and the sends metered. Ported to `references/session-structure.md`.
 - 2026-11-07, Quantum 338 V2242, one-change saves settled the Mustard Optical attack and recovery order, the FET ratio value for ALL and the Levelling Amp mode; (1d, 53) is absent.
+- 2026-11-09 to 2026-11-12, Quantum 5, Quantum 7 and Quantum 852 V2242 offline programs: the Mustard channel counts read in the Quantum 5 and Quantum 7 Session Structure dialogs; real Quantum 5 and Quantum 852 shows with more than 24 Mustard channels, edited by bytes, loaded and saved with every channel kept; a Quantum 852 session set to 300 inputs and saved. Ported to `references/FORMAT.md`.
 - 2026-10-18, Quantum 225 offline editor 21.0.2126, a Quantum 112 session handed over as a Quantum 225 session was greyed out in the open dialog and would not open, while the Quantum 112 editor opened the same file. A session built from the Quantum 225 editor's own factory session loaded (`references/editor-acceptance.md`).
