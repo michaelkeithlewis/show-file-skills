@@ -272,6 +272,13 @@ Where each bank sits on the faders. The bank list is section 243 ("Surface banks
 - On load, a layer 1 whose shown button is empty gets a new blank bank on that button. The Quantum 326/338 editor added none when the shown button held a bank. An emptied layer 2 or 3 got none. Editor load: Quantum 225, Quantum 326/338, SD5 and SD12 at V2242.
 - The blank bank has no name, strips, label or colour. Its +0x1a is `ff` x 8, which means off the Layout page. One written this way was kept, and the editor added no second one. Editor load, Quantum 225 to Quantum 326/338.
 - A bank that is in no position of section 212 stays in the bank list through load and re-save. Editor load: Quantum 225, Quantum 326/338 and SD12 (one SD12 with 10 of its 34 banks on no button).
+- A bank copy (Layout > Fader Banks, copy to) is a new record at the end of section 243. It differs from its source only in the bank number (+2), +0x1a to +0x22 (`ff` x 8 and 0, as on a new bank), the u32 at +0x158 (0) and the heap words. Name, strips, locked rows, second line, colour, lock and view bytes come along. Read from a Quantum 112 session saved at V2242 whose bank 9 is the copy of its bank 4.
+- One bank number never sits on two positions. None of 596 sessions read has that, 257 of them with banks in more than one bay. A copy is how the same strips go on a second button.
+- Copies written that way load and are kept. Editor load at V2242:
+  - Quantum 326/338 editor, a real show: its control group bank copied onto the four buttons of layer 2 of another bay.
+  - Quantum 225 editor, a real show saved at V2025: every bank deleted, then an input bank and a control group bank with three copies written onto layers 1 and 2 of one bay.
+  - Each re-save kept every written bank and position, heap words aside.
+- The talkback bank, a bank holding TB In alone, is in all 16 empty sessions read from the V2242 programs. It sits on a bank button in all of them but the SD11's and SD11i's. It is an ordinary bank: 86 of 143 sessions read have none, among them 52 of 54 Quantum 225 sessions and all 27 Quantum 852 sessions. Editor load: a Quantum 112 session whose talkback bank was its last bank and on no button, with that bank deleted, loaded in the Quantum 112 offline program at V2242, and the re-save kept its 8 banks and every position.
 - A bank list copied from the other console line loads, shows on the Fader Banks screen and re-saves with section 212 byte for byte and no bank added. The copy keeps strips, names, second lines and Layout page places. The pairs are in [`engine-findings.md`](engine-findings.md).
 
 Label and colour:
