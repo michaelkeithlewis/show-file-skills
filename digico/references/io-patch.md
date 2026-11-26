@@ -39,7 +39,7 @@ Keys are (module, param, band) in hex, as in [`FORMAT.md`](FORMAT.md). A key wri
 
 - One write puts a run of channels on consecutive sockets of a device, from a chosen socket. The write matches the console's auto patch. A stereo channel takes two sockets. Gain and 48V move with the channel.
 - Gain, 48V and pad belong to the input socket, not to the channel. Module `11` holds them: params `86` (gain), `83` (48V) and `89` (pad). The gain of a channel is the gain of the socket under the channel.
-- A stereo channel has no alt input. A mono channel has one.
+- A stereo channel has no alt input. A mono channel has one. Making a mono channel stereo clears its alt (Quantum 112 offline program at V2242). None of the 1827 stereo inputs in 143 sessions read (Quantum and SD) holds an alt; 1203 mono inputs do.
 - The I/O screen of the site engine added no new bytes for inputs and gain. The older writers made the files below.
 
 ## Output patch
