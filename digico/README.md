@@ -78,6 +78,6 @@ Check every session before it goes near a console. No warranty.
 
 ## Credits
 
-DiGiCo field work by [Jan Rosenbauer](https://www.instagram.com/janrosenbauer/) (Wellenbrecher Audio, Hamburg), proven on a Quantum 112. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
+DiGiCo field work by [Jan Rosenbauer](https://www.instagram.com/latenightboysclub/) (Wellenbrecher Audio, Hamburg), proven on a Quantum 112. Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
 
 Cross-desk format notes in this folder are by [markcarlberg](https://github.com/markcarlberg). Full list: [Contributors](https://github.com/michaelkeithlewis/show-file-skills#contributors).
