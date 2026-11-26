@@ -173,7 +173,7 @@ A live value takes the snapshot's value when all three allow it:
 
 A replay of this rule matched five recalls fired and saved on a Quantum 112, value for value and name for name.
 
-- The EQ safe does not keep the filters. An EQ-safed channel kept its EQ but took the snapshot's HPF. With only the EQ out of the snapshot's scope, the EQ stayed and the HPF came from the snapshot. The filters are a column of their own.
+- The EQ safe does not keep the filters on the Quantum 112 (on an SD console it does: "SD consoles" below). An EQ-safed channel kept its EQ but took the snapshot's HPF. With only the EQ out of the snapshot's scope, the EQ stayed and the HPF came from the snapshot. The filters are a column of their own.
 - Control group membership (the fader's `(0c, 04, 0)` bits and the control groups' module `0a`) comes back only with the misc switch CG Members.
 - FX units and Spice Rack slots need their own Global Scope bit (module `15`, module `1f`), no unit safe, and the snapshot's scope.
 
@@ -191,6 +191,14 @@ So a channel renamed in section 211 alone gets its old name back at the next rec
 - An output socket's own source `(12, 00, 0)`: it does not come back with the socket. It follows the strip that feeds it ("Output sockets follow their feeder" below).
 - The Mustard compressor's stereo link `(1d, 3f, 0)` comes back on buses, but on a stereo input it is always on after a recall, whatever is stored.
 - A Spice Rack slot that the recall changes loses its preset (its preset index becomes -1).
+
+## Presets and Mustard channels on a recall
+
+A recall also writes two fields of each recalled strip's section 201 record. These are the fields at +42 and +86 that one recall changed on 36 input records.
+
+- The preset index (+42, and the first i32 of the strip's tail in section 211) takes the stored preset, the snapshot strip's tail, when Global Scope recalls every module of the strip that has params. That recall set it on 36 inputs and 4 FX units, each to the stored value. The Quantum 112 program (V2242.4, `tChannelSnapshot.Recall`) writes -1 where Global Scope recalls only part of the strip. No saved recall shows that case.
+- The Mustard channel (+86): a strip whose Mustard modules all go out gives its channel back (-1). The same recall switched Mustard out on 19 inputs and freed all 21 of their channels. A strip whose Mustard comes in without a channel takes the lowest free block of its width, a stereo strip's starting on an even number (`tTidalChannelAllocator.ObtainChannels`).
+- When one recall frees some channels and takes others, the channels are numbered afresh, as on every load. In a one-change save on a Quantum 112, two inputs whose Mustard came back in and one whose Mustard went out left the two on channels 0 and 1, not 1 and 2.
 
 With the misc switch Layout on, a recall puts back which bank each layer shows on each fader bay. It does not put the bank buttons back: after a bank was moved to another button, a recall left the buttons as they were.
 
@@ -214,6 +222,11 @@ A recall makes the FX rack the snapshot's. It takes what any FX value takes: Glo
 - A unit the snapshot holds with another algorithm `(15, 80, 0)`, or one that is not live, is made anew from the stored strip, the way a new unit is written ("FX unit" under "FX units, sends, buses and patch" in [`FORMAT.md`](FORMAT.md)), with the stored name, preset and width. A unit with the same algorithm takes the stored values only.
 - The FX list keeps its order. A unit made anew in its own place keeps its section 201 record: the stored name is written over the old one, so a shorter name leaves the old name's last letters after it. The record takes the stored preset index (+42) and keeps its EngineChannel (+84).
 - A unit that was not live takes the place and the EngineChannel of a unit of its kind (reverb or other effect) that the same recall took away. Its section 201 record is written clean, with the stored name.
+- A unit that goes leaves its number free, so the FX list can have a gap: a recall that took the first of three units away left the other two as FX 2 and FX 3. The editor's own delete counts the units behind it down instead.
+- A unit that the recall changes between a reverb and another effect takes the first free EngineChannel of its kind, after its own is let go. Back from a reverb to an effect, a unit took EngineChannel 0 on one show, and 2 on another, where a safed unit held 0.
+- Inputs patched from a unit's returns: a unit that goes, or one made anew where no unit was, unpatches them in section 211. The snapshots keep their routes, and the value recall then patches what the snapshot holds in scope. A unit made anew in its own place (another algorithm) keeps them.
+- A unit's inputs `(15, 00, 0)` and `(15, 00, 1)`, the aux or group feeding each side, come back only where Global Scope recalls the Outputs in the section of that aux or group. The FX section's own Global Scope does not decide it. On a show whose aux sections recall Fader-Mute and Fader only, a unit made anew in its own place came back unfed, although the snapshot stores it fed from an aux.
+- A safed unit `(15, f0, 0)` keeps its algorithm, its name and its values, but it takes the stored preset index (+42).
 
 The console's FX > NEW does not store the new unit in any snapshot. So on a session whose Global Scope recalls FX, a new unit lasts until the next recall unless the snapshots are updated.
 
@@ -222,6 +235,14 @@ Proven at V2242:
 - One-change saves of a Quantum 112 session: FX > NEW added a delay, fed by an aux and with its return on an input, to a show with one snapshot. No snapshot held the new unit. Recalling the snapshot then took the delay away, its strip and its section 201 record, and left the rest as a recall leaves it.
 - A save-back from the Quantum 326/338 editor: a file written by bytes with seven FX units, its one snapshot recalled there. Three units went, four took the snapshot's algorithm and name, and one unit that was not live came back in the place of a reverb the recall took away.
 - Replaying these rules on the file before each recall gives the console's FX units with their values and names, and the FX records of section 201 byte for byte.
+- One-change saves of Quantum 112 sessions in the Quantum 112 software: a recall that took a unit away left the gap, and a recall that changed a unit back from a reverb to an effect gave it EngineChannel 0.
+- A save-back from the Quantum 112 software: a file written by bytes, with one unit given another algorithm in place and a safed unit given another algorithm and preset, its snapshot 3 recalled and saved. Replaying the rules on the written file gives the save-back's live values, names and preset indexes exactly. Leave out any one of the last three rules above and the replay differs: 2 feed values, 1 input patch, or 2 preset fields. One EngineChannel differs (see "What we don't know").
+
+## SD consoles
+
+One recall on an SD file, in the SD9 V2242 offline program. The file was a real SD9 show saved at V1619 with 25 snapshots, written by bytes (an input and a mono aux more, one snapshot more, a rename). The program loaded it, snapshot 7 was recalled, and the session was saved. Replaying the rule of "What a recall changes" on the written file gives the save-back's names, preset indexes and Mustard channels exactly, and its live values but 561. Of those, 504 are input socket params `(11, c8)` and `(11, c9)`, which the V2242 program adds to the sockets of a V1619 file on load. The other 57 differ from the stored values only by the program's own steps (2.0 against 2.004, 6300 Hz against 6239 Hz).
+
+One rule differs from the Quantum 112: **the EQ safe keeps the filters too.** Every EQ-safed strip whose stored filters differ from its live ones kept the live filters, 34 strips and 71 values, inputs and buses alike. Replayed with the Quantum 112 rule, all 71 come out wrong.
 
 ## Store and update
 
@@ -247,9 +268,8 @@ Nothing in this folder writes scope yet. A tool that edits a show with snapshots
 - The 992-byte block in each snapshot record.
 - Misc scope bits 1, 8 to 12 and 14: read from the panel order, not saved one by one.
 - What the console does with +0x39 in a pool state. It is 0 there in every show.
-- SD consoles: none of this is tested on an SD file.
-- How the FX list is numbered when a recall takes a unit away and no unit takes its place. No console-saved file has a gap in its FX numbers.
-- Which EngineChannel a unit gets when a recall changes it from a reverb to another effect, or back.
-- A recall with FX off in Global Scope, or with a unit safed: the recall rule says the rack, or the safed unit, stays. No such recall was saved.
+- SD consoles: one recall on an SD9 show ("SD consoles"). Other SD consoles, scope edits, store and update on an SD file: not tested.
+- Where a unit coming back goes when a number before the other units is free. The Quantum 112 program showed it as FX 1, the lowest free number, but no save holds that recall.
+- A recall with FX off in Global Scope: the recall rule says the rack stays. No such recall was saved.
+- On the Quantum 112 save-back above, a reverb unit that the recall did not change moved from EngineChannel 128 to 130. The written file had the reverbs on 128 and 132. Nothing above writes it, and the save does not show whether the load or the recall moved it.
 - On one recall, a stereo input's right leg went onto the output socket after its stored left one, and two input sockets were patched straight onto two plug-in rack outputs (`(11, fe, 0)` and `(12, e2, 0)`, as in [`FORMAT.md`](FORMAT.md)). Nothing stored says so.
-- The same recall changed 36 input records of section 201: the i32 at +42 (on an FX record, its preset index) and the u16 at +86. Nothing in the rules above writes them.
