@@ -138,6 +138,12 @@ input patch/routing; bus sends/assignments; freq/gain quantization grid.
 - **Input channel** = 18 records (01 input, 09 delay, 07 filters, 08 inserts, 04 EQ, 05 dyn, 0c fader/mute, 02 sends,
   0d pan, 03 groups, 0e, 13, 0a, 1a-1e Mustard) + trailer `27 00 | id (0x0100|idx) | name`. Channel record in
   section 201: `cb 00 79 00 | id | number | name`. All 20 copies of a name are fixed 32-byte fields.
+- **Inputs past 256** (the Quantum 852 takes 384 input paths): inputs 257 and up are strip type `02`, index 0 = input
+  257, after the 256 inputs of type `01`. Read from a save of the Quantum 852 V2242 offline program with Session
+  Structure set to 300 inputs: section 201 records with id `0x0200|idx` and numbers 257 to 300, counted in the Input
+  Channels group (300); section 211 strips with the same 18 records and trailer id `0x0200|idx`, after the 256 of type
+  `01`; bank slots of type `02` with index = input - 257; EngineChannel 256 to 299 on them and 300 on TB In (last
+  input + 1, the Q8 rule under EngineChannel); the header counts 300 inputs.
 - **Stride depends on session structure** (4854 B with 6+6 auxes, 4750 B with 4+7), so key by (module, param, band),
   never by offset. Keys for every field mapped above: `scripts/keys_from_offsets.json`. The control names come from the
   installer's iPad control file for the Q2 (164 controls with min/max).
